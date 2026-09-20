@@ -1,5 +1,7 @@
 # caderno-sanfona
 
+App em produção: https://caderno-sanfona.gilenopribeiro.workers.dev
+
 Aplicativo de cifras, repertórios e estudo visual para sanfona, com editor de acordes, baixos, teclado e modo de execução.
 
 Web app responsivo (PWA) — roda no navegador (celular, tablet, desktop) e pode ser instalado na tela inicial. Não é preciso loja de aplicativos para usar.
@@ -29,13 +31,13 @@ Observação sobre o Supabase (banco de dados, Etapa 10): o plano grátis pausa 
 ## Roadmap (etapas de desenvolvimento)
 
 1. Esqueleto do app (Vite + React + TS + Tailwind + PWA) — feito
-2. Camada de dados local (IndexedDB via Dexie)
-3. Biblioteca de músicas
-4. Editor de cifras
-5. Transposição de tom
-6. Cadernos e repertórios
-7. Modo Tocar (tela cheia, zoom, navegação)
-8. Rolagem automática + Configurações
-9. Modo Sanfona Visual (baixos 80/120 + teclado)
-10. Supabase (login + sincronização em nuvem)
-11. Deploy online gratuito
+2. Deploy online gratuito (Cloudflare Pages/Workers) — feito
+3. Camada de dados local (IndexedDB via Dexie)
+4. Biblioteca de músicas
+5. Editor de cifras
+6. Transposição de tom
+7. Cadernos e repertórios
+8. Modo Tocar (tela cheia, zoom, navegação)
+9. Rolagem automática + Configurações
+10. Modo Sanfona Visual (baixos 80/120 + teclado)
+11. Supabase (login + sincronização em nuvem)
