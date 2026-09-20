@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-surface: #ffffff;
+  --color-surface-alt: #f1f5f9;
+  color-scheme: light;
+}
+
+:root.dark {
+  --color-surface: #0f172a;
+  --color-surface-alt: #1e293b;
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-surface-alt text-slate-900 dark:text-slate-100;
+  overscroll-behavior: none;
+}
+
+/* Respeita notch/status bar em celulares no modo tela cheia (item 18) */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.tap-target {
+  min-height: 44px;
+  min-width: 44px;
+}
