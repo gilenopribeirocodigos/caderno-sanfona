@@ -8,6 +8,13 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      // Desativado durante o desenvolvimento ativo: um Service Worker
+      // real de cache atrapalha os testes de cada etapa (o navegador
+      // mostra a versão antiga até o cache expirar). `selfDestroying`
+      // publica um SW que só desinstala e limpa o cache de quem já
+      // tinha instalado a versão anterior. Reativar (registerType:
+      // 'autoUpdate') perto do fim do projeto, quando o app estabilizar.
+      selfDestroying: true,
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
