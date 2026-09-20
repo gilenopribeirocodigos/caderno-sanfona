@@ -32,12 +32,12 @@ Observação sobre o Supabase (banco de dados, Etapa 10): o plano grátis pausa 
 
 1. Esqueleto do app (Vite + React + TS + Tailwind + PWA) — feito
 2. Deploy online gratuito (Cloudflare Pages/Workers) — feito
-3. Camada de dados local (IndexedDB via Dexie)
-4. Biblioteca de músicas
-5. Editor de cifras
-6. Transposição de tom
-7. Cadernos e repertórios
-8. Modo Tocar (tela cheia, zoom, navegação)
-9. Rolagem automática + Configurações
-10. Modo Sanfona Visual (baixos 80/120 + teclado)
+3. Camada de dados local (IndexedDB via Dexie) — feito
+4. Biblioteca de músicas — feito
+5. Editor de cifras — feito
+6. Transposição de tom — feito
+7. Cadernos e repertórios — feito
+8. Modo Tocar (tela cheia, zoom, navegação) — feito
+9. Rolagem automática + Configurações — feito
+10. Modo Sanfona Visual (baixos 80/120 + teclado) — feito
 11. Supabase (login + sincronização em nuvem)
