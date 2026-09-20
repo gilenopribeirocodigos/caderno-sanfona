@@ -28,13 +28,17 @@ export default function Editor() {
   const [picker, setPicker] = useState<{ lineIndex: number; tokenIndex: number } | null>(null)
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>()
+  const lastLoadedSource = useRef<string | undefined>(undefined)
 
-  // Sincroniza o estado local de edição quando a música carrega/atualiza por fora.
+  // Sincroniza o estado local de edição sempre que a letra/cifra mudar no
+  // banco (letra inicial salva, ou uma alteração vinda de outra aba) — mas
+  // não quando o valor já é o que acabamos de salvar nós mesmos.
   useEffect(() => {
-    if (song && lines === null) {
-      setLines(song.chordData.lines.length > 0 ? song.chordData.lines : parseChordPro(song.lyrics))
-    }
-  }, [song, lines])
+    if (!song) return
+    if (song.chordData.chordProSource === lastLoadedSource.current) return
+    lastLoadedSource.current = song.chordData.chordProSource
+    setLines(song.chordData.lines.length > 0 ? song.chordData.lines : parseChordPro(song.lyrics))
+  }, [song])
 
   if (songId === 'novo' || !song) {
     return (
@@ -60,6 +64,7 @@ export default function Editor() {
     if (saveTimeout.current) clearTimeout(saveTimeout.current)
     saveTimeout.current = setTimeout(async () => {
       const source = renderChordPro(newLines)
+      lastLoadedSource.current = source
       await saveChordData(song!.id, { chordProSource: source, lines: newLines })
       setSaveState('saved')
     }, 400)

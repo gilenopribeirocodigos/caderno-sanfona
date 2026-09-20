@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import AppShell from './components/AppShell'
 import Library from './pages/Library'
@@ -6,8 +7,15 @@ import NotebookDetail from './pages/NotebookDetail'
 import Editor from './pages/Editor'
 import Play from './pages/Play'
 import Settings from './pages/Settings'
+import { useSettings } from './lib/useSettings'
 
 export default function App() {
+  const settings = useSettings()
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', settings.theme === 'dark')
+  }, [settings.theme])
+
   return (
     <Routes>
       <Route element={<AppShell />}>
