@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db'
 import {
@@ -216,7 +217,7 @@ export default function Library() {
                   <p className="mt-1 text-xs text-slate-400">{song.tags.join(' · ')}</p>
                 )}
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <button
                   aria-label="Favoritar"
                   className="tap-target text-lg"
@@ -224,16 +225,28 @@ export default function Library() {
                 >
                   {song.favorite ? '★' : '☆'}
                 </button>
+                <Link
+                  to={`/tocar?song=${song.id}`}
+                  className="tap-target rounded-md bg-slate-900 px-2 py-1 text-xs font-medium text-white dark:bg-slate-100 dark:text-slate-900"
+                >
+                  Tocar
+                </Link>
+                <Link
+                  to={`/editor/${song.id}`}
+                  className="tap-target text-xs text-slate-500 underline"
+                >
+                  Cifra
+                </Link>
                 <button
                   aria-label="Editar"
-                  className="tap-target text-sm text-slate-500"
+                  className="tap-target text-xs text-slate-500 underline"
                   onClick={() => setFormMode({ kind: 'edit', song })}
                 >
-                  Editar
+                  Dados
                 </button>
                 <button
                   aria-label="Excluir"
-                  className="tap-target text-sm text-red-500"
+                  className="tap-target text-xs text-red-500 underline"
                   onClick={() => deleteSong(song.id)}
                 >
                   Excluir
