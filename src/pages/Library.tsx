@@ -1,88 +1,244 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db'
-import { createSong, deleteSong, toggleFavorite } from '@/lib/songsRepo'
+import {
+  createSong,
+  deleteSong,
+  parseTagsInput,
+  toggleFavorite,
+  updateSongDetails,
+} from '@/lib/songsRepo'
+import SongForm, { emptySongForm, songToFormValues, type SongFormValues } from '@/components/SongForm'
+import type { Song } from '@/types'
 
-/**
- * Etapa 2: prova de que o banco local (Dexie/IndexedDB) funciona —
- * criar, listar, favoritar e excluir músicas, persistindo entre recargas
- * da página e mesmo offline. A UI completa (filtros, edição) vem na
- * Etapa 3.
- */
+type SortMode = 'alfabetica' | 'artista' | 'tom' | 'mais-tocadas' | 'recentes' | 'nao-treinadas'
+
+type FormMode = { kind: 'closed' } | { kind: 'create' } | { kind: 'edit'; song: Song }
+
 export default function Library() {
-  const songs = useLiveQuery(() => db.songs.orderBy('title').toArray(), [])
-  const [title, setTitle] = useState('')
-  const [artist, setArtist] = useState('')
-  const [originalKey, setOriginalKey] = useState('C')
+  const songs = useLiveQuery(() => db.songs.toArray(), [])
+  const [formMode, setFormMode] = useState<FormMode>({ kind: 'closed' })
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault()
-    if (!title.trim()) return
-    await createSong({ title, artist, originalKey, lyrics: '' })
-    setTitle('')
-    setArtist('')
+  const [search, setSearch] = useState('')
+  const [keyFilter, setKeyFilter] = useState('')
+  const [rhythmFilter, setRhythmFilter] = useState('')
+  const [difficultyFilter, setDifficultyFilter] = useState('')
+  const [onlyFavorites, setOnlyFavorites] = useState(false)
+  const [sortMode, setSortMode] = useState<SortMode>('alfabetica')
+
+  const keys = useMemo(
+    () => Array.from(new Set((songs ?? []).map((s) => s.preferredKey))).sort(),
+    [songs],
+  )
+  const rhythms = useMemo(
+    () => Array.from(new Set((songs ?? []).map((s) => s.rhythm).filter(Boolean))) as string[],
+    [songs],
+  )
+
+  const visibleSongs = useMemo(() => {
+    let list = songs ?? []
+    const term = search.trim().toLowerCase()
+    if (term) {
+      list = list.filter(
+        (s) =>
+          s.title.toLowerCase().includes(term) ||
+          (s.artist ?? '').toLowerCase().includes(term),
+      )
+    }
+    if (keyFilter) list = list.filter((s) => s.preferredKey === keyFilter)
+    if (rhythmFilter) list = list.filter((s) => s.rhythm === rhythmFilter)
+    if (difficultyFilter) list = list.filter((s) => s.difficulty === difficultyFilter)
+    if (onlyFavorites) list = list.filter((s) => s.favorite)
+    if (sortMode === 'nao-treinadas') list = list.filter((s) => s.timesPlayed === 0)
+
+    const sorted = [...list]
+    switch (sortMode) {
+      case 'artista':
+        sorted.sort((a, b) => (a.artist ?? '').localeCompare(b.artist ?? ''))
+        break
+      case 'tom':
+        sorted.sort((a, b) => a.preferredKey.localeCompare(b.preferredKey))
+        break
+      case 'mais-tocadas':
+        sorted.sort((a, b) => b.timesPlayed - a.timesPlayed)
+        break
+      case 'recentes':
+        sorted.sort((a, b) =>
+          (b.lastPracticedAt ?? b.createdAt).localeCompare(a.lastPracticedAt ?? a.createdAt),
+        )
+        break
+      default:
+        sorted.sort((a, b) => a.title.localeCompare(b.title))
+    }
+    return sorted
+  }, [songs, search, keyFilter, rhythmFilter, difficultyFilter, onlyFavorites, sortMode])
+
+  async function handleCreate(values: SongFormValues) {
+    await createSong({
+      title: values.title,
+      artist: values.artist,
+      originalKey: values.originalKey,
+      rhythm: values.rhythm,
+      difficulty: values.difficulty || undefined,
+      tags: parseTagsInput(values.tagsText),
+      notes: values.notes,
+      lyrics: '',
+    })
+    setFormMode({ kind: 'closed' })
+  }
+
+  async function handleEdit(song: Song, values: SongFormValues) {
+    await updateSongDetails(song.id, {
+      title: values.title,
+      artist: values.artist,
+      originalKey: values.originalKey,
+      rhythm: values.rhythm,
+      difficulty: values.difficulty || undefined,
+      tags: parseTagsInput(values.tagsText),
+      notes: values.notes,
+    })
+    setFormMode({ kind: 'closed' })
   }
 
   return (
     <div className="mx-auto max-w-2xl p-4">
-      <h2 className="text-xl font-semibold">Biblioteca</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Biblioteca</h2>
+        {formMode.kind === 'closed' && (
+          <button
+            className="tap-target rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white dark:bg-slate-100 dark:text-slate-900"
+            onClick={() => setFormMode({ kind: 'create' })}
+          >
+            + Nova música
+          </button>
+        )}
+      </div>
 
-      <form onSubmit={handleCreate} className="mt-4 flex flex-col gap-2 rounded-lg bg-surface p-3">
-        <input
-          className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-          placeholder="Título da música"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-        <div className="flex gap-2">
-          <input
-            className="tap-target flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-            placeholder="Artista (opcional)"
-            value={artist}
-            onChange={(e) => setArtist(e.target.value)}
-          />
-          <input
-            className="tap-target w-20 rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-            placeholder="Tom"
-            value={originalKey}
-            onChange={(e) => setOriginalKey(e.target.value)}
+      {formMode.kind === 'create' && (
+        <div className="mt-3">
+          <SongForm
+            initial={emptySongForm()}
+            submitLabel="Criar música"
+            onCancel={() => setFormMode({ kind: 'closed' })}
+            onSubmit={handleCreate}
           />
         </div>
-        <button
-          type="submit"
-          className="tap-target rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white dark:bg-slate-100 dark:text-slate-900"
-        >
-          + Nova música
-        </button>
-      </form>
+      )}
+      {formMode.kind === 'edit' && (
+        <div className="mt-3">
+          <SongForm
+            initial={songToFormValues(formMode.song)}
+            submitLabel="Salvar alterações"
+            onCancel={() => setFormMode({ kind: 'closed' })}
+            onSubmit={(values) => handleEdit(formMode.song, values)}
+          />
+        </div>
+      )}
+
+      <div className="mt-4 flex flex-col gap-2 rounded-lg bg-surface p-3">
+        <input
+          className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+          placeholder="Buscar por nome ou artista..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <div className="flex flex-wrap gap-2">
+          <select
+            className="tap-target rounded-md border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
+            value={keyFilter}
+            onChange={(e) => setKeyFilter(e.target.value)}
+          >
+            <option value="">Todos os tons</option>
+            {keys.map((k) => (
+              <option key={k} value={k}>
+                {k}
+              </option>
+            ))}
+          </select>
+          <select
+            className="tap-target rounded-md border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
+            value={rhythmFilter}
+            onChange={(e) => setRhythmFilter(e.target.value)}
+          >
+            <option value="">Todos os ritmos</option>
+            {rhythms.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+          <select
+            className="tap-target rounded-md border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
+            value={difficultyFilter}
+            onChange={(e) => setDifficultyFilter(e.target.value)}
+          >
+            <option value="">Toda dificuldade</option>
+            <option value="facil">Fácil</option>
+            <option value="medio">Médio</option>
+            <option value="dificil">Difícil</option>
+          </select>
+          <select
+            className="tap-target rounded-md border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
+            value={sortMode}
+            onChange={(e) => setSortMode(e.target.value as SortMode)}
+          >
+            <option value="alfabetica">Ordem alfabética</option>
+            <option value="artista">Por artista</option>
+            <option value="tom">Por tom</option>
+            <option value="mais-tocadas">Mais tocadas</option>
+            <option value="recentes">Recentes</option>
+            <option value="nao-treinadas">Ainda não treinadas</option>
+          </select>
+          <label className="tap-target flex items-center gap-1.5 rounded-md border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-700">
+            <input
+              type="checkbox"
+              checked={onlyFavorites}
+              onChange={(e) => setOnlyFavorites(e.target.checked)}
+            />
+            Favoritas
+          </label>
+        </div>
+      </div>
 
       <ul className="mt-4 flex flex-col gap-2">
-        {songs?.map((song) => (
-          <li
-            key={song.id}
-            className="flex items-center justify-between rounded-lg bg-surface px-3 py-2"
-          >
-            <div>
-              <p className="font-medium">{song.title}</p>
-              <p className="text-xs text-slate-500">
-                {song.artist ? `${song.artist} · ` : ''}Tom {song.preferredKey}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                aria-label="Favoritar"
-                className="tap-target text-lg"
-                onClick={() => toggleFavorite(song.id, !song.favorite)}
-              >
-                {song.favorite ? '★' : '☆'}
-              </button>
-              <button
-                aria-label="Excluir"
-                className="tap-target text-sm text-red-500"
-                onClick={() => deleteSong(song.id)}
-              >
-                Excluir
-              </button>
+        {visibleSongs.map((song) => (
+          <li key={song.id} className="rounded-lg bg-surface px-3 py-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">{song.title}</p>
+                <p className="text-xs text-slate-500">
+                  {song.artist ? `${song.artist} · ` : ''}Tom {song.preferredKey}
+                  {song.rhythm ? ` · ${song.rhythm}` : ''}
+                  {song.difficulty ? ` · ${song.difficulty}` : ''}
+                  {song.timesPlayed > 0 ? ` · tocada ${song.timesPlayed}x` : ''}
+                </p>
+                {song.tags.length > 0 && (
+                  <p className="mt-1 text-xs text-slate-400">{song.tags.join(' · ')}</p>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  aria-label="Favoritar"
+                  className="tap-target text-lg"
+                  onClick={() => toggleFavorite(song.id, !song.favorite)}
+                >
+                  {song.favorite ? '★' : '☆'}
+                </button>
+                <button
+                  aria-label="Editar"
+                  className="tap-target text-sm text-slate-500"
+                  onClick={() => setFormMode({ kind: 'edit', song })}
+                >
+                  Editar
+                </button>
+                <button
+                  aria-label="Excluir"
+                  className="tap-target text-sm text-red-500"
+                  onClick={() => deleteSong(song.id)}
+                >
+                  Excluir
+                </button>
+              </div>
             </div>
           </li>
         ))}
@@ -90,8 +246,13 @@ export default function Library() {
 
       {songs?.length === 0 && (
         <p className="mt-6 text-center text-sm text-slate-500">
-          Nenhuma música ainda. Crie a primeira acima — ela fica salva no
+          Nenhuma música ainda. Toque em "+ Nova música" — ela fica salva no
           seu aparelho, mesmo offline.
+        </p>
+      )}
+      {(songs?.length ?? 0) > 0 && visibleSongs.length === 0 && (
+        <p className="mt-6 text-center text-sm text-slate-500">
+          Nenhuma música encontrada com esses filtros.
         </p>
       )}
     </div>

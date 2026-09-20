@@ -5,10 +5,17 @@ function newId(): string {
   return crypto.randomUUID()
 }
 
-export interface CreateSongInput {
+export interface SongDetailsInput {
   title: string
   artist?: string
   originalKey: string
+  rhythm?: string
+  difficulty?: Song['difficulty']
+  tags: string[]
+  notes?: string
+}
+
+export interface CreateSongInput extends SongDetailsInput {
   lyrics: string
 }
 
@@ -23,7 +30,10 @@ export async function createSong(input: CreateSongInput): Promise<Song> {
     preferredKey: input.originalKey,
     lyrics: input.lyrics,
     chordData: { chordProSource: input.lyrics, lines: [] },
-    tags: [],
+    rhythm: input.rhythm?.trim() || undefined,
+    difficulty: input.difficulty,
+    tags: input.tags,
+    notes: input.notes?.trim() || undefined,
     favorite: false,
     timesPlayed: 0,
     createdAt: now,
@@ -31,6 +41,26 @@ export async function createSong(input: CreateSongInput): Promise<Song> {
   }
   await db.songs.add(song)
   return song
+}
+
+/** Atualiza só os dados cadastrais da música (item 4), sem mexer na letra/cifra. */
+export async function updateSongDetails(id: string, input: SongDetailsInput): Promise<void> {
+  await updateSong(id, {
+    title: input.title.trim(),
+    artist: input.artist?.trim() || undefined,
+    originalKey: input.originalKey,
+    rhythm: input.rhythm?.trim() || undefined,
+    difficulty: input.difficulty,
+    tags: input.tags,
+    notes: input.notes?.trim() || undefined,
+  })
+}
+
+export function parseTagsInput(raw: string): string[] {
+  return raw
+    .split(',')
+    .map((t) => t.trim())
+    .filter(Boolean)
 }
 
 export async function updateSong(id: string, changes: Partial<Song>): Promise<void> {
