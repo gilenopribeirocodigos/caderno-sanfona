@@ -59,6 +59,9 @@ body {
   transform-origin: center;
   animation: accordion-breathe 2.8s ease-in-out infinite;
 }
+.accordion-breathe-slow {
+  animation-duration: 6s;
+}
 @media (prefers-reduced-motion: reduce) {
   .accordion-breathe {
     animation: none;

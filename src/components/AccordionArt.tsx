@@ -9,10 +9,13 @@ import { useId } from 'react'
 export default function AccordionArt({
   className = '',
   animated = false,
+  slow = false,
 }: {
   className?: string
   /** Anima o fole em um leve "respirar", como se a sanfona estivesse tocando. */
   animated?: boolean
+  /** Respiração bem mais lenta, para marcas d'água grandes em segundo plano. */
+  slow?: boolean
 }) {
   const uid = useId().replace(/:/g, '')
   const N = 15 // número de dobras do fole
@@ -78,7 +81,7 @@ export default function AccordionArt({
       <rect x="56" y="2" width="16" height="16" rx="2" fill="var(--color-gold)" stroke="#7a5a12" strokeWidth="0.75" />
 
       {/* Fole (parte central sanfonada) — "respira" quando animated */}
-      <g className={animated ? 'accordion-breathe' : undefined}>
+      <g className={animated ? `accordion-breathe${slow ? ' accordion-breathe-slow' : ''}` : undefined}>
         {Array.from({ length: N }).map((_, i) => {
           const x0 = foleStart + i * step
           const x1 = x0 + step / 2
