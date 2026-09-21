@@ -57,7 +57,7 @@ export default function ChordSheet({
                   <span
                     style={{ fontSize: chordSize }}
                     className={`font-bold leading-tight ${
-                      token.chord === activeChord
+                      token.chord && token.chord === activeChord
                         ? 'rounded bg-amber-400 px-1 text-slate-900'
                         : 'text-sky-600 dark:text-sky-400'
                     }`}
