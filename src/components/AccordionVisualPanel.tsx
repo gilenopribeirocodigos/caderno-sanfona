@@ -175,25 +175,34 @@ export default function AccordionVisualPanel({
           </div>
         )}
         {(view === 'both' || view === 'keyboard') && (
-          <div>
-            {building ? (
-              <div>
+          <div className="flex flex-col gap-3">
+            <ChordKeyboards
+              chords={displayChords}
+              realChords={songChords}
+              activeChord={activeChord}
+              notation={notation}
+              interactive={interactive}
+              onSelectChord={onSelectChord}
+              onDismissPreview={onSelectChord ? clearPreview : undefined}
+            />
+            {building && (
+              <div className="rounded-lg border border-dashed border-emerald-500 p-2">
+                <p className="mb-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                  {builderNotes.size === 0
+                    ? 'Toque nas notas para montar um acorde — ele aparece ali em cima assim que for reconhecido.'
+                    : builtChord
+                      ? (
+                        <>
+                          Reconhecido: <strong>{formatChordForDisplay(builtChord, notation)}</strong> — já apareceu ali em cima, com "(prévia)".
+                        </>
+                      )
+                      : 'Ainda não forma um acorde conhecido.'}
+                </p>
                 <NoteBuilderKeyboard
                   selectedNotes={builderNotes}
                   notation={notation}
                   onToggleNote={toggleBuilderNote}
                 />
-                <p className="mt-1 max-w-[9rem] text-xs">
-                  {builderNotes.size === 0
-                    ? 'Toque nas notas para montar um acorde.'
-                    : builtChord
-                      ? (
-                        <>
-                          Reconhecido: <strong>{formatChordForDisplay(builtChord, notation)}</strong>
-                        </>
-                      )
-                      : 'Ainda não forma um acorde conhecido.'}
-                </p>
                 <button
                   className="tap-target mt-1 rounded-md border border-slate-300 px-2 py-1 text-xs dark:border-slate-700"
                   onClick={() => setBuilderNotes(new Set())}
@@ -201,16 +210,6 @@ export default function AccordionVisualPanel({
                   Limpar
                 </button>
               </div>
-            ) : (
-              <ChordKeyboards
-                chords={displayChords}
-                realChords={songChords}
-                activeChord={activeChord}
-                notation={notation}
-                interactive={interactive}
-                onSelectChord={onSelectChord}
-                onDismissPreview={onSelectChord ? clearPreview : undefined}
-              />
             )}
           </div>
         )}
