@@ -17,8 +17,10 @@ const NAV_ITEMS = [
 export default function AppShell() {
   return (
     <div className="flex h-full flex-col md:flex-row">
-      <aside className="safe-top hidden shrink-0 border-r border-slate-200 bg-surface px-3 py-4 dark:border-slate-800 md:flex md:w-56 md:flex-col md:gap-1">
-        <div className="mb-4 flex items-center gap-2 px-2">
+      <aside className="safe-top relative hidden shrink-0 overflow-hidden border-r border-slate-200 bg-surface px-3 py-4 dark:border-slate-800 md:flex md:w-56 md:flex-col md:gap-1">
+        {/* Marca d'água decorativa, presença sutil da sanfona dentro do app */}
+        <AccordionArt className="pointer-events-none absolute -bottom-10 -left-16 h-64 w-auto -rotate-6 opacity-[0.05] dark:opacity-[0.08]" />
+        <div className="relative mb-4 flex items-center gap-2 px-2">
           <AccordionArt className="h-7 w-auto shrink-0" />
           <h1 className="text-base font-semibold leading-tight">Caderno de Sanfona</h1>
         </div>
@@ -28,7 +30,7 @@ export default function AppShell() {
             to={item.to}
             end={item.end}
             className={({ isActive }) =>
-              `tap-target flex items-center rounded-lg px-3 py-2 text-sm font-medium ${
+              `tap-target relative flex items-center rounded-lg px-3 py-2 text-sm font-medium ${
                 isActive
                   ? 'bg-[var(--color-brand)] text-white'
                   : 'text-slate-600 hover:bg-surface-alt dark:text-slate-300'
@@ -38,7 +40,7 @@ export default function AppShell() {
             {item.label}
           </NavLink>
         ))}
-        <VersionTag className="mt-auto px-2 pt-4" />
+        <VersionTag className="relative mt-auto px-2 pt-4" />
       </aside>
 
       <main className="flex-1 overflow-y-auto bg-surface-alt">
