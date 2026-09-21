@@ -1,23 +1,18 @@
-import { execSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// Identifica exatamente qual commit está publicado (mostrado no rodapé do
-// app), para confirmar visualmente se um deploy novo já chegou ao ar.
-function getCommitHash(): string {
-  try {
-    return execSync('git rev-parse --short HEAD').toString().trim()
-  } catch {
-    return 'dev'
-  }
-}
+// Versão legível (1.0, 1.1, 1.2...) mostrada no rodapé do app, para
+// confirmar visualmente se um deploy novo já chegou ao ar. Vem do
+// arquivo VERSION na raiz do projeto — atualizado a cada publicação.
+const appVersion = readFileSync(new URL('./VERSION', import.meta.url), 'utf-8').trim()
 
 // Web app responsivo (PWA): roda no navegador (celular, tablet, desktop),
 // pode ser instalado na tela inicial e funciona offline via service worker.
 export default defineConfig({
   define: {
-    __APP_VERSION__: JSON.stringify(getCommitHash()),
+    __APP_VERSION__: JSON.stringify(appVersion),
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
   },
   plugins: [
