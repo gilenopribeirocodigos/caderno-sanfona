@@ -328,6 +328,7 @@ export default function Play() {
             songChords={songChords}
             accordionType={settings.accordionType}
             notation={settings.notation}
+            currentKey={song.preferredKey}
             onChangeAccordionType={(type) => updateSettings({ accordionType: type })}
             onSelectChord={setActiveChord}
           />

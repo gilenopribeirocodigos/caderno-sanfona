@@ -3,6 +3,7 @@ import type { AccordionType, ChordNotation } from '@/types'
 import { formatChordForDisplay, notesInChord } from '@/utils/chords'
 import BassDiagram from './BassDiagram'
 import ChordKeyboards from './ChordKeyboards'
+import ChordPicker from './ChordPicker'
 
 interface AccordionVisualPanelProps {
   activeChord?: string
@@ -10,6 +11,8 @@ interface AccordionVisualPanelProps {
   songChords?: string[]
   accordionType: AccordionType
   notation: ChordNotation
+  /** Tom da música, usado só para sugerir acordes prováveis no seletor. */
+  currentKey?: string
   onChangeAccordionType: (type: AccordionType) => void
   /** Deixa o usuário tocar direto no baixo para escolher o acorde, sem depender da letra. */
   onSelectChord?: (chord: string) => void
@@ -23,11 +26,13 @@ export default function AccordionVisualPanel({
   songChords = [],
   accordionType,
   notation,
+  currentKey = 'C',
   onChangeAccordionType,
   onSelectChord,
 }: AccordionVisualPanelProps) {
   const [view, setView] = useState<ViewMode>('both')
   const [interactive, setInteractive] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   const notes = activeChord ? notesInChord(activeChord) : []
 
@@ -87,13 +92,29 @@ export default function AccordionVisualPanel({
                   : 'border-slate-300 dark:border-slate-700'
               }`}
               onClick={() => setInteractive((v) => !v)}
-              title="Tocar direto no diagrama para escolher o acorde"
+              title="Tocar num acorde já usado na música para marcá-lo como atual"
             >
               {interactive ? '✓ Tocar no diagrama' : 'Tocar no diagrama'}
             </button>
           )}
+          {onSelectChord && (
+            <button
+              className="tap-target rounded-md border border-slate-300 px-2 py-1 dark:border-slate-700"
+              onClick={() => setPickerOpen(true)}
+              title="Ver qualquer acorde nos diagramas, mesmo um que não esteja na música"
+            >
+              Outro acorde...
+            </button>
+          )}
         </div>
       </div>
+      {interactive && onSelectChord && (
+        <p className="-mt-1 mb-2 text-[10px] text-slate-400">
+          Cada desenho abaixo é um acorde já usado nesta música — toque em
+          qualquer um deles para marcá-lo como atual. Para ver um acorde que
+          não está na música (ex: Ré menor), use "Outro acorde..." acima.
+        </p>
+      )}
 
       <div className="flex flex-wrap items-start gap-4">
         {(view === 'both' || view === 'bass') && (
@@ -123,6 +144,20 @@ export default function AccordionVisualPanel({
           />
         )}
       </div>
+
+      {pickerOpen && onSelectChord && (
+        <ChordPicker
+          title="Ver outro acorde nos diagramas"
+          currentKey={currentKey}
+          notation={notation}
+          currentChord={activeChord}
+          onSelect={(chord) => {
+            onSelectChord(chord)
+            setPickerOpen(false)
+          }}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
     </div>
   )
 }
