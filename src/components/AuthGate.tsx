@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { isCloudEnabled } from '@/lib/supabaseClient'
 import { signIn, signUp, useAuthUser } from '@/lib/auth'
+import { syncNow } from '@/lib/sync'
 import AccordionArt from './AccordionArt'
 import SplashScreen from './SplashScreen'
 
@@ -15,6 +16,18 @@ type Mode = 'signin' | 'signup'
  */
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuthUser()
+  const syncedFor = useRef<string | null>(null)
+
+  // Sincroniza sozinho ao abrir o app logado (uma vez por sessão), em vez
+  // de depender de alguém lembrar de tocar em "Sincronizar agora" nos dois
+  // aparelhos — é isso que fazia uma música criada no PC nunca aparecer
+  // sozinha no celular. Roda em segundo plano, sem travar a tela; o botão
+  // manual em Configurações continua ali para forçar uma atualização.
+  useEffect(() => {
+    if (!user || syncedFor.current === user.id) return
+    syncedFor.current = user.id
+    syncNow(user.id).catch(() => {})
+  }, [user])
 
   // Nuvem não configurada (ex: rodando local sem as variáveis de
   // ambiente) — não trava o desenvolvimento, deixa passar direto.

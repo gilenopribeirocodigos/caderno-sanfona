@@ -57,10 +57,12 @@ export default function AccountSection() {
           {busy ? 'Sincronizando...' : 'Sincronizar agora'}
         </button>
         <p className="text-[10px] text-slate-400">
-          Envia o que você editou aqui para a nuvem e traz de volta o que
-          estiver lá (inclusive de outro aparelho). Se a mesma música foi
-          editada em dois aparelhos desde a última sincronização, vale a
-          versão de quem sincronizar por último.
+          O app já sincroniza sozinho sempre que você abre ele logado —
+          esse botão é só para forçar uma atualização na hora (por
+          exemplo, se você acabou de mudar algo no outro aparelho e quer
+          ver aqui sem precisar sair e abrir de novo). Se a mesma música
+          foi editada nos dois aparelhos ao mesmo tempo, vale a versão de
+          quem sincronizar por último.
         </p>
       </div>
       {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
