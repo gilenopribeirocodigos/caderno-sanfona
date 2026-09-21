@@ -7,6 +7,8 @@ interface AccordionVisualPanelProps {
   activeChord?: string
   accordionType: AccordionType
   onChangeAccordionType: (type: AccordionType) => void
+  /** Deixa o usuário tocar direto no baixo para escolher o acorde, sem depender da letra. */
+  onSelectChord?: (chord: string) => void
 }
 
 type ViewMode = 'both' | 'bass' | 'keyboard'
@@ -16,8 +18,10 @@ export default function AccordionVisualPanel({
   activeChord,
   accordionType,
   onChangeAccordionType,
+  onSelectChord,
 }: AccordionVisualPanelProps) {
   const [view, setView] = useState<ViewMode>('both')
+  const [interactive, setInteractive] = useState(false)
 
   return (
     <div className="rounded-lg bg-surface p-3">
@@ -25,7 +29,7 @@ export default function AccordionVisualPanel({
         <p className="text-sm font-medium">
           {activeChord ? `Acorde: ${activeChord}` : 'Toque num acorde da letra para ver aqui'}
         </p>
-        <div className="flex gap-1 text-xs">
+        <div className="flex flex-wrap gap-1 text-xs">
           <select
             className="tap-target rounded-md border border-slate-300 px-1.5 py-1 dark:border-slate-700 dark:bg-slate-800"
             value={accordionType}
@@ -47,12 +51,30 @@ export default function AccordionVisualPanel({
               {mode === 'both' ? 'Ambos' : mode === 'bass' ? 'Baixos' : 'Teclado'}
             </button>
           ))}
+          {onSelectChord && (
+            <button
+              className={`tap-target rounded-md border px-2 py-1 ${
+                interactive
+                  ? 'border-emerald-600 bg-emerald-600 text-white'
+                  : 'border-slate-300 dark:border-slate-700'
+              }`}
+              onClick={() => setInteractive((v) => !v)}
+              title="Tocar direto no diagrama para escolher o acorde"
+            >
+              {interactive ? '✓ Tocar no diagrama' : 'Tocar no diagrama'}
+            </button>
+          )}
         </div>
       </div>
 
       <div className="flex flex-wrap items-start gap-4">
         {(view === 'both' || view === 'bass') && (
-          <BassDiagram accordionType={accordionType} activeChord={activeChord} />
+          <BassDiagram
+            accordionType={accordionType}
+            activeChord={activeChord}
+            interactive={interactive}
+            onSelectChord={onSelectChord}
+          />
         )}
         {(view === 'both' || view === 'keyboard') && <VerticalKeyboard activeChord={activeChord} />}
       </div>

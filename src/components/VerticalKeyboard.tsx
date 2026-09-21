@@ -17,22 +17,24 @@ const SHARP_AFTER: Record<string, string | null> = {
   B: null,
 }
 
-const WHITE_KEY_W = 56
-const WHITE_KEY_H = 30
-const BLACK_KEY_W = 34
-const BLACK_KEY_H = 20
+const WHITE_KEY_W = 64
+const WHITE_KEY_H = 34
+const BLACK_KEY_W = 40
+const BLACK_KEY_H = 22
+const CORNER = 6
 
 /**
  * Teclado vertical da mão direita (itens 68-71, 1195-1224): teclas brancas
  * e pretas na vertical (mais natural para a sanfona do que um piano
- * deitado), destacando as notas do acorde atual.
+ * deitado), com desenho de piano de verdade e destaque das notas do
+ * acorde atual (cor + marcador).
  */
 export default function VerticalKeyboard({ activeChord, octaves = 2 }: VerticalKeyboardProps) {
   const activeNotes = new Set(notesInChord(activeChord ?? ''))
   const whiteKeys = Array.from({ length: octaves }).flatMap(() => WHITE_SEQUENCE)
 
   const height = whiteKeys.length * WHITE_KEY_H
-  const width = WHITE_KEY_W + 24
+  const width = WHITE_KEY_W + 6
 
   const blackKeys: { note: string; y: number }[] = []
   whiteKeys.forEach((note, i) => {
@@ -43,25 +45,31 @@ export default function VerticalKeyboard({ activeChord, octaves = 2 }: VerticalK
   })
 
   return (
-    <svg width={width} height={height} role="img" aria-label="Teclado vertical da mão direita">
+    <svg width={width} height={height + 4} role="img" aria-label="Teclado vertical da mão direita">
       {whiteKeys.map((note, i) => {
         const active = activeNotes.has(note)
         return (
           <g key={i}>
             <rect
-              x={0}
-              y={i * WHITE_KEY_H}
-              width={WHITE_KEY_W}
-              height={WHITE_KEY_H}
-              fill={active ? '#f59e0b' : '#fff'}
+              x={0.5}
+              y={i * WHITE_KEY_H + 0.5}
+              width={WHITE_KEY_W - 1}
+              height={WHITE_KEY_H - 1}
+              rx={i === whiteKeys.length - 1 ? CORNER : 0}
+              fill={active ? '#fde68a' : '#ffffff'}
               stroke="#94a3b8"
+              strokeWidth={1}
             />
+            {active && (
+              <circle cx={WHITE_KEY_W - 14} cy={i * WHITE_KEY_H + WHITE_KEY_H / 2} r={6} fill="#d97706" />
+            )}
             <text
-              x={8}
+              x={10}
               y={i * WHITE_KEY_H + WHITE_KEY_H / 2}
               dominantBaseline="central"
-              fontSize={11}
-              fill={active ? '#fff' : '#334155'}
+              fontSize={12}
+              fontWeight={active ? 700 : 400}
+              fill="#334155"
             >
               {note}
             </text>
@@ -77,15 +85,11 @@ export default function VerticalKeyboard({ activeChord, octaves = 2 }: VerticalK
               y={y}
               width={BLACK_KEY_W}
               height={BLACK_KEY_H}
-              fill={active ? '#f59e0b' : '#1e293b'}
+              rx={2}
+              fill={active ? '#d97706' : '#0f172a'}
             />
-            <text
-              x={6}
-              y={y + BLACK_KEY_H / 2}
-              dominantBaseline="central"
-              fontSize={9}
-              fill="#fff"
-            >
+            {active && <circle cx={BLACK_KEY_W - 10} cy={y + BLACK_KEY_H / 2} r={4} fill="#fde68a" />}
+            <text x={6} y={y + BLACK_KEY_H / 2} dominantBaseline="central" fontSize={10} fontWeight={600} fill="#fff">
               {note}
             </text>
           </g>

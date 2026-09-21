@@ -231,6 +231,7 @@ export default function Play() {
             activeChord={activeChord}
             accordionType={settings.accordionType}
             onChangeAccordionType={(type) => updateSettings({ accordionType: type })}
+            onSelectChord={setActiveChord}
           />
         </div>
       )}
