@@ -60,16 +60,15 @@ function LoginScreen() {
           'radial-gradient(120% 100% at 15% 0%, var(--color-brand) 0%, var(--color-brand-dark) 45%, #1a0710 100%)',
       }}
     >
-      {/* Sanfonas ilustradas ao fundo, "aparecendo levemente" e respirando
-          devagar nos dois cantos — dá movimento sem distrair do formulário */}
+      {/* Sanfonas ilustradas ao fundo, "aparecendo levemente" nos dois
+          cantos — estáticas e sem sombra de propósito (mais leve para
+          celulares mais fracos; quem "respira" é só o ícone em destaque). */}
       <AccordionArt
-        animated
-        slow
+        flat
         className="pointer-events-none absolute -bottom-16 -right-24 h-[34rem] w-auto rotate-[8deg] opacity-[0.16] mix-blend-luminosity sm:opacity-20"
       />
       <AccordionArt
-        animated
-        slow
+        flat
         className="pointer-events-none absolute -top-20 -left-24 hidden h-[26rem] w-auto -rotate-[10deg] scale-x-[-1] opacity-[0.14] mix-blend-luminosity sm:block"
       />
       <div className="pointer-events-none absolute -bottom-10 -right-10 h-72 w-72 rounded-full bg-[var(--color-gold)] opacity-[0.12] blur-3xl" />

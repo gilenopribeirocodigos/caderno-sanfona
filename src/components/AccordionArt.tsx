@@ -10,12 +10,20 @@ export default function AccordionArt({
   className = '',
   animated = false,
   slow = false,
+  flat = false,
 }: {
   className?: string
   /** Anima o fole em um leve "respirar", como se a sanfona estivesse tocando. */
   animated?: boolean
   /** Respiração bem mais lenta, para marcas d'água grandes em segundo plano. */
   slow?: boolean
+  /**
+   * Sem o filtro de sombra (custa mais para o navegador redesenhar).
+   * Usado em marcas d'água grandes/decorativas, onde a sombra nem é
+   * percebida por causa da baixa opacidade — importa mais desempenho
+   * em celulares mais fracos do que esse detalhe.
+   */
+  flat?: boolean
 }) {
   const uid = useId().replace(/:/g, '')
   const N = 15 // número de dobras do fole
@@ -60,13 +68,15 @@ export default function AccordionArt({
           <stop offset="0%" stopColor="#3a2a1c" />
           <stop offset="100%" stopColor="#1c130c" />
         </linearGradient>
-        <filter id={`${uid}-shadow`} x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#000000" floodOpacity="0.35" />
-        </filter>
+        {!flat && (
+          <filter id={`${uid}-shadow`} x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#000000" floodOpacity="0.35" />
+          </filter>
+        )}
       </defs>
 
       {/* Corpo do teclado (mão direita) */}
-      <g filter={`url(#${uid}-shadow)`}>
+      <g filter={flat ? undefined : `url(#${uid}-shadow)`}>
         <rect x="14" y="10" width="100" height="248" rx="18" fill={`url(#${uid}-body)`} />
         <rect x="14" y="10" width="100" height="248" rx="18" fill={`url(#${uid}-sheen)`} />
       </g>
@@ -107,7 +117,7 @@ export default function AccordionArt({
       <rect x={foleEnd - 4} y="20" width="8" height="224" rx="3" fill="var(--color-gold)" opacity="0.55" />
 
       {/* Corpo dos baixos (mão esquerda) */}
-      <g filter={`url(#${uid}-shadow)`}>
+      <g filter={flat ? undefined : `url(#${uid}-shadow)`}>
         <rect x="382" y="14" width="128" height="252" rx="18" fill={`url(#${uid}-body)`} />
         <rect x="382" y="14" width="128" height="252" rx="18" fill={`url(#${uid}-sheen)`} />
       </g>
