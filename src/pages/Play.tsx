@@ -5,7 +5,7 @@ import { db } from '@/lib/db'
 import { registerPractice } from '@/lib/songsRepo'
 import { updateSettings } from '@/lib/settingsRepo'
 import { useSettings } from '@/lib/useSettings'
-import { firstChord } from '@/utils/chordpro'
+import { firstChord, uniqueChordsInSong } from '@/utils/chordpro'
 import ChordSheet from '@/components/ChordSheet'
 import AccordionVisualPanel from '@/components/AccordionVisualPanel'
 import type { NotebookSong } from '@/types'
@@ -49,6 +49,11 @@ export default function Play() {
   const [scrolling, setScrolling] = useState(false)
   const [speedLevel, setSpeedLevel] = useState(2)
   const [startDelay, setStartDelay] = useState(0)
+
+  const songChords = useMemo(
+    () => (song ? uniqueChordsInSong(song.chordData.lines) : []),
+    [song],
+  )
 
   const containerRef = useRef<HTMLDivElement>(null)
   const scrollInterval = useRef<ReturnType<typeof setInterval>>()
@@ -229,6 +234,7 @@ export default function Play() {
         <div className="border-t border-slate-200 p-2 dark:border-slate-800">
           <AccordionVisualPanel
             activeChord={activeChord}
+            songChords={songChords}
             accordionType={settings.accordionType}
             notation={settings.notation}
             onChangeAccordionType={(type) => updateSettings({ accordionType: type })}

@@ -1,10 +1,13 @@
 import type { AccordionType, ChordNotation } from '@/types'
 import { formatChordForDisplay } from '@/utils/chords'
 import { chordLabelForRow, columnsFor, getHighlightedButtons, rowsFor } from '@/utils/accordion'
+import { colorMapForChords } from '@/utils/chordColors'
 
 interface BassDiagramProps {
   accordionType: AccordionType
   activeChord?: string
+  /** Todos os acordes usados na música (não só o atual) — cada um com sua própria cor. */
+  songChords?: string[]
   notation: ChordNotation
   /** Quando true, tocar num botão de acorde define o acorde ativo (item "marcar direto no baixo"). */
   interactive?: boolean
@@ -19,14 +22,19 @@ const ROW_SHIFT = 16 // px de deslocamento por linha, para lembrar o layout diag
 
 /**
  * Mapa dos baixos da mão esquerda (itens 55-67, 1123-1157): as notas descem
- * na tela (leitura vertical, sem depender de rolar a página toda de lado) e
- * cada linha de botões é deslocada diagonalmente da anterior, lembrando o
- * layout físico real do instrumento. Os nomes das notas ficam numa coluna
- * fixa que nunca sai da tela, mesmo quando a área dos botões rola de lado.
+ * na tela (leitura vertical) e cada linha de botões é deslocada
+ * diagonalmente da anterior, lembrando o layout físico real do instrumento.
+ * Os nomes das notas ficam numa coluna fixa que nunca sai da tela.
+ *
+ * Cada acorde da música ganha sua própria cor (mesma cor usada no teclado),
+ * para diferenciar rapidamente qual botão pertence a qual acorde quando a
+ * música usa vários. O acorde tocado agora aparece preenchido; os demais,
+ * com contorno na cor deles.
  */
 export default function BassDiagram({
   accordionType,
   activeChord,
+  songChords = [],
   notation,
   interactive = false,
   onSelectChord,
@@ -34,13 +42,19 @@ export default function BassDiagram({
   const notes = columnsFor(accordionType)
   const availableRows = rowsFor(accordionType)
   const columns = VISIBLE_COLUMNS.filter((c) => (availableRows as readonly string[]).includes(c))
-  const highlights = getHighlightedButtons(activeChord, accordionType)
   const rowIndexByName = new Map(availableRows.map((name, i) => [name, i]))
+  const colorByChord = colorMapForChords(songChords)
 
-  function isHighlighted(noteIndex: number, columnName: string) {
-    const rowIndex = rowIndexByName.get(columnName)
-    return highlights.some((h) => h.row === rowIndex && h.col === noteIndex)
-  }
+  // Para cada célula (linha de função x nota), decide a qual acorde da
+  // música ela pertence — o acorde ativo tem prioridade quando duas cores
+  // disputam o mesmo botão de baixo (nota compartilhada entre acordes).
+  const cellOwner = new Map<string, string>()
+  songChords.forEach((chord) => {
+    getHighlightedButtons(chord, accordionType).forEach((h) => {
+      const key = `${h.row}-${h.col}`
+      if (chord === activeChord || !cellOwner.has(key)) cellOwner.set(key, chord)
+    })
+  })
 
   return (
     <div>
@@ -70,8 +84,10 @@ export default function BassDiagram({
               >
                 {columns.map((col) => {
                   const chord = col === 'Baixo' ? note : chordLabelForRow(note, col)
-                  const hit = isHighlighted(noteIndex, col)
-                  const kind = col === 'Baixo' ? 'bass' : 'chord'
+                  const rowIndex = rowIndexByName.get(col)
+                  const owner = cellOwner.get(`${rowIndex}-${noteIndex}`)
+                  const color = owner ? colorByChord.get(owner) : undefined
+                  const isActive = owner === activeChord
                   const canClick = interactive && col !== 'Baixo' && onSelectChord
                   return (
                     <button
@@ -79,12 +95,12 @@ export default function BassDiagram({
                       type="button"
                       disabled={!canClick}
                       onClick={() => canClick && onSelectChord!(chord)}
-                      title={`${col}: ${formatChordForDisplay(chord, notation)}`}
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold transition-colors ${
-                        hit
-                          ? kind === 'bass'
-                            ? 'border-sky-600 bg-sky-600 text-white'
-                            : 'border-amber-500 bg-amber-500 text-white'
+                      title={`${col}: ${formatChordForDisplay(chord, notation)}${owner ? ` (acorde ${formatChordForDisplay(owner, notation)})` : ''}`}
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-bold transition-colors ${
+                        color
+                          ? isActive
+                            ? color.solid
+                            : color.tint
                           : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'
                       } ${canClick ? 'cursor-pointer hover:border-slate-900 dark:hover:border-slate-100' : ''}`}
                     >

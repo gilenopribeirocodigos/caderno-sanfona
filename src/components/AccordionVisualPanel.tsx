@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { AccordionType, ChordNotation } from '@/types'
 import { formatChordForDisplay, notesInChord } from '@/utils/chords'
 import BassDiagram from './BassDiagram'
-import VerticalKeyboard from './VerticalKeyboard'
+import ChordKeyboards from './ChordKeyboards'
 
 interface AccordionVisualPanelProps {
   activeChord?: string
+  /** Todos os acordes da música, marcados junto (discretamente) com o atual. */
+  songChords?: string[]
   accordionType: AccordionType
   notation: ChordNotation
   onChangeAccordionType: (type: AccordionType) => void
@@ -18,6 +20,7 @@ type ViewMode = 'both' | 'bass' | 'keyboard'
 /** Modo Sanfona Visual (itens 13, 61-62, 72-75): baixos + teclado, com opção de ocultar partes. */
 export default function AccordionVisualPanel({
   activeChord,
+  songChords = [],
   accordionType,
   notation,
   onChangeAccordionType,
@@ -27,6 +30,13 @@ export default function AccordionVisualPanel({
   const [interactive, setInteractive] = useState(false)
 
   const notes = activeChord ? notesInChord(activeChord) : []
+
+  // Garante que o acorde ativo sempre tenha uma cor e apareça no teclado,
+  // mesmo quando ele vem do modo interativo e não está (ainda) na música.
+  const displayChords = useMemo(() => {
+    if (!activeChord || songChords.includes(activeChord)) return songChords
+    return [...songChords, activeChord]
+  }, [songChords, activeChord])
 
   return (
     <div className="rounded-lg bg-surface p-3">
@@ -91,19 +101,20 @@ export default function AccordionVisualPanel({
             <BassDiagram
               accordionType={accordionType}
               activeChord={activeChord}
+              songChords={displayChords}
               notation={notation}
               interactive={interactive}
               onSelectChord={onSelectChord}
             />
             <p className="mt-1 max-w-xs text-[10px] text-slate-400">
-              O botão azul é só o baixo (1 nota). O botão laranja de acorde já
-              toca as notas todas de uma vez, num único toque — é assim que a
-              sanfona funciona.
+              Cada acorde da música tem sua cor. Preenchido = acorde atual.
+              O botão de acorde já toca as notas todas de uma vez, num único
+              toque — é assim que a sanfona funciona.
             </p>
           </div>
         )}
         {(view === 'both' || view === 'keyboard') && (
-          <VerticalKeyboard activeChord={activeChord} notation={notation} />
+          <ChordKeyboards chords={displayChords} activeChord={activeChord} notation={notation} />
         )}
       </div>
     </div>

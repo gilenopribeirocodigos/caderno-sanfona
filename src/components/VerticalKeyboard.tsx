@@ -1,10 +1,11 @@
 import type { ChordNotation } from '@/types'
 import { formatChordForDisplay, notesInChord } from '@/utils/chords'
+import type { ChordColor } from '@/utils/chordColors'
 
 interface VerticalKeyboardProps {
-  activeChord?: string
+  chord?: string
+  color: ChordColor
   notation: ChordNotation
-  octaves?: number
 }
 
 const WHITE_SEQUENCE = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
@@ -19,23 +20,21 @@ const SHARP_AFTER: Record<string, string | null> = {
   B: null,
 }
 
-const WHITE_KEY_W = 76
-const WHITE_KEY_H = 34
-const BLACK_KEY_W = 48
-const BLACK_KEY_H = 22
+const WHITE_KEY_W = 64
+const WHITE_KEY_H = 30
+const BLACK_KEY_W = 40
+const BLACK_KEY_H = 20
 const CORNER = 6
 
 /**
- * Teclado vertical da mão direita (itens 68-71, 1195-1224): teclas brancas
- * e pretas na vertical (mais natural para a sanfona do que um piano
- * deitado), com desenho de piano de verdade e destaque das notas do
- * acorde atual (cor + marcador).
+ * Teclado vertical da mão direita para UM acorde (itens 68-71, 1195-1224):
+ * teclas brancas e pretas na vertical, com uma oitava só (marca uma única
+ * vez cada nota, o suficiente para indicar onde apertar). Usado em conjunto
+ * com um teclado por acorde da música (ver ChordKeyboards).
  */
-// Uma oitava só: marcar a mesma nota repetida em várias oitavas confundia
-// mais do que ajudava — o objetivo é indicar UM lugar claro para apertar.
-export default function VerticalKeyboard({ activeChord, notation, octaves = 1 }: VerticalKeyboardProps) {
-  const activeNotes = new Set(notesInChord(activeChord ?? ''))
-  const whiteKeys = Array.from({ length: octaves }).flatMap(() => WHITE_SEQUENCE)
+export default function VerticalKeyboard({ chord, color, notation }: VerticalKeyboardProps) {
+  const activeNotes = new Set(notesInChord(chord ?? ''))
+  const whiteKeys = WHITE_SEQUENCE
 
   const height = whiteKeys.length * WHITE_KEY_H
   const width = WHITE_KEY_W + 6
@@ -49,7 +48,7 @@ export default function VerticalKeyboard({ activeChord, notation, octaves = 1 }:
   })
 
   return (
-    <svg width={width} height={height + 4} role="img" aria-label="Teclado vertical da mão direita">
+    <svg width={width} height={height + 4} role="img" aria-label={`Teclado do acorde ${chord ?? ''}`}>
       {whiteKeys.map((note, i) => {
         const active = activeNotes.has(note)
         return (
@@ -60,18 +59,18 @@ export default function VerticalKeyboard({ activeChord, notation, octaves = 1 }:
               width={WHITE_KEY_W - 1}
               height={WHITE_KEY_H - 1}
               rx={i === whiteKeys.length - 1 ? CORNER : 0}
-              fill={active ? '#fde68a' : '#ffffff'}
-              stroke="#94a3b8"
-              strokeWidth={1}
+              fill={active ? color.hexSoft : '#ffffff'}
+              stroke={active ? color.hex : '#94a3b8'}
+              strokeWidth={active ? 1.5 : 1}
             />
             {active && (
-              <circle cx={WHITE_KEY_W - 14} cy={i * WHITE_KEY_H + WHITE_KEY_H / 2} r={6} fill="#d97706" />
+              <circle cx={WHITE_KEY_W - 13} cy={i * WHITE_KEY_H + WHITE_KEY_H / 2} r={5.5} fill={color.hex} />
             )}
             <text
-              x={10}
+              x={8}
               y={i * WHITE_KEY_H + WHITE_KEY_H / 2}
               dominantBaseline="central"
-              fontSize={12}
+              fontSize={11}
               fontWeight={active ? 700 : 400}
               fill="#334155"
             >
@@ -90,10 +89,10 @@ export default function VerticalKeyboard({ activeChord, notation, octaves = 1 }:
               width={BLACK_KEY_W}
               height={BLACK_KEY_H}
               rx={2}
-              fill={active ? '#d97706' : '#0f172a'}
+              fill={active ? color.hex : '#0f172a'}
             />
-            {active && <circle cx={BLACK_KEY_W - 10} cy={y + BLACK_KEY_H / 2} r={4} fill="#fde68a" />}
-            <text x={6} y={y + BLACK_KEY_H / 2} dominantBaseline="central" fontSize={9} fontWeight={600} fill="#fff">
+            {active && <circle cx={BLACK_KEY_W - 9} cy={y + BLACK_KEY_H / 2} r={3.5} fill={color.hexSoft} />}
+            <text x={5} y={y + BLACK_KEY_H / 2} dominantBaseline="central" fontSize={8.5} fontWeight={600} fill="#fff">
               {formatChordForDisplay(note, notation)}
             </text>
           </g>

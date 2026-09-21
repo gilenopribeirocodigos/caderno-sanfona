@@ -54,3 +54,14 @@ export function firstChord(source: string): string | undefined {
   const match = /\[([^\]]+)\]/.exec(source)
   return match?.[1]
 }
+
+/** Todos os acordes distintos usados na música, na ordem em que aparecem. */
+export function uniqueChordsInSong(lines: LyricLine[]): string[] {
+  const seen = new Set<string>()
+  for (const line of lines) {
+    for (const token of line.tokens) {
+      if (token.chord) seen.add(token.chord)
+    }
+  }
+  return Array.from(seen)
+}
