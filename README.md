@@ -26,7 +26,7 @@ O app é 100% estático depois do build (`npm run build` gera a pasta `dist/`), 
 
 Em qualquer uma delas, o passo é: criar conta grátis → "New Project/Site" → conectar este repositório → build command `npm run build`, publish directory `dist`. A cada push na branch principal, o site é atualizado automaticamente.
 
-Observação sobre o Supabase (banco de dados, Etapa 10): o plano grátis pausa o projeto sozinho após 7 dias sem nenhum uso — não é cobrança, só requer reativar pelo painel com 1 clique.
+Observação sobre o Supabase (banco de dados, Etapa 11): o plano grátis pausa o projeto sozinho após 7 dias sem nenhum uso — não é cobrança, só requer reativar pelo painel com 1 clique.
 
 ## Roadmap (etapas de desenvolvimento)
 
@@ -40,4 +40,17 @@ Observação sobre o Supabase (banco de dados, Etapa 10): o plano grátis pausa 
 8. Modo Tocar (tela cheia, zoom, navegação) — feito
 9. Rolagem automática + Configurações — feito
 10. Modo Sanfona Visual (baixos 80/120 + teclado) — feito
-11. Supabase (login + sincronização em nuvem)
+11. Supabase (login + sincronização em nuvem) — feito
+
+## Nuvem (Supabase)
+
+Projeto Supabase próprio, plano grátis. Schema em `supabase/migrations/`
+(rode os arquivos em ordem no SQL Editor caso recrie o projeto). Variáveis
+de ambiente necessárias (configuradas no Cloudflare em Settings →
+Variables and secrets, e localmente em `.env.local`, veja `.env.example`):
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY` (ou a "publishable key" mais nova, funciona igual)
+
+Sem essas variáveis o app continua funcionando 100% offline — login e
+sincronização só aparecem em Configurações quando configuradas.
