@@ -42,6 +42,29 @@ export default function Play() {
   const currentSongId = queue[index]
   const song = useLiveQuery(() => (currentSongId ? db.songs.get(currentSongId) : undefined), [currentSongId])
 
+  // Se o índice pedido não existe mais na fila (ex: a música foi removida
+  // do caderno depois que o link/"Continuar tocando" foi salvo), volta pro
+  // início em vez de ficar preso pra sempre em "Carregando..." — esse era
+  // o travamento relatado ao clicar em Tocar.
+  useEffect(() => {
+    const notebookReady = !notebookId || notebookEntries !== undefined
+    if (!notebookReady || queue.length === 0 || (index >= 0 && index < queue.length)) return
+    if (notebookId) setSearchParams({ notebook: notebookId, index: '0' })
+    else if (songParam) setSearchParams({ song: songParam })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notebookId, notebookEntries, queue.length, index])
+
+  // Rede de segurança: se depois de alguns segundos a música ainda não
+  // apareceu (id inválido, removida, ou qualquer outra falha de dados),
+  // mostra um aviso com saída em vez de travar para sempre em "Carregando...".
+  const [notFound, setNotFound] = useState(false)
+  useEffect(() => {
+    setNotFound(false)
+    if (!currentSongId) return
+    const timeout = setTimeout(() => setNotFound(true), 4000)
+    return () => clearTimeout(timeout)
+  }, [currentSongId])
+
   const [controlsVisible, setControlsVisible] = useState(true)
   const [showVisual, setShowVisual] = useState(false)
   const [activeChord, setActiveChord] = useState<string | undefined>()
@@ -51,7 +74,7 @@ export default function Play() {
   const [startDelay, setStartDelay] = useState(0)
 
   const songChords = useMemo(
-    () => (song ? uniqueChordsInSong(song.chordData.lines) : []),
+    () => (song ? uniqueChordsInSong(song.chordData.lines ?? []) : []),
     [song],
   )
 
@@ -160,7 +183,7 @@ export default function Play() {
     ctx.font = `${currentSize}px ${fontFamily}`
     const widestLine = Math.max(
       1,
-      ...song.chordData.lines.map((l) => ctx.measureText(l.tokens.map((t) => t.text).join(' ')).width),
+      ...(song.chordData.lines ?? []).map((l) => ctx.measureText(l.tokens.map((t) => t.text).join(' ')).width),
     )
 
     // Mira em 94% da largura disponível (uma folga discreta nas bordas).
@@ -201,7 +224,22 @@ export default function Play() {
     )
   }
 
-  if (!song) return <div className="p-4 text-sm text-slate-500">Carregando...</div>
+  if (!song) {
+    if (!notFound) return <div className="p-4 text-sm text-slate-500">Carregando...</div>
+    return (
+      <div className="mx-auto max-w-2xl p-4 text-center text-sm text-slate-500">
+        <p>Não foi possível carregar essa música. Ela pode ter sido removida ou o link não é mais válido.</p>
+        <div className="mt-3 flex justify-center gap-2">
+          <Link to="/" className="tap-target rounded-md border border-slate-300 px-3 py-2 dark:border-slate-700">
+            Biblioteca
+          </Link>
+          <Link to="/cadernos" className="tap-target rounded-md border border-slate-300 px-3 py-2 dark:border-slate-700">
+            Cadernos
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="relative flex h-full flex-col bg-surface-alt">
@@ -259,7 +297,7 @@ export default function Play() {
 
       <div ref={containerRef} className="flex-1 overflow-y-auto p-4">
         <ChordSheet
-          lines={song.chordData.lines}
+          lines={song.chordData.lines ?? []}
           notation={settings.notation}
           fontSize={settings.fontSize}
           chordSize={settings.chordSize}
