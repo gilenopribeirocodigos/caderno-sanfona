@@ -3,16 +3,19 @@ import { Link, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db'
 import {
+  parseTagsInput,
   saveChordData,
   setInitialLyrics,
   transposeSongBySemitones,
   transposeSongToKey,
+  updateSongDetails,
 } from '@/lib/songsRepo'
 import { useSettings } from '@/lib/useSettings'
 import { parseChordPro, renderChordPro } from '@/utils/chordpro'
 import { COMMON_ROOTS } from '@/utils/chords'
 import ChordSheet, { type WordRef } from '@/components/ChordSheet'
 import ChordPicker from '@/components/ChordPicker'
+import SongForm, { songToFormValues, type SongFormValues } from '@/components/SongForm'
 import type { LyricLine, Song } from '@/types'
 
 type SaveState = 'saved' | 'saving' | 'idle'
@@ -67,6 +70,8 @@ function SongEditor({ songId }: { songId: string }) {
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [rawMode, setRawMode] = useState(false)
   const [rawDraft, setRawDraft] = useState('')
+  const [tab, setTab] = useState<'cifra' | 'dados'>('cifra')
+  const [dadosSaved, setDadosSaved] = useState(false)
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>()
   const lastLoadedSource = useRef<string | undefined>(undefined)
 
@@ -158,6 +163,20 @@ function SongEditor({ songId }: { songId: string }) {
     await setInitialLyrics(song!.id, lyricsDraft)
   }
 
+  async function handleSaveDados(values: SongFormValues) {
+    await updateSongDetails(song!.id, {
+      title: values.title,
+      artist: values.artist,
+      originalKey: values.originalKey,
+      rhythm: values.rhythm,
+      difficulty: values.difficulty || undefined,
+      tags: parseTagsInput(values.tagsText),
+      notes: values.notes,
+    })
+    setDadosSaved(true)
+    setTimeout(() => setDadosSaved(false), 1500)
+  }
+
   const activeToken = picker && lines ? lines[picker.lineIndex].tokens[picker.tokenIndex] : undefined
 
   return (
@@ -170,7 +189,38 @@ function SongEditor({ songId }: { songId: string }) {
         <SaveIndicator state={saveState} />
       </div>
 
-      {song.lyrics.trim() === '' ? (
+      <div className="mt-3 flex gap-2 border-b border-slate-200 dark:border-slate-800">
+        <button
+          className={`tap-target px-3 py-2 text-sm font-medium ${
+            tab === 'cifra'
+              ? 'border-b-2 border-slate-900 dark:border-slate-100'
+              : 'text-slate-500'
+          }`}
+          onClick={() => setTab('cifra')}
+        >
+          Letra e Cifra
+        </button>
+        <button
+          className={`tap-target px-3 py-2 text-sm font-medium ${
+            tab === 'dados'
+              ? 'border-b-2 border-slate-900 dark:border-slate-100'
+              : 'text-slate-500'
+          }`}
+          onClick={() => setTab('dados')}
+        >
+          Dados
+        </button>
+      </div>
+
+      {tab === 'dados' ? (
+        <div className="mt-4">
+          <SongForm
+            initial={songToFormValues(song)}
+            submitLabel={dadosSaved ? 'Salvo ✓' : 'Salvar dados'}
+            onSubmit={handleSaveDados}
+          />
+        </div>
+      ) : song.lyrics.trim() === '' ? (
         <form onSubmit={handleSaveInitialLyrics} className="mt-4 flex flex-col gap-2">
           <p className="text-sm text-slate-500">
             Cole ou digite a letra da música. Depois é só tocar em cada

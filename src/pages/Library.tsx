@@ -2,19 +2,12 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db'
-import {
-  createSong,
-  deleteSong,
-  parseTagsInput,
-  toggleFavorite,
-  updateSongDetails,
-} from '@/lib/songsRepo'
-import SongForm, { emptySongForm, songToFormValues, type SongFormValues } from '@/components/SongForm'
-import type { Song } from '@/types'
+import { createSong, deleteSong, parseTagsInput, toggleFavorite } from '@/lib/songsRepo'
+import SongForm, { emptySongForm, type SongFormValues } from '@/components/SongForm'
 
 type SortMode = 'alfabetica' | 'artista' | 'tom' | 'mais-tocadas' | 'recentes' | 'nao-treinadas'
 
-type FormMode = { kind: 'closed' } | { kind: 'create' } | { kind: 'edit'; song: Song }
+type FormMode = { kind: 'closed' } | { kind: 'create' }
 
 export default function Library() {
   const songs = useLiveQuery(() => db.songs.toArray(), [])
@@ -88,19 +81,6 @@ export default function Library() {
     setFormMode({ kind: 'closed' })
   }
 
-  async function handleEdit(song: Song, values: SongFormValues) {
-    await updateSongDetails(song.id, {
-      title: values.title,
-      artist: values.artist,
-      originalKey: values.originalKey,
-      rhythm: values.rhythm,
-      difficulty: values.difficulty || undefined,
-      tags: parseTagsInput(values.tagsText),
-      notes: values.notes,
-    })
-    setFormMode({ kind: 'closed' })
-  }
-
   return (
     <div className="mx-auto max-w-2xl p-4">
       <div className="flex items-center justify-between">
@@ -125,17 +105,6 @@ export default function Library() {
           />
         </div>
       )}
-      {formMode.kind === 'edit' && (
-        <div className="mt-3">
-          <SongForm
-            initial={songToFormValues(formMode.song)}
-            submitLabel="Salvar alterações"
-            onCancel={() => setFormMode({ kind: 'closed' })}
-            onSubmit={(values) => handleEdit(formMode.song, values)}
-          />
-        </div>
-      )}
-
       <div className="mt-4 flex flex-col gap-2 rounded-lg bg-surface p-3">
         <input
           className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
@@ -227,23 +196,18 @@ export default function Library() {
                 </button>
                 <Link
                   to={`/tocar?song=${song.id}`}
-                  className="tap-target rounded-md bg-slate-900 px-2 py-1 text-xs font-medium text-white dark:bg-slate-100 dark:text-slate-900"
+                  aria-label="Tocar"
+                  title="Tocar"
+                  className="tap-target flex items-center justify-center rounded-md bg-slate-900 px-2.5 py-1.5 text-sm text-white dark:bg-slate-100 dark:text-slate-900"
                 >
-                  Tocar
+                  ▶
                 </Link>
                 <Link
                   to={`/editor/${song.id}`}
                   className="tap-target text-xs text-slate-500 underline"
                 >
-                  Cifra
+                  Editar
                 </Link>
-                <button
-                  aria-label="Editar"
-                  className="tap-target text-xs text-slate-500 underline"
-                  onClick={() => setFormMode({ kind: 'edit', song })}
-                >
-                  Dados
-                </button>
                 <button
                   aria-label="Excluir"
                   className="tap-target text-xs text-red-500 underline"
