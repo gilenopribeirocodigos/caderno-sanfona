@@ -114,7 +114,13 @@ export default function AccordionVisualPanel({
           </div>
         )}
         {(view === 'both' || view === 'keyboard') && (
-          <ChordKeyboards chords={displayChords} activeChord={activeChord} notation={notation} />
+          <ChordKeyboards
+            chords={displayChords}
+            activeChord={activeChord}
+            notation={notation}
+            interactive={interactive}
+            onSelectChord={onSelectChord}
+          />
         )}
       </div>
     </div>

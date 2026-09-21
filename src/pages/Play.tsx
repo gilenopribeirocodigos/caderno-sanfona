@@ -146,12 +146,27 @@ export default function Play() {
 
   function fitToScreen() {
     if (!song || !containerRef.current) return
-    const longest = Math.max(
-      1,
-      ...song.chordData.lines.map((l) => l.tokens.map((t) => t.text).join(' ').length),
-    )
     const availableWidth = containerRef.current.clientWidth - 32
-    const newFontSize = Math.round(Math.min(40, Math.max(14, availableWidth / (longest * 0.56))))
+    if (availableWidth <= 0) return
+
+    // Mede a largura real da linha mais comprida no tamanho de fonte atual
+    // (em vez de estimar por contagem de caracteres) para calcular o
+    // quanto crescer ou encolher — funciona igual em celular e desktop.
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    const fontFamily = getComputedStyle(document.body).fontFamily
+    const currentSize = settings.fontSize
+    ctx.font = `${currentSize}px ${fontFamily}`
+    const widestLine = Math.max(
+      1,
+      ...song.chordData.lines.map((l) => ctx.measureText(l.tokens.map((t) => t.text).join(' ')).width),
+    )
+
+    // Mira em 94% da largura disponível (uma folga discreta nas bordas).
+    const newFontSize = Math.round(
+      Math.min(40, Math.max(14, currentSize * ((availableWidth * 0.94) / widestLine))),
+    )
     updateSettings({ fontSize: newFontSize, chordSize: Math.max(12, newFontSize - 2) })
   }
 
@@ -234,6 +249,7 @@ export default function Play() {
             <button
               className="tap-target rounded-md border border-slate-300 px-2 py-1 text-xs dark:border-slate-700"
               onClick={() => setControlsVisible(false)}
+              title="Esconde os botões para tocar sem distração (toque em ⋮ Controles para trazê-los de volta)"
             >
               Ocultar
             </button>
@@ -247,7 +263,10 @@ export default function Play() {
           notation={settings.notation}
           fontSize={settings.fontSize}
           chordSize={settings.chordSize}
-          activeChord={activeChord}
+          // Só destaca o "acorde atual" quando a Sanfona Visual está aberta
+          // (é para ela que esse destaque serve) — do contrário, o primeiro
+          // acorde da música aparecia marcado sem nenhuma explicação.
+          activeChord={showVisual ? activeChord : undefined}
           onChordTap={setActiveChord}
         />
       </div>
