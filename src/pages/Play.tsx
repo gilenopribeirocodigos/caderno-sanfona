@@ -51,7 +51,6 @@ export default function Play() {
   const [startDelay, setStartDelay] = useState(0)
 
   const containerRef = useRef<HTMLDivElement>(null)
-  const hideTimer = useRef<ReturnType<typeof setTimeout>>()
   const scrollInterval = useRef<ReturnType<typeof setInterval>>()
   const scrollTimeout = useRef<ReturnType<typeof setTimeout>>()
 
@@ -62,23 +61,16 @@ export default function Play() {
     }
   }, [song?.id])
 
+  // Se a tela cheia for encerrada (Esc, gesto do sistema...), garante que os
+  // controles voltem a aparecer — nunca deixar a pessoa "presa" sem botões.
   useEffect(() => {
-    const handler = () => setIsFullscreen(Boolean(document.fullscreenElement))
+    const handler = () => {
+      const fs = Boolean(document.fullscreenElement)
+      setIsFullscreen(fs)
+      if (!fs) setControlsVisible(true)
+    }
     document.addEventListener('fullscreenchange', handler)
     return () => document.removeEventListener('fullscreenchange', handler)
-  }, [])
-
-  function resetHideTimer() {
-    setControlsVisible(true)
-    if (hideTimer.current) clearTimeout(hideTimer.current)
-    hideTimer.current = setTimeout(() => setControlsVisible(false), 4000)
-  }
-
-  useEffect(() => {
-    resetHideTimer()
-    return () => {
-      if (hideTimer.current) clearTimeout(hideTimer.current)
-    }
   }, [])
 
   function goTo(newIndex: number) {
@@ -170,10 +162,17 @@ export default function Play() {
   if (!song) return <div className="p-4 text-sm text-slate-500">Carregando...</div>
 
   return (
-    <div
-      className="flex h-full flex-col bg-surface-alt"
-      onClick={resetHideTimer}
-    >
+    <div className="relative flex h-full flex-col bg-surface-alt">
+      {!controlsVisible && (
+        <button
+          aria-label="Mostrar controles"
+          onClick={() => setControlsVisible(true)}
+          className="tap-target fixed bottom-4 right-4 z-40 rounded-full bg-slate-900/80 px-4 py-3 text-sm font-medium text-white shadow-lg dark:bg-slate-100/90 dark:text-slate-900"
+        >
+          ⋮ Controles
+        </button>
+      )}
+
       {controlsVisible && (
         <div className="safe-top flex items-center justify-between gap-2 bg-surface px-3 py-2 text-sm">
           <div>
@@ -204,6 +203,12 @@ export default function Play() {
               onClick={() => setShowVisual((v) => !v)}
             >
               Sanfona visual
+            </button>
+            <button
+              className="tap-target rounded-md border border-slate-300 px-2 py-1 text-xs dark:border-slate-700"
+              onClick={() => setControlsVisible(false)}
+            >
+              Ocultar
             </button>
           </div>
         </div>
