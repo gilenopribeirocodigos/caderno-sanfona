@@ -29,7 +29,9 @@ const CORNER = 6
  * deitado), com desenho de piano de verdade e destaque das notas do
  * acorde atual (cor + marcador).
  */
-export default function VerticalKeyboard({ activeChord, octaves = 2 }: VerticalKeyboardProps) {
+// Uma oitava só: marcar a mesma nota repetida em várias oitavas confundia
+// mais do que ajudava — o objetivo é indicar UM lugar claro para apertar.
+export default function VerticalKeyboard({ activeChord, octaves = 1 }: VerticalKeyboardProps) {
   const activeNotes = new Set(notesInChord(activeChord ?? ''))
   const whiteKeys = Array.from({ length: octaves }).flatMap(() => WHITE_SEQUENCE)
 
