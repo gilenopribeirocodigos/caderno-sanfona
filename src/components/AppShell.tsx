@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import AccordionArt from './AccordionArt'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Biblioteca', end: true },
@@ -17,7 +18,10 @@ export default function AppShell() {
   return (
     <div className="flex h-full flex-col md:flex-row">
       <aside className="safe-top hidden shrink-0 border-r border-slate-200 bg-surface px-3 py-4 dark:border-slate-800 md:flex md:w-56 md:flex-col md:gap-1">
-        <h1 className="mb-4 px-2 text-lg font-semibold">Caderno de Sanfona</h1>
+        <div className="mb-4 flex items-center gap-2 px-2">
+          <AccordionArt className="h-7 w-auto shrink-0" />
+          <h1 className="text-base font-semibold leading-tight">Caderno de Sanfona</h1>
+        </div>
         {NAV_ITEMS.map((item) => (
           <NavLink
             key={item.to}
@@ -26,7 +30,7 @@ export default function AppShell() {
             className={({ isActive }) =>
               `tap-target flex items-center rounded-lg px-3 py-2 text-sm font-medium ${
                 isActive
-                  ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+                  ? 'bg-[var(--color-brand)] text-white'
                   : 'text-slate-600 hover:bg-surface-alt dark:text-slate-300'
               }`
             }
@@ -42,15 +46,17 @@ export default function AppShell() {
       </main>
 
       <nav className="safe-bottom flex shrink-0 flex-col border-t border-slate-200 bg-surface dark:border-slate-800 md:hidden">
-        <div className="flex">
+        <div className="flex gap-1 px-1 pt-1">
           {NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `tap-target flex flex-1 flex-col items-center justify-center py-2 text-xs font-medium ${
-                  isActive ? 'text-slate-900 dark:text-slate-50' : 'text-slate-500'
+                `tap-target flex flex-1 flex-col items-center justify-center rounded-lg py-1.5 text-xs font-medium transition-colors ${
+                  isActive
+                    ? 'bg-[var(--color-brand)] text-white'
+                    : 'text-slate-500 dark:text-slate-400'
                 }`
               }
             >

@@ -63,7 +63,14 @@ export default function Play() {
     if (song) {
       setActiveChord(firstChord(song.chordData.chordProSource))
       registerPractice(song.id)
+      // Lembra o que estava tocando (item 48: "Continuar tocando"), para
+      // oferecer o atalho quando o Modo Tocar for aberto sem contexto.
+      localStorage.setItem(
+        'lastPlay',
+        JSON.stringify({ search: searchParams.toString(), title: song.title }),
+      )
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [song?.id])
 
   // Se a tela cheia for encerrada (Esc, gesto do sistema...), garante que os
@@ -149,8 +156,23 @@ export default function Play() {
   }
 
   if (queue.length === 0) {
+    let lastPlay: { search: string; title: string } | null = null
+    try {
+      const raw = localStorage.getItem('lastPlay')
+      if (raw) lastPlay = JSON.parse(raw)
+    } catch {
+      lastPlay = null
+    }
     return (
       <div className="mx-auto max-w-2xl p-4 text-center text-sm text-slate-500">
+        {lastPlay && (
+          <Link
+            to={`/tocar?${lastPlay.search}`}
+            className="tap-target mb-4 inline-block rounded-md bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-white"
+          >
+            ▶ Continuar tocando: {lastPlay.title}
+          </Link>
+        )}
         <p>Escolha uma música na Biblioteca ou um caderno para começar a tocar.</p>
         <div className="mt-3 flex justify-center gap-2">
           <Link to="/" className="tap-target rounded-md border border-slate-300 px-3 py-2 dark:border-slate-700">

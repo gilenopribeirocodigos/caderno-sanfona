@@ -6,6 +6,12 @@
   --color-surface: #ffffff;
   --color-surface-alt: #f1f5f9;
   color-scheme: light;
+
+  /* Identidade visual: tons de sanfona (verniz vinho + latão dourado). */
+  --color-brand: #7f1d3d;
+  --color-brand-dark: #4a0f24;
+  --color-brand-light: #b6305c;
+  --color-gold: #c9a227;
 }
 
 :root.dark {
