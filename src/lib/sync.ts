@@ -1,0 +1,228 @@
+import { supabase } from './supabaseClient'
+import { db, LOCAL_USER_ID } from './db'
+import type {
+  AppSettings,
+  Notebook,
+  NotebookSong,
+  PracticeHistoryEntry,
+  Song,
+  SongVersion,
+} from '@/types'
+
+/**
+ * Sincronização (Etapa 11, item 35): envia as alterações locais para a
+ * nuvem e depois traz de volta o estado atual da nuvem, que passa a valer
+ * localmente. Isso garante que edições feitas neste aparelho nunca se
+ * percam ao sincronizar; o efeito colateral é que, se a MESMA música foi
+ * editada em dois aparelhos entre uma sincronização e outra, vale a
+ * edição do aparelho que sincronizar por último — aceitável para uso
+ * pessoal, mas vale saber.
+ */
+
+function songToRemote(s: Song, userId: string) {
+  return {
+    id: s.id,
+    user_id: userId,
+    title: s.title,
+    artist: s.artist ?? null,
+    original_key: s.originalKey,
+    preferred_key: s.preferredKey,
+    lyrics: s.lyrics,
+    chord_data: s.chordData,
+    bpm: s.bpm ?? null,
+    rhythm: s.rhythm ?? null,
+    time_signature: s.timeSignature ?? null,
+    difficulty: s.difficulty ?? null,
+    notes: s.notes ?? null,
+    tags: s.tags,
+    favorite: s.favorite,
+    last_practiced_at: s.lastPracticedAt ?? null,
+    times_played: s.timesPlayed,
+    created_at: s.createdAt,
+    updated_at: s.updatedAt,
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function songFromRemote(r: any): Song {
+  return {
+    id: r.id,
+    userId: r.user_id,
+    title: r.title,
+    artist: r.artist ?? undefined,
+    originalKey: r.original_key,
+    preferredKey: r.preferred_key,
+    lyrics: r.lyrics,
+    chordData: r.chord_data,
+    bpm: r.bpm ?? undefined,
+    rhythm: r.rhythm ?? undefined,
+    timeSignature: r.time_signature ?? undefined,
+    difficulty: r.difficulty ?? undefined,
+    notes: r.notes ?? undefined,
+    tags: r.tags ?? [],
+    favorite: r.favorite,
+    lastPracticedAt: r.last_practiced_at ?? undefined,
+    timesPlayed: r.times_played,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  }
+}
+
+function notebookToRemote(n: Notebook, userId: string) {
+  return { id: n.id, user_id: userId, name: n.name, description: n.description ?? null, created_at: n.createdAt }
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function notebookFromRemote(r: any): Notebook {
+  return { id: r.id, userId: r.user_id, name: r.name, description: r.description ?? undefined, createdAt: r.created_at }
+}
+
+function notebookSongToRemote(ns: NotebookSong, userId: string) {
+  return { id: ns.id, user_id: userId, notebook_id: ns.notebookId, song_id: ns.songId, position: ns.position }
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function notebookSongFromRemote(r: any): NotebookSong {
+  return { id: r.id, notebookId: r.notebook_id, songId: r.song_id, position: r.position }
+}
+
+function songVersionToRemote(v: SongVersion, userId: string) {
+  return {
+    id: v.id,
+    user_id: userId,
+    song_id: v.songId,
+    name: v.name,
+    key: v.key,
+    lyrics: v.lyrics,
+    chord_data: v.chordData,
+    created_at: v.createdAt,
+  }
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function songVersionFromRemote(r: any): SongVersion {
+  return { id: r.id, songId: r.song_id, name: r.name, key: r.key, lyrics: r.lyrics, chordData: r.chord_data, createdAt: r.created_at }
+}
+
+function practiceToRemote(p: PracticeHistoryEntry, userId: string) {
+  return {
+    id: p.id,
+    user_id: userId,
+    song_id: p.songId,
+    date: p.date,
+    duration_seconds: p.durationSeconds ?? null,
+    bpm: p.bpm ?? null,
+    notes: p.notes ?? null,
+  }
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function practiceFromRemote(r: any): PracticeHistoryEntry {
+  return { id: r.id, songId: r.song_id, date: r.date, durationSeconds: r.duration_seconds ?? undefined, bpm: r.bpm ?? undefined, notes: r.notes ?? undefined }
+}
+
+function settingsToRemote(s: AppSettings, userId: string) {
+  return {
+    user_id: userId,
+    notation: s.notation,
+    font_size: s.fontSize,
+    chord_size: s.chordSize,
+    theme: s.theme,
+    auto_scroll_speed: s.autoScrollSpeed,
+    accordion_type: s.accordionType,
+    help_level: s.helpLevel,
+    external_controller_mapping: s.externalControllerMapping,
+  }
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function settingsFromRemote(r: any): AppSettings {
+  return {
+    userId: LOCAL_USER_ID,
+    notation: r.notation,
+    fontSize: r.font_size,
+    chordSize: r.chord_size,
+    theme: r.theme,
+    autoScrollSpeed: r.auto_scroll_speed,
+    accordionType: r.accordion_type,
+    helpLevel: r.help_level,
+    externalControllerMapping: r.external_controller_mapping ?? {},
+  }
+}
+
+export async function syncNow(userId: string): Promise<void> {
+  if (!supabase) throw new Error('Nuvem não configurada')
+
+  const [songs, notebooks, notebookSongs, songVersions, practiceHistory, settings] = await Promise.all([
+    db.songs.toArray(),
+    db.notebooks.toArray(),
+    db.notebookSongs.toArray(),
+    db.songVersions.toArray(),
+    db.practiceHistory.toArray(),
+    db.settings.get(LOCAL_USER_ID),
+  ])
+
+  // 1) Envia tudo que existe localmente (upsert = cria ou atualiza).
+  if (songs.length > 0) {
+    const { error } = await supabase.from('songs').upsert(songs.map((s) => songToRemote(s, userId)))
+    if (error) throw error
+  }
+  if (notebooks.length > 0) {
+    const { error } = await supabase.from('notebooks').upsert(notebooks.map((n) => notebookToRemote(n, userId)))
+    if (error) throw error
+  }
+  if (notebookSongs.length > 0) {
+    const { error } = await supabase
+      .from('notebook_songs')
+      .upsert(notebookSongs.map((ns) => notebookSongToRemote(ns, userId)))
+    if (error) throw error
+  }
+  if (songVersions.length > 0) {
+    const { error } = await supabase
+      .from('song_versions')
+      .upsert(songVersions.map((v) => songVersionToRemote(v, userId)))
+    if (error) throw error
+  }
+  if (practiceHistory.length > 0) {
+    const { error } = await supabase
+      .from('practice_history')
+      .upsert(practiceHistory.map((p) => practiceToRemote(p, userId)))
+    if (error) throw error
+  }
+  if (settings) {
+    const { error } = await supabase.from('settings').upsert(settingsToRemote(settings, userId))
+    if (error) throw error
+  }
+
+  // 2) Traz de volta o estado atual da nuvem (une o que veio de outros
+  // aparelhos com o que acabou de ser enviado) e substitui localmente.
+  const [remoteSongs, remoteNotebooks, remoteNotebookSongs, remoteVersions, remotePractice, remoteSettings] =
+    await Promise.all([
+      supabase.from('songs').select('*').eq('user_id', userId),
+      supabase.from('notebooks').select('*').eq('user_id', userId),
+      supabase.from('notebook_songs').select('*').eq('user_id', userId),
+      supabase.from('song_versions').select('*').eq('user_id', userId),
+      supabase.from('practice_history').select('*').eq('user_id', userId),
+      supabase.from('settings').select('*').eq('user_id', userId).maybeSingle(),
+    ])
+
+  for (const [label, res] of Object.entries({
+    songs: remoteSongs,
+    notebooks: remoteNotebooks,
+    notebookSongs: remoteNotebookSongs,
+    songVersions: remoteVersions,
+    practiceHistory: remotePractice,
+    settings: remoteSettings,
+  })) {
+    if (res.error) throw new Error(`${label}: ${res.error.message}`)
+  }
+
+  await db.transaction(
+    'rw',
+    [db.songs, db.notebooks, db.notebookSongs, db.songVersions, db.practiceHistory, db.settings],
+    async () => {
+      if (remoteSongs.data) await db.songs.bulkPut(remoteSongs.data.map(songFromRemote))
+      if (remoteNotebooks.data) await db.notebooks.bulkPut(remoteNotebooks.data.map(notebookFromRemote))
+      if (remoteNotebookSongs.data)
+        await db.notebookSongs.bulkPut(remoteNotebookSongs.data.map(notebookSongFromRemote))
+      if (remoteVersions.data) await db.songVersions.bulkPut(remoteVersions.data.map(songVersionFromRemote))
+      if (remotePractice.data) await db.practiceHistory.bulkPut(remotePractice.data.map(practiceFromRemote))
+      if (remoteSettings.data) await db.settings.put(settingsFromRemote(remoteSettings.data))
+    },
+  )
+}

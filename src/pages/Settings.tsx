@@ -1,5 +1,10 @@
+import { Suspense, lazy } from 'react'
 import { useSettings } from '@/lib/useSettings'
 import { updateSettings } from '@/lib/settingsRepo'
+
+// Carregado sob demanda: o SDK do Supabase é pesado e só é necessário
+// quando esta seção realmente aparece na tela (item 35, nuvem).
+const AccountSection = lazy(() => import('@/components/AccountSection'))
 
 export default function Settings() {
   const settings = useSettings()
@@ -94,6 +99,10 @@ export default function Settings() {
           ))}
         </div>
       </section>
+
+      <Suspense fallback={<p className="mt-4 text-xs text-slate-400">Carregando...</p>}>
+        <AccountSection />
+      </Suspense>
     </div>
   )
 }
