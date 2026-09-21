@@ -61,7 +61,19 @@ export default function Play() {
   useEffect(() => {
     setNotFound(false)
     if (!currentSongId) return
-    const timeout = setTimeout(() => setNotFound(true), 4000)
+    const timeout = setTimeout(() => {
+      setNotFound(true)
+      // Limpa o atalho "Continuar tocando" se for ele quem apontava pra
+      // cá — senão ele continua aparecendo, sempre levando a essa mesma
+      // tela de erro.
+      try {
+        const raw = localStorage.getItem('lastPlay')
+        const lastPlay = raw ? JSON.parse(raw) : null
+        if (lastPlay?.search === searchParams.toString()) localStorage.removeItem('lastPlay')
+      } catch {
+        localStorage.removeItem('lastPlay')
+      }
+    }, 4000)
     return () => clearTimeout(timeout)
   }, [currentSongId])
 
