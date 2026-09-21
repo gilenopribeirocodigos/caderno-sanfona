@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db'
 import {
@@ -11,7 +11,7 @@ import {
 import { useSettings } from '@/lib/useSettings'
 import { parseChordPro, renderChordPro } from '@/utils/chordpro'
 import { COMMON_ROOTS } from '@/utils/chords'
-import ChordSheet from '@/components/ChordSheet'
+import ChordSheet, { type WordRef } from '@/components/ChordSheet'
 import ChordPicker from '@/components/ChordPicker'
 import type { LyricLine, Song } from '@/types'
 
@@ -19,14 +19,54 @@ type SaveState = 'saved' | 'saving' | 'idle'
 
 export default function Editor() {
   const { songId } = useParams<{ songId: string }>()
-  const navigate = useNavigate()
-  const song = useLiveQuery(() => (songId ? db.songs.get(songId) : undefined), [songId])
+
+  if (songId === 'novo') return <SongPicker />
+  return <SongEditor songId={songId!} />
+}
+
+/** Tela mostrada quando se entra no Editor pelo menu, sem uma música específica. */
+function SongPicker() {
+  const songs = useLiveQuery(() => db.songs.orderBy('title').toArray(), [])
+  return (
+    <div className="mx-auto max-w-2xl p-4">
+      <h2 className="text-xl font-semibold">Editor</h2>
+      <p className="mt-2 text-sm text-slate-500">Escolha uma música para editar a cifra.</p>
+      <ul className="mt-4 flex flex-col gap-2">
+        {songs?.map((s) => (
+          <li key={s.id}>
+            <Link
+              to={`/editor/${s.id}`}
+              className="tap-target block rounded-lg bg-surface px-3 py-2 hover:bg-surface-alt"
+            >
+              <span className="font-medium">{s.title}</span>
+              <span className="ml-2 text-xs text-slate-500">Tom {s.preferredKey}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      {songs?.length === 0 && (
+        <p className="mt-6 text-center text-sm text-slate-500">
+          Nenhuma música ainda.{' '}
+          <Link to="/" className="underline">
+            Crie uma na Biblioteca
+          </Link>
+          .
+        </p>
+      )}
+    </div>
+  )
+}
+
+function SongEditor({ songId }: { songId: string }) {
+  const song = useLiveQuery(() => db.songs.get(songId), [songId])
   const settings = useSettings()
 
   const [lyricsDraft, setLyricsDraft] = useState('')
   const [lines, setLines] = useState<LyricLine[] | null>(null)
   const [picker, setPicker] = useState<{ lineIndex: number; tokenIndex: number } | null>(null)
   const [saveState, setSaveState] = useState<SaveState>('idle')
+  const [rawMode, setRawMode] = useState(false)
+  const [rawDraft, setRawDraft] = useState('')
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>()
   const lastLoadedSource = useRef<string | undefined>(undefined)
 
@@ -40,22 +80,8 @@ export default function Editor() {
     setLines(song.chordData.lines.length > 0 ? song.chordData.lines : parseChordPro(song.lyrics))
   }, [song])
 
-  if (songId === 'novo' || !song) {
-    return (
-      <div className="mx-auto max-w-2xl p-4">
-        <h2 className="text-xl font-semibold">Editor</h2>
-        <p className="mt-2 text-sm text-slate-500">
-          Crie a música pela Biblioteca primeiro (título e tom), depois volte
-          aqui para colar a letra e adicionar as cifras.
-        </p>
-        <button
-          className="tap-target mt-4 rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
-          onClick={() => navigate('/')}
-        >
-          Ir para a Biblioteca
-        </button>
-      </div>
-    )
+  if (!song) {
+    return <div className="mx-auto max-w-2xl p-4 text-sm text-slate-500">Carregando...</div>
   }
 
   function commitLines(newLines: LyricLine[]) {
@@ -89,13 +115,24 @@ export default function Editor() {
     if (!picker || !lines) return
     const newLines = lines.map((line, li) => {
       if (li !== picker.lineIndex) return line
-      const tokens = line.tokens.map((t, ti) =>
-        ti === picker.tokenIndex ? { text: t.text } : t,
-      )
+      const tokens = line.tokens.map((t, ti) => (ti === picker.tokenIndex ? { text: t.text } : t))
       return { ...line, tokens }
     })
     commitLines(newLines)
     setPicker(null)
+  }
+
+  /** Arrastar um acorde para outra palavra troca os dois (item 171: "arrastado horizontalmente"). */
+  function handleChordMove(from: WordRef, to: WordRef) {
+    if (!lines) return
+    if (from.lineIndex === to.lineIndex && from.tokenIndex === to.tokenIndex) return
+    const newLines = lines.map((line) => ({ ...line, tokens: line.tokens.map((t) => ({ ...t })) }))
+    const fromToken = newLines[from.lineIndex].tokens[from.tokenIndex]
+    const toToken = newLines[to.lineIndex].tokens[to.tokenIndex]
+    const fromChord = fromToken.chord
+    fromToken.chord = toToken.chord
+    toToken.chord = fromChord
+    commitLines(newLines)
   }
 
   function addSection() {
@@ -104,14 +141,24 @@ export default function Editor() {
     commitLines([...lines, { section: name, tokens: [] }])
   }
 
+  function openRawMode() {
+    if (!lines) return
+    setRawDraft(renderChordPro(lines))
+    setRawMode(true)
+  }
+
+  function saveRawMode() {
+    commitLines(parseChordPro(rawDraft))
+    setRawMode(false)
+  }
+
   async function handleSaveInitialLyrics(e: React.FormEvent) {
     e.preventDefault()
     if (!lyricsDraft.trim()) return
     await setInitialLyrics(song!.id, lyricsDraft)
   }
 
-  const activeToken =
-    picker && lines ? lines[picker.lineIndex].tokens[picker.tokenIndex] : undefined
+  const activeToken = picker && lines ? lines[picker.lineIndex].tokens[picker.tokenIndex] : undefined
 
   return (
     <div className="mx-auto max-w-3xl p-4 pb-24">
@@ -146,24 +193,64 @@ export default function Editor() {
         <>
           <TransposeBar song={song} />
 
-          <div className="mt-4 rounded-lg bg-surface p-4">
-            {lines && (
-              <ChordSheet
-                lines={lines}
-                notation={settings.notation}
-                fontSize={settings.fontSize}
-                chordSize={settings.chordSize}
-                onWordClick={handleWordClick}
-              />
-            )}
-          </div>
+          {!rawMode ? (
+            <>
+              <div className="mt-4 rounded-lg bg-surface p-4">
+                {lines && (
+                  <ChordSheet
+                    lines={lines}
+                    notation={settings.notation}
+                    fontSize={settings.fontSize}
+                    chordSize={settings.chordSize}
+                    onWordClick={handleWordClick}
+                    onChordMove={handleChordMove}
+                  />
+                )}
+              </div>
 
-          <button
-            className="tap-target mt-3 rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
-            onClick={addSection}
-          >
-            + Seção (Refrão, Verso...)
-          </button>
+              <div className="mt-3 flex gap-2">
+                <button
+                  className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
+                  onClick={addSection}
+                >
+                  + Seção (Refrão, Verso...)
+                </button>
+                <button
+                  className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
+                  onClick={openRawMode}
+                >
+                  Modo texto (ChordPro)
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="mt-4 flex flex-col gap-2">
+              <p className="text-xs text-slate-500">
+                Edite diretamente no formato ChordPro. Coloque o acorde entre
+                colchetes na posição exata, mesmo no meio de uma palavra:{' '}
+                <code>[C]pala[G]vra</code>. Linhas começando com <code>## </code> viram seções.
+              </p>
+              <textarea
+                className="min-h-64 rounded-md border border-slate-300 p-3 font-mono text-sm dark:border-slate-700 dark:bg-slate-800"
+                value={rawDraft}
+                onChange={(e) => setRawDraft(e.target.value)}
+              />
+              <div className="flex gap-2">
+                <button
+                  className="tap-target rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white dark:bg-slate-100 dark:text-slate-900"
+                  onClick={saveRawMode}
+                >
+                  Salvar
+                </button>
+                <button
+                  className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
+                  onClick={() => setRawMode(false)}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
 
@@ -184,11 +271,7 @@ export default function Editor() {
 
 function SaveIndicator({ state }: { state: SaveState }) {
   if (state === 'idle') return null
-  return (
-    <span className="text-xs text-slate-400">
-      {state === 'saving' ? 'Salvando...' : 'Salvo ✓'}
-    </span>
-  )
+  return <span className="text-xs text-slate-400">{state === 'saving' ? 'Salvando...' : 'Salvo ✓'}</span>
 }
 
 function TransposeBar({ song }: { song: Song }) {
