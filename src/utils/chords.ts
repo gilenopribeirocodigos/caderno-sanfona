@@ -121,50 +121,71 @@ export function quickPaletteForKey(key: string): { label: string; chord: string 
   })
 }
 
+/**
+ * Intervalos (em semitons a partir da fundamental) de cada qualidade de
+ * acorde suportada — usado tanto para montar as notas de um acorde
+ * conhecido quanto, ao contrário, para reconhecer um acorde a partir de
+ * notas soltas (ver `chordFromNotes`).
+ */
+const QUALITY_INTERVALS: Record<string, number[]> = {
+  '': [0, 4, 7],
+  m: [0, 3, 7],
+  '7': [0, 4, 7, 10],
+  m7: [0, 3, 7, 10],
+  maj7: [0, 4, 7, 11],
+  dim: [0, 3, 6],
+  aug: [0, 4, 8],
+  sus2: [0, 2, 7],
+  sus4: [0, 5, 7],
+  '6': [0, 4, 7, 9],
+  m6: [0, 3, 7, 9],
+  '9': [0, 4, 7, 10, 14],
+}
+
 /** Notas que compõem um acorde, usadas nos diagramas de baixo/teclado (itens 60/70). */
 export function notesInChord(chord: string): string[] {
   const parsed = parseChord(chord)
   if (!parsed) return []
   const rootIndex = CHROMATIC_SHARP.indexOf(parsed.root as (typeof CHROMATIC_SHARP)[number])
   if (rootIndex === -1) return []
-
-  let intervals: number[]
-  switch (parsed.quality) {
-    case 'm':
-      intervals = [0, 3, 7]
-      break
-    case '7':
-      intervals = [0, 4, 7, 10]
-      break
-    case 'm7':
-      intervals = [0, 3, 7, 10]
-      break
-    case 'maj7':
-      intervals = [0, 4, 7, 11]
-      break
-    case 'dim':
-      intervals = [0, 3, 6]
-      break
-    case 'aug':
-      intervals = [0, 4, 8]
-      break
-    case 'sus2':
-      intervals = [0, 2, 7]
-      break
-    case 'sus4':
-      intervals = [0, 5, 7]
-      break
-    case '6':
-      intervals = [0, 4, 7, 9]
-      break
-    case 'm6':
-      intervals = [0, 3, 7, 9]
-      break
-    case '9':
-      intervals = [0, 4, 7, 10, 14]
-      break
-    default:
-      intervals = [0, 4, 7]
-  }
+  const intervals = QUALITY_INTERVALS[parsed.quality] ?? QUALITY_INTERVALS['']
   return intervals.map((i) => CHROMATIC_SHARP[(rootIndex + i) % 12])
+}
+
+// Qualidades preferidas ao reconhecer notas soltas: mais simples primeiro,
+// para não sugerir "C6" quando "C" já explica as mesmas notas mais uma.
+const RECOGNITION_QUALITY_ORDER = ['', 'm', 'dim', 'aug', 'sus2', 'sus4', '7', 'm7', 'maj7', '6', 'm6', '9']
+
+/**
+ * Tenta reconhecer um acorde a partir de um conjunto solto de notas (ex:
+ * tocadas uma a uma no teclado), sem se importar com ordem ou oitava —
+ * é o inverso de `notesInChord`. Retorna o primeiro acorde cujas notas
+ * batem exatamente com as informadas, ou undefined se nenhuma bater.
+ */
+export function chordFromNotes(notes: string[]): string | undefined {
+  const uniqueInput = new Set(
+    notes
+      .map((n) => normalizeToSharp(n))
+      .filter((n) => (CHROMATIC_SHARP as readonly string[]).includes(n)),
+  )
+  if (uniqueInput.size < 2) return undefined
+
+  for (const root of CHROMATIC_SHARP) {
+    const rootIndex = CHROMATIC_SHARP.indexOf(root)
+    for (const quality of RECOGNITION_QUALITY_ORDER) {
+      const chordNotes = new Set<string>(
+        QUALITY_INTERVALS[quality].map((i) => CHROMATIC_SHARP[(rootIndex + i) % 12]),
+      )
+      if (chordNotes.size !== uniqueInput.size) continue
+      let matches = true
+      for (const n of uniqueInput) {
+        if (!chordNotes.has(n)) {
+          matches = false
+          break
+        }
+      }
+      if (matches) return `${root}${quality}`
+    }
+  }
+  return undefined
 }

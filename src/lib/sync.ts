@@ -10,13 +10,13 @@ import type {
 } from '@/types'
 
 /**
- * Sincronização (Etapa 11, item 35): envia as alterações locais para a
- * nuvem e depois traz de volta o estado atual da nuvem, que passa a valer
- * localmente. Isso garante que edições feitas neste aparelho nunca se
- * percam ao sincronizar; o efeito colateral é que, se a MESMA música foi
- * editada em dois aparelhos entre uma sincronização e outra, vale a
- * edição do aparelho que sincronizar por último — aceitável para uso
- * pessoal, mas vale saber.
+ * Sincronização (Etapa 11, item 35): traz primeiro o estado atual da
+ * nuvem (o que veio de outros aparelhos) e funde localmente, e só depois
+ * envia o estado local — já atualizado — de volta para a nuvem. Nessa
+ * ordem, uma edição feita durante a sincronização nunca é perdida nem
+ * revertida por engano. Se a MESMA música foi editada em dois aparelhos
+ * entre uma sincronização e outra, vale a edição do aparelho que
+ * sincronizar por último — aceitável para uso pessoal, mas vale saber.
  */
 
 function songToRemote(s: Song, userId: string) {
@@ -148,49 +148,12 @@ function settingsFromRemote(r: any): AppSettings {
 export async function syncNow(userId: string): Promise<void> {
   if (!supabase) throw new Error('Nuvem não configurada')
 
-  const [songs, notebooks, notebookSongs, songVersions, practiceHistory, settings] = await Promise.all([
-    db.songs.toArray(),
-    db.notebooks.toArray(),
-    db.notebookSongs.toArray(),
-    db.songVersions.toArray(),
-    db.practiceHistory.toArray(),
-    db.settings.get(LOCAL_USER_ID),
-  ])
-
-  // 1) Envia tudo que existe localmente (upsert = cria ou atualiza).
-  if (songs.length > 0) {
-    const { error } = await supabase.from('songs').upsert(songs.map((s) => songToRemote(s, userId)))
-    if (error) throw error
-  }
-  if (notebooks.length > 0) {
-    const { error } = await supabase.from('notebooks').upsert(notebooks.map((n) => notebookToRemote(n, userId)))
-    if (error) throw error
-  }
-  if (notebookSongs.length > 0) {
-    const { error } = await supabase
-      .from('notebook_songs')
-      .upsert(notebookSongs.map((ns) => notebookSongToRemote(ns, userId)))
-    if (error) throw error
-  }
-  if (songVersions.length > 0) {
-    const { error } = await supabase
-      .from('song_versions')
-      .upsert(songVersions.map((v) => songVersionToRemote(v, userId)))
-    if (error) throw error
-  }
-  if (practiceHistory.length > 0) {
-    const { error } = await supabase
-      .from('practice_history')
-      .upsert(practiceHistory.map((p) => practiceToRemote(p, userId)))
-    if (error) throw error
-  }
-  if (settings) {
-    const { error } = await supabase.from('settings').upsert(settingsToRemote(settings, userId))
-    if (error) throw error
-  }
-
-  // 2) Traz de volta o estado atual da nuvem (une o que veio de outros
-  // aparelhos com o que acabou de ser enviado) e substitui localmente.
+  // 1) Traz primeiro o estado atual da nuvem (o que veio de outros
+  // aparelhos) e funde localmente. Isso roda logo ao abrir o app — antes
+  // de a pessoa mexer em qualquer coisa — de propósito: fazer essa parte
+  // por último (como era antes) tinha um defeito real, sobrescrevendo uma
+  // mudança feita na tela de Configurações bem na hora em que a
+  // sincronização terminava, dando a impressão de tela travada/sem efeito.
   const [remoteSongs, remoteNotebooks, remoteNotebookSongs, remoteVersions, remotePractice, remoteSettings] =
     await Promise.all([
       supabase.from('songs').select('*').eq('user_id', userId),
@@ -225,4 +188,47 @@ export async function syncNow(userId: string): Promise<void> {
       if (remoteSettings.data) await db.settings.put(settingsFromRemote(remoteSettings.data))
     },
   )
+
+  // 2) Só agora lê o estado local (já com o que veio da nuvem, mais
+  // qualquer edição feita nesse meio tempo) e envia pra nuvem — assim uma
+  // mudança feita durante a sincronização nunca é perdida nem revertida.
+  const [songs, notebooks, notebookSongs, songVersions, practiceHistory, settings] = await Promise.all([
+    db.songs.toArray(),
+    db.notebooks.toArray(),
+    db.notebookSongs.toArray(),
+    db.songVersions.toArray(),
+    db.practiceHistory.toArray(),
+    db.settings.get(LOCAL_USER_ID),
+  ])
+
+  if (songs.length > 0) {
+    const { error } = await supabase.from('songs').upsert(songs.map((s) => songToRemote(s, userId)))
+    if (error) throw error
+  }
+  if (notebooks.length > 0) {
+    const { error } = await supabase.from('notebooks').upsert(notebooks.map((n) => notebookToRemote(n, userId)))
+    if (error) throw error
+  }
+  if (notebookSongs.length > 0) {
+    const { error } = await supabase
+      .from('notebook_songs')
+      .upsert(notebookSongs.map((ns) => notebookSongToRemote(ns, userId)))
+    if (error) throw error
+  }
+  if (songVersions.length > 0) {
+    const { error } = await supabase
+      .from('song_versions')
+      .upsert(songVersions.map((v) => songVersionToRemote(v, userId)))
+    if (error) throw error
+  }
+  if (practiceHistory.length > 0) {
+    const { error } = await supabase
+      .from('practice_history')
+      .upsert(practiceHistory.map((p) => practiceToRemote(p, userId)))
+    if (error) throw error
+  }
+  if (settings) {
+    const { error } = await supabase.from('settings').upsert(settingsToRemote(settings, userId))
+    if (error) throw error
+  }
 }

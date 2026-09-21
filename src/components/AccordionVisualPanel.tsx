@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
 import type { AccordionType, ChordNotation } from '@/types'
-import { formatChordForDisplay, notesInChord } from '@/utils/chords'
+import { chordFromNotes, formatChordForDisplay, notesInChord } from '@/utils/chords'
 import BassDiagram from './BassDiagram'
 import ChordKeyboards from './ChordKeyboards'
 import ChordPicker from './ChordPicker'
+import NoteBuilderKeyboard from './NoteBuilderKeyboard'
 
 interface AccordionVisualPanelProps {
   activeChord?: string
@@ -33,8 +34,11 @@ export default function AccordionVisualPanel({
   const [view, setView] = useState<ViewMode>('both')
   const [interactive, setInteractive] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [building, setBuilding] = useState(false)
+  const [builderNotes, setBuilderNotes] = useState<Set<string>>(new Set())
 
   const notes = activeChord ? notesInChord(activeChord) : []
+  const builtChord = building ? chordFromNotes([...builderNotes]) : undefined
 
   // Garante que o acorde ativo sempre tenha uma cor e apareça no teclado,
   // mesmo quando ele vem do modo interativo e não está (ainda) na música.
@@ -42,6 +46,22 @@ export default function AccordionVisualPanel({
     if (!activeChord || songChords.includes(activeChord)) return songChords
     return [...songChords, activeChord]
   }, [songChords, activeChord])
+
+  function toggleBuilderNote(note: string) {
+    setBuilderNotes((prev) => {
+      const next = new Set(prev)
+      if (next.has(note)) next.delete(note)
+      else next.add(note)
+      const resolved = chordFromNotes([...next])
+      if (resolved && onSelectChord) onSelectChord(resolved)
+      return next
+    })
+  }
+
+  function clearPreview() {
+    setBuilderNotes(new Set())
+    if (onSelectChord) onSelectChord(songChords[0] ?? '')
+  }
 
   return (
     <div className="rounded-lg bg-surface p-3">
@@ -51,6 +71,11 @@ export default function AccordionVisualPanel({
             {activeChord ? (
               <>
                 Acorde: <strong>{formatChordForDisplay(activeChord, notation)}</strong>
+                {!songChords.includes(activeChord) && (
+                  <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-normal text-amber-700 dark:bg-amber-900 dark:text-amber-300">
+                    prévia — não está na música
+                  </span>
+                )}
               </>
             ) : (
               'Toque num acorde da letra para ver aqui'
@@ -106,13 +131,27 @@ export default function AccordionVisualPanel({
               Outro acorde...
             </button>
           )}
+          {onSelectChord && (view === 'both' || view === 'keyboard') && (
+            <button
+              className={`tap-target rounded-md border px-2 py-1 ${
+                building
+                  ? 'border-emerald-600 bg-emerald-600 text-white'
+                  : 'border-slate-300 dark:border-slate-700'
+              }`}
+              onClick={() => setBuilding((v) => !v)}
+              title="Tocar as notas uma a uma no teclado para montar/reconhecer um acorde"
+            >
+              {building ? '✓ Montar acorde' : 'Montar acorde'}
+            </button>
+          )}
         </div>
       </div>
-      {interactive && onSelectChord && (
+      {interactive && onSelectChord && !building && (
         <p className="-mt-1 mb-2 text-[10px] text-slate-400">
           Cada desenho abaixo é um acorde já usado nesta música — toque em
           qualquer um deles para marcá-lo como atual. Para ver um acorde que
-          não está na música (ex: Ré menor), use "Outro acorde..." acima.
+          não está na música (ex: Ré menor), use "Outro acorde..." ou
+          "Montar acorde" acima.
         </p>
       )}
 
@@ -130,18 +169,50 @@ export default function AccordionVisualPanel({
             <p className="mt-1 max-w-xs text-[10px] text-slate-400">
               Cada acorde da música tem sua cor. Preenchido = acorde atual.
               O botão de acorde já toca as notas todas de uma vez, num único
-              toque — é assim que a sanfona funciona.
+              toque — é assim que a sanfona funciona (não dá para "montar"
+              um acorde botão por botão no baixo, só escolher um já pronto).
             </p>
           </div>
         )}
         {(view === 'both' || view === 'keyboard') && (
-          <ChordKeyboards
-            chords={displayChords}
-            activeChord={activeChord}
-            notation={notation}
-            interactive={interactive}
-            onSelectChord={onSelectChord}
-          />
+          <div>
+            {building ? (
+              <div>
+                <NoteBuilderKeyboard
+                  selectedNotes={builderNotes}
+                  notation={notation}
+                  onToggleNote={toggleBuilderNote}
+                />
+                <p className="mt-1 max-w-[9rem] text-xs">
+                  {builderNotes.size === 0
+                    ? 'Toque nas notas para montar um acorde.'
+                    : builtChord
+                      ? (
+                        <>
+                          Reconhecido: <strong>{formatChordForDisplay(builtChord, notation)}</strong>
+                        </>
+                      )
+                      : 'Ainda não forma um acorde conhecido.'}
+                </p>
+                <button
+                  className="tap-target mt-1 rounded-md border border-slate-300 px-2 py-1 text-xs dark:border-slate-700"
+                  onClick={() => setBuilderNotes(new Set())}
+                >
+                  Limpar
+                </button>
+              </div>
+            ) : (
+              <ChordKeyboards
+                chords={displayChords}
+                realChords={songChords}
+                activeChord={activeChord}
+                notation={notation}
+                interactive={interactive}
+                onSelectChord={onSelectChord}
+                onDismissPreview={onSelectChord ? clearPreview : undefined}
+              />
+            )}
+          </div>
         )}
       </div>
 
