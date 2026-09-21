@@ -1,7 +1,9 @@
-import { notesInChord } from '@/utils/chords'
+import type { ChordNotation } from '@/types'
+import { formatChordForDisplay, notesInChord } from '@/utils/chords'
 
 interface VerticalKeyboardProps {
   activeChord?: string
+  notation: ChordNotation
   octaves?: number
 }
 
@@ -17,9 +19,9 @@ const SHARP_AFTER: Record<string, string | null> = {
   B: null,
 }
 
-const WHITE_KEY_W = 64
+const WHITE_KEY_W = 76
 const WHITE_KEY_H = 34
-const BLACK_KEY_W = 40
+const BLACK_KEY_W = 48
 const BLACK_KEY_H = 22
 const CORNER = 6
 
@@ -31,7 +33,7 @@ const CORNER = 6
  */
 // Uma oitava só: marcar a mesma nota repetida em várias oitavas confundia
 // mais do que ajudava — o objetivo é indicar UM lugar claro para apertar.
-export default function VerticalKeyboard({ activeChord, octaves = 1 }: VerticalKeyboardProps) {
+export default function VerticalKeyboard({ activeChord, notation, octaves = 1 }: VerticalKeyboardProps) {
   const activeNotes = new Set(notesInChord(activeChord ?? ''))
   const whiteKeys = Array.from({ length: octaves }).flatMap(() => WHITE_SEQUENCE)
 
@@ -73,7 +75,7 @@ export default function VerticalKeyboard({ activeChord, octaves = 1 }: VerticalK
               fontWeight={active ? 700 : 400}
               fill="#334155"
             >
-              {note}
+              {formatChordForDisplay(note, notation)}
             </text>
           </g>
         )
@@ -91,8 +93,8 @@ export default function VerticalKeyboard({ activeChord, octaves = 1 }: VerticalK
               fill={active ? '#d97706' : '#0f172a'}
             />
             {active && <circle cx={BLACK_KEY_W - 10} cy={y + BLACK_KEY_H / 2} r={4} fill="#fde68a" />}
-            <text x={6} y={y + BLACK_KEY_H / 2} dominantBaseline="central" fontSize={10} fontWeight={600} fill="#fff">
-              {note}
+            <text x={6} y={y + BLACK_KEY_H / 2} dominantBaseline="central" fontSize={9} fontWeight={600} fill="#fff">
+              {formatChordForDisplay(note, notation)}
             </text>
           </g>
         )

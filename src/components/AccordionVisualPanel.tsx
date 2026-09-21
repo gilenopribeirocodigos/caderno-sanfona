@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import type { AccordionType } from '@/types'
+import type { AccordionType, ChordNotation } from '@/types'
+import { formatChordForDisplay, notesInChord } from '@/utils/chords'
 import BassDiagram from './BassDiagram'
 import VerticalKeyboard from './VerticalKeyboard'
 
 interface AccordionVisualPanelProps {
   activeChord?: string
   accordionType: AccordionType
+  notation: ChordNotation
   onChangeAccordionType: (type: AccordionType) => void
   /** Deixa o usuário tocar direto no baixo para escolher o acorde, sem depender da letra. */
   onSelectChord?: (chord: string) => void
@@ -17,18 +19,34 @@ type ViewMode = 'both' | 'bass' | 'keyboard'
 export default function AccordionVisualPanel({
   activeChord,
   accordionType,
+  notation,
   onChangeAccordionType,
   onSelectChord,
 }: AccordionVisualPanelProps) {
   const [view, setView] = useState<ViewMode>('both')
   const [interactive, setInteractive] = useState(false)
 
+  const notes = activeChord ? notesInChord(activeChord) : []
+
   return (
     <div className="rounded-lg bg-surface p-3">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm font-medium">
-          {activeChord ? `Acorde: ${activeChord}` : 'Toque num acorde da letra para ver aqui'}
-        </p>
+        <div>
+          <p className="text-sm font-medium">
+            {activeChord ? (
+              <>
+                Acorde: <strong>{formatChordForDisplay(activeChord, notation)}</strong>
+              </>
+            ) : (
+              'Toque num acorde da letra para ver aqui'
+            )}
+          </p>
+          {notes.length > 0 && (
+            <p className="text-xs text-slate-500">
+              Notas: {notes.map((n) => formatChordForDisplay(n, notation)).join(' · ')}
+            </p>
+          )}
+        </div>
         <div className="flex flex-wrap gap-1 text-xs">
           <select
             className="tap-target rounded-md border border-slate-300 px-1.5 py-1 dark:border-slate-700 dark:bg-slate-800"
@@ -69,14 +87,24 @@ export default function AccordionVisualPanel({
 
       <div className="flex flex-wrap items-start gap-4">
         {(view === 'both' || view === 'bass') && (
-          <BassDiagram
-            accordionType={accordionType}
-            activeChord={activeChord}
-            interactive={interactive}
-            onSelectChord={onSelectChord}
-          />
+          <div>
+            <BassDiagram
+              accordionType={accordionType}
+              activeChord={activeChord}
+              notation={notation}
+              interactive={interactive}
+              onSelectChord={onSelectChord}
+            />
+            <p className="mt-1 max-w-xs text-[10px] text-slate-400">
+              O botão azul é só o baixo (1 nota). O botão laranja de acorde já
+              toca as notas todas de uma vez, num único toque — é assim que a
+              sanfona funciona.
+            </p>
+          </div>
         )}
-        {(view === 'both' || view === 'keyboard') && <VerticalKeyboard activeChord={activeChord} />}
+        {(view === 'both' || view === 'keyboard') && (
+          <VerticalKeyboard activeChord={activeChord} notation={notation} />
+        )}
       </div>
     </div>
   )

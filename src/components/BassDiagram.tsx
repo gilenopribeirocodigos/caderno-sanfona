@@ -1,9 +1,11 @@
-import type { AccordionType } from '@/types'
+import type { AccordionType, ChordNotation } from '@/types'
+import { formatChordForDisplay } from '@/utils/chords'
 import { chordLabelForRow, columnsFor, getHighlightedButtons, rowsFor } from '@/utils/accordion'
 
 interface BassDiagramProps {
   accordionType: AccordionType
   activeChord?: string
+  notation: ChordNotation
   /** Quando true, tocar num botão de acorde define o acorde ativo (item "marcar direto no baixo"). */
   interactive?: boolean
   onSelectChord?: (chord: string) => void
@@ -25,6 +27,7 @@ const ROW_SHIFT = 16 // px de deslocamento por linha, para lembrar o layout diag
 export default function BassDiagram({
   accordionType,
   activeChord,
+  notation,
   interactive = false,
   onSelectChord,
 }: BassDiagramProps) {
@@ -52,7 +55,7 @@ export default function BassDiagram({
               style={{ height: ROW_HEIGHT }}
               className="flex w-10 items-center justify-center border-b border-slate-100 text-xs font-semibold text-slate-500 dark:border-slate-800"
             >
-              {note}
+              {formatChordForDisplay(note, notation)}
             </div>
           ))}
         </div>
@@ -76,7 +79,7 @@ export default function BassDiagram({
                       type="button"
                       disabled={!canClick}
                       onClick={() => canClick && onSelectChord!(chord)}
-                      title={`${col}: ${chord}`}
+                      title={`${col}: ${formatChordForDisplay(chord, notation)}`}
                       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold transition-colors ${
                         hit
                           ? kind === 'bass'
@@ -85,7 +88,7 @@ export default function BassDiagram({
                           : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'
                       } ${canClick ? 'cursor-pointer hover:border-slate-900 dark:hover:border-slate-100' : ''}`}
                     >
-                      {chord}
+                      {formatChordForDisplay(chord, notation)}
                     </button>
                   )
                 })}

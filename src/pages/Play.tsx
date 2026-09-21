@@ -230,6 +230,7 @@ export default function Play() {
           <AccordionVisualPanel
             activeChord={activeChord}
             accordionType={settings.accordionType}
+            notation={settings.notation}
             onChangeAccordionType={(type) => updateSettings({ accordionType: type })}
             onSelectChord={setActiveChord}
           />
