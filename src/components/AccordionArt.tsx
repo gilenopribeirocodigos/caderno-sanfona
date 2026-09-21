@@ -6,7 +6,14 @@ import { useId } from 'react'
  * com gradientes e sombreado para dar volume, usada na tela de login e
  * como marca d'água dentro do app.
  */
-export default function AccordionArt({ className = '' }: { className?: string }) {
+export default function AccordionArt({
+  className = '',
+  animated = false,
+}: {
+  className?: string
+  /** Anima o fole em um leve "respirar", como se a sanfona estivesse tocando. */
+  animated?: boolean
+}) {
   const uid = useId().replace(/:/g, '')
   const N = 15 // número de dobras do fole
   const foleStart = 108
@@ -70,27 +77,29 @@ export default function AccordionArt({ className = '' }: { className?: string })
       <rect x="18" y="4" width="92" height="12" rx="6" fill={`url(#${uid}-strap)`} />
       <rect x="56" y="2" width="16" height="16" rx="2" fill="var(--color-gold)" stroke="#7a5a12" strokeWidth="0.75" />
 
-      {/* Fole (parte central sanfonada) */}
-      {Array.from({ length: N }).map((_, i) => {
-        const x0 = foleStart + i * step
-        const x1 = x0 + step / 2
-        const x2 = x0 + step
-        const tY0 = i % 2 === 0 ? topOut : topIn
-        const tY1 = i % 2 === 0 ? topIn : topOut
-        const bY0 = i % 2 === 0 ? botOut : botIn
-        const bY1 = i % 2 === 0 ? botIn : botOut
-        return (
-          <polygon
-            key={i}
-            points={`${x0},${tY0} ${x1},${tY1} ${x2},${tY0} ${x2},${bY0} ${x1},${bY1} ${x0},${bY0}`}
-            fill={i % 2 === 0 ? `url(#${uid}-foldA)` : `url(#${uid}-foldB)`}
-            stroke="#2c0916"
-            strokeOpacity="0.4"
-            strokeWidth="0.75"
-          />
-        )
-      })}
-      {/* friso dourado nas quinas do fole junto aos corpos */}
+      {/* Fole (parte central sanfonada) — "respira" quando animated */}
+      <g className={animated ? 'accordion-breathe' : undefined}>
+        {Array.from({ length: N }).map((_, i) => {
+          const x0 = foleStart + i * step
+          const x1 = x0 + step / 2
+          const x2 = x0 + step
+          const tY0 = i % 2 === 0 ? topOut : topIn
+          const tY1 = i % 2 === 0 ? topIn : topOut
+          const bY0 = i % 2 === 0 ? botOut : botIn
+          const bY1 = i % 2 === 0 ? botIn : botOut
+          return (
+            <polygon
+              key={i}
+              points={`${x0},${tY0} ${x1},${tY1} ${x2},${tY0} ${x2},${bY0} ${x1},${bY1} ${x0},${bY0}`}
+              fill={i % 2 === 0 ? `url(#${uid}-foldA)` : `url(#${uid}-foldB)`}
+              stroke="#2c0916"
+              strokeOpacity="0.4"
+              strokeWidth="0.75"
+            />
+          )
+        })}
+      </g>
+      {/* friso dourado nas quinas do fole junto aos corpos (fixo, não "respira") */}
       <rect x={foleStart - 4} y="20" width="8" height="224" rx="3" fill="var(--color-gold)" opacity="0.55" />
       <rect x={foleEnd - 4} y="20" width="8" height="224" rx="3" fill="var(--color-gold)" opacity="0.55" />
 

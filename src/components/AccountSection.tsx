@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { isCloudEnabled } from '@/lib/supabaseClient'
-import { signOut, useAuthUser } from '@/lib/auth'
+import { useAuthUser } from '@/lib/auth'
 import { syncNow } from '@/lib/sync'
 
-/** Conta e sincronização (item 35) — login já é feito na entrada do app. */
+/**
+ * Conta e sincronização (item 35) — login é feito na entrada do app, e
+ * "sair" fica no menu de conta no topo da tela (não aqui).
+ */
 export default function AccountSection() {
   const { user } = useAuthUser()
   const [error, setError] = useState<string | null>(null)
@@ -46,21 +49,13 @@ export default function AccountSection() {
           Logado como <strong>{user.email}</strong>
         </p>
         {lastSync && <p className="text-xs text-slate-500">Última sincronização: {lastSync}</p>}
-        <div className="flex gap-2">
-          <button
-            disabled={busy}
-            onClick={handleSync}
-            className="tap-target rounded-md bg-[var(--color-brand)] px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-          >
-            {busy ? 'Sincronizando...' : 'Sincronizar agora'}
-          </button>
-          <button
-            onClick={() => signOut()}
-            className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
-          >
-            Sair
-          </button>
-        </div>
+        <button
+          disabled={busy}
+          onClick={handleSync}
+          className="tap-target self-start rounded-md bg-[var(--color-brand)] px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+        >
+          {busy ? 'Sincronizando...' : 'Sincronizar agora'}
+        </button>
         <p className="text-[10px] text-slate-400">
           Envia o que você editou aqui para a nuvem e traz de volta o que
           estiver lá (inclusive de outro aparelho). Se a mesma música foi

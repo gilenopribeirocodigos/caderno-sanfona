@@ -1,12 +1,17 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { Suspense, lazy } from 'react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import AccordionArt from './AccordionArt'
 
+// Carregado sob demanda: depende do SDK do Supabase, só baixado quando a
+// barra superior realmente precisa mostrar o menu de conta.
+const AccountMenu = lazy(() => import('./AccountMenu'))
+
 const NAV_ITEMS = [
-  { to: '/', label: 'Biblioteca', end: true },
-  { to: '/cadernos', label: 'Cadernos' },
-  { to: '/editor/novo', label: 'Editor' },
-  { to: '/tocar', label: 'Tocar' },
-  { to: '/config', label: 'Config' },
+  { to: '/', label: 'Biblioteca', end: true, match: /^\/$/ },
+  { to: '/cadernos', label: 'Cadernos', end: false, match: /^\/cadernos/ },
+  { to: '/editor/novo', label: 'Editor', end: false, match: /^\/editor/ },
+  { to: '/tocar', label: 'Tocar', end: false, match: /^\/tocar/ },
+  { to: '/config', label: 'Config', end: false, match: /^\/config/ },
 ]
 
 /**
@@ -43,8 +48,11 @@ export default function AppShell() {
         <VersionTag className="relative mt-auto px-2 pt-4" />
       </aside>
 
-      <main className="flex-1 overflow-y-auto bg-surface-alt">
-        <Outlet />
+      <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <TopBar />
+        <div className="flex-1 overflow-y-auto bg-surface-alt">
+          <Outlet />
+        </div>
       </main>
 
       <nav className="safe-bottom flex shrink-0 flex-col border-t border-slate-200 bg-surface dark:border-slate-800 md:hidden">
@@ -69,6 +77,33 @@ export default function AppShell() {
         <VersionTag className="pb-1 text-center" />
       </nav>
     </div>
+  )
+}
+
+/**
+ * Barra superior com a identidade visual da sanfona presente em todas as
+ * telas (não só na entrada) e o menu de conta/sair, no padrão de sites
+ * profissionais (em vez de "Sair" perdido dentro de Configurações).
+ */
+function TopBar() {
+  const location = useLocation()
+  const current = NAV_ITEMS.find((item) => item.match.test(location.pathname))
+
+  return (
+    <header className="safe-top relative flex shrink-0 items-center justify-between gap-3 bg-gradient-to-r from-[var(--color-brand-dark)] via-[var(--color-brand)] to-[var(--color-brand-dark)] px-4 py-2.5 text-white">
+      {/* Recorte próprio para a marca d'água não vazar, sem cortar o menu de conta abaixo */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <AccordionArt className="absolute -top-10 right-6 h-24 w-auto rotate-[15deg] opacity-20" />
+      </div>
+      <span className="relative truncate text-sm font-semibold tracking-wide">
+        {current?.label ?? 'Caderno de Sanfona'}
+      </span>
+      <div className="relative shrink-0">
+        <Suspense fallback={<div className="h-8 w-8" />}>
+          <AccountMenu />
+        </Suspense>
+      </div>
+    </header>
   )
 }
 

@@ -43,3 +43,24 @@ body {
   min-height: 44px;
   min-width: 44px;
 }
+
+/* "Respiração" do fole da sanfona ilustrada (tela de login) */
+@keyframes accordion-breathe {
+  0%,
+  100% {
+    transform: scaleX(1);
+  }
+  50% {
+    transform: scaleX(0.91);
+  }
+}
+.accordion-breathe {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: accordion-breathe 2.8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .accordion-breathe {
+    animation: none;
+  }
+}

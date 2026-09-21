@@ -29,6 +29,7 @@ function LoginScreen() {
   const [mode, setMode] = useState<Mode>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [signedUp, setSignedUp] = useState(false)
@@ -63,9 +64,10 @@ function LoginScreen() {
       <AccordionArt className="pointer-events-none absolute -bottom-16 -right-24 h-[34rem] w-auto rotate-[8deg] opacity-[0.16] mix-blend-luminosity sm:opacity-20" />
       <div className="pointer-events-none absolute -bottom-10 -right-10 h-72 w-72 rounded-full bg-[var(--color-gold)] opacity-[0.12] blur-3xl" />
 
-      <div className="relative z-10 w-full max-w-sm">
+      <div className="relative z-10 flex w-full max-w-sm flex-col items-center">
         <div className="mb-6 flex flex-col items-center text-center">
-          <AccordionArt className="h-24 w-auto drop-shadow-lg" />
+          {/* Ilustração em destaque, com o fole "respirando" como se estivesse tocando */}
+          <AccordionArt animated className="h-32 w-auto drop-shadow-2xl sm:h-36" />
           <h1 className="mt-3 text-2xl font-bold text-white">Caderno de Sanfona</h1>
           <p className="mt-1 text-sm text-white/70">
             Seu caderno pessoal de letras, cifras e repertórios
@@ -118,15 +120,36 @@ function LoginScreen() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
                 />
-                <input
-                  type="password"
-                  required
-                  minLength={6}
-                  placeholder="Senha (mínimo 6 caracteres)"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    minLength={6}
+                    placeholder="Senha (mínimo 6 caracteres)"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="tap-target w-full rounded-md border border-slate-300 px-3 py-2 pr-10 text-sm dark:border-slate-700 dark:bg-slate-800"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                    className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  >
+                    {showPassword ? (
+                      <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M2 10s3-5.5 8-5.5S18 10 18 10s-3 5.5-8 5.5S2 10 2 10z" strokeLinecap="round" strokeLinejoin="round" />
+                        <circle cx="10" cy="10" r="2.25" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    ) : (
+                      <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M2 10s3-5.5 8-5.5S18 10 18 10s-3 5.5-8 5.5S2 10 2 10z" strokeLinecap="round" strokeLinejoin="round" />
+                        <circle cx="10" cy="10" r="2.25" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M3 3l14 14" strokeLinecap="round" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
                 <button
                   type="submit"
                   disabled={busy}
@@ -139,6 +162,8 @@ function LoginScreen() {
             </>
           )}
         </div>
+
+        <p className="mt-5 text-[10px] text-white/40">versão {__APP_VERSION__}</p>
       </div>
     </div>
   )
