@@ -2,6 +2,7 @@ import { db } from './db'
 import type { ChordData, Song } from '@/types'
 import { buildChordData, stripChords, transposeChordProSource } from '@/utils/chordpro'
 import { semitonesBetweenKeys } from '@/utils/chords'
+import { queueSyncChange } from './syncQueue'
 
 function newId(): string {
   return crypto.randomUUID()
@@ -42,6 +43,7 @@ export async function createSong(input: CreateSongInput): Promise<Song> {
     updatedAt: now,
   }
   await db.songs.add(song)
+  queueSyncChange('songs', song.id)
   return song
 }
 
@@ -67,6 +69,7 @@ export function parseTagsInput(raw: string): string[] {
 
 export async function updateSong(id: string, changes: Partial<Song>): Promise<void> {
   await db.songs.update(id, { ...changes, updatedAt: new Date().toISOString() })
+  queueSyncChange('songs', id)
 }
 
 export async function deleteSong(id: string): Promise<void> {
@@ -127,5 +130,7 @@ export async function registerPractice(id: string): Promise<void> {
   await db.songs.update(id, {
     timesPlayed: song.timesPlayed + 1,
     lastPracticedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   })
+  queueSyncChange('songs', id)
 }

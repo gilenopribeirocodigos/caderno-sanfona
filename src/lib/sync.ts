@@ -1,5 +1,11 @@
 import { supabase } from './supabaseClient'
 import { db, LOCAL_USER_ID } from './db'
+import {
+  getPendingChanges,
+  pendingKey,
+  removePendingChange,
+  type SyncTable,
+} from './syncQueue'
 import type {
   AppSettings,
   Notebook,
@@ -153,13 +159,121 @@ function settingsFromRemote(r: any): AppSettings {
 // duplicados. Uma segunda chamada, nesse caso, só espera a primeira acabar.
 let inFlightSync: Promise<void> | null = null
 const SYNC_TIMEOUT_MS = 25_000
+const SYNC_ERROR_KEY = 'lastSyncError'
+
+let backgroundSyncTimer: ReturnType<typeof setTimeout> | null = null
+
+function reportSyncError(error: unknown): void {
+  const message = error instanceof Error ? error.message : 'Erro ao sincronizar'
+  localStorage.setItem(SYNC_ERROR_KEY, message)
+  window.dispatchEvent(new CustomEvent('caderno-sync-error', { detail: message }))
+}
+
+function scheduleBackgroundSync(delay = 500): void {
+  if (backgroundSyncTimer) clearTimeout(backgroundSyncTimer)
+  backgroundSyncTimer = setTimeout(async () => {
+    backgroundSyncTimer = null
+    if (!supabase || !navigator.onLine) return
+    const { data, error } = await supabase.auth.getSession()
+    if (error || !data.session?.user) return
+    syncNow(data.session.user.id).catch(reportSyncError)
+  }, delay)
+}
+
+async function pushPendingChanges(userId: string): Promise<void> {
+  const pending = getPendingChanges()
+  if (pending.length === 0 || !supabase) return
+
+  const order: Record<SyncTable, number> = {
+    songs: 0,
+    notebooks: 1,
+    notebookSongs: 2,
+    songVersions: 3,
+    practiceHistory: 4,
+    settings: 5,
+  }
+
+  for (const change of [...pending].sort((a, b) => order[a.table] - order[b.table])) {
+    let error: { message: string } | null = null
+
+    switch (change.table) {
+      case 'songs': {
+        const value = await db.songs.get(change.id)
+        if (value) ({ error } = await supabase.from('songs').upsert(songToRemote(value, userId)))
+        break
+      }
+      case 'notebooks': {
+        const value = await db.notebooks.get(change.id)
+        if (value) ({ error } = await supabase.from('notebooks').upsert(notebookToRemote(value, userId)))
+        break
+      }
+      case 'notebookSongs': {
+        const value = await db.notebookSongs.get(change.id)
+        if (value) ({ error } = await supabase.from('notebook_songs').upsert(notebookSongToRemote(value, userId)))
+        break
+      }
+      case 'songVersions': {
+        const value = await db.songVersions.get(change.id)
+        if (value) ({ error } = await supabase.from('song_versions').upsert(songVersionToRemote(value, userId)))
+        break
+      }
+      case 'practiceHistory': {
+        const value = await db.practiceHistory.get(change.id)
+        if (value) ({ error } = await supabase.from('practice_history').upsert(practiceToRemote(value, userId)))
+        break
+      }
+      case 'settings': {
+        const value = await db.settings.get(LOCAL_USER_ID)
+        if (value) ({ error } = await supabase.from('settings').upsert(settingsToRemote(value, userId)))
+        break
+      }
+    }
+
+    if (error) throw new Error(`${change.table}: ${error.message}`)
+    removePendingChange(change)
+  }
+}
 
 export function syncNow(userId: string): Promise<void> {
   if (inFlightSync) return inFlightSync
-  inFlightSync = runSync(userId).finally(() => {
-    inFlightSync = null
-  })
+  inFlightSync = pushPendingChanges(userId)
+    .then(() => runSync(userId))
+    .then(() => {
+      const now = new Date().toLocaleString('pt-BR')
+      localStorage.setItem('lastSync', now)
+      localStorage.removeItem(SYNC_ERROR_KEY)
+      window.dispatchEvent(new CustomEvent('caderno-sync-success', { detail: now }))
+    })
+    .finally(() => {
+      inFlightSync = null
+      if (getPendingChanges().length > 0) scheduleBackgroundSync(0)
+    })
   return inFlightSync
+}
+
+/** Mantém aparelhos abertos atualizados e sincroniza ao voltar ao app. */
+export function startAutoSync(userId: string): () => void {
+  const run = () => {
+    if (document.visibilityState === 'visible' && navigator.onLine) {
+      syncNow(userId).catch(reportSyncError)
+    }
+  }
+  const interval = window.setInterval(run, 20_000)
+  const onVisibilityChange = () => run()
+  const onSyncRequested = () => scheduleBackgroundSync()
+  window.addEventListener('focus', run)
+  window.addEventListener('online', run)
+  window.addEventListener('caderno-sync-requested', onSyncRequested)
+  document.addEventListener('visibilitychange', onVisibilityChange)
+  run()
+
+  return () => {
+    window.clearInterval(interval)
+    window.removeEventListener('focus', run)
+    window.removeEventListener('online', run)
+    window.removeEventListener('caderno-sync-requested', onSyncRequested)
+    document.removeEventListener('visibilitychange', onVisibilityChange)
+  }
 }
 
 async function runSync(userId: string): Promise<void> {
@@ -220,7 +334,18 @@ async function performSync(userId: string): Promise<void> {
     'rw',
     [db.songs, db.notebooks, db.notebookSongs, db.songVersions, db.practiceHistory],
     async () => {
-      if (remoteSongs.data) await db.songs.bulkPut(remoteSongs.data.map(songFromRemote))
+      if (remoteSongs.data) {
+        const pending = new Set(getPendingChanges().map(pendingKey))
+        const localSongs = new Map((await db.songs.toArray()).map((song) => [song.id, song]))
+        const incoming = remoteSongs.data
+          .map(songFromRemote)
+          .filter((remote) => {
+            if (pending.has(`songs:${remote.id}`)) return false
+            const local = localSongs.get(remote.id)
+            return !local || Date.parse(remote.updatedAt) >= Date.parse(local.updatedAt)
+          })
+        if (incoming.length > 0) await db.songs.bulkPut(incoming)
+      }
       if (remoteNotebooks.data) await db.notebooks.bulkPut(remoteNotebooks.data.map(notebookFromRemote))
       if (remoteNotebookSongs.data)
         await db.notebookSongs.bulkPut(remoteNotebookSongs.data.map(notebookSongFromRemote))
@@ -228,7 +353,10 @@ async function performSync(userId: string): Promise<void> {
       if (remotePractice.data) await db.practiceHistory.bulkPut(remotePractice.data.map(practiceFromRemote))
     },
   )
-  if (remoteSettings.data) await db.settings.put(settingsFromRemote(remoteSettings.data))
+  const pendingAfterPull = new Set(getPendingChanges().map(pendingKey))
+  if (remoteSettings.data && !pendingAfterPull.has(`settings:${LOCAL_USER_ID}`)) {
+    await db.settings.put(settingsFromRemote(remoteSettings.data))
+  }
 
   // 2) Só agora lê o estado local (já com o que veio da nuvem, mais
   // qualquer edição feita nesse meio tempo) e envia pra nuvem — assim uma

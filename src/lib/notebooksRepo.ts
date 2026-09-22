@@ -1,5 +1,6 @@
 import { db } from './db'
 import type { Notebook } from '@/types'
+import { queueSyncChange } from './syncQueue'
 
 function newId(): string {
   return crypto.randomUUID()
@@ -13,11 +14,13 @@ export async function createNotebook(name: string, description?: string): Promis
     createdAt: new Date().toISOString(),
   }
   await db.notebooks.add(notebook)
+  queueSyncChange('notebooks', notebook.id)
   return notebook
 }
 
 export async function renameNotebook(id: string, name: string): Promise<void> {
   await db.notebooks.update(id, { name: name.trim() })
+  queueSyncChange('notebooks', id)
 }
 
 export async function deleteNotebook(id: string): Promise<void> {
@@ -44,12 +47,14 @@ export async function addSongToNotebook(notebookId: string, songId: string): Pro
 
   const entries = await db.notebookSongs.where('notebookId').equals(notebookId).toArray()
   const nextPosition = entries.length > 0 ? Math.max(...entries.map((e) => e.position)) + 1 : 0
-  await db.notebookSongs.add({
+  const entry = {
     id: crypto.randomUUID(),
     notebookId,
     songId,
     position: nextPosition,
-  })
+  }
+  await db.notebookSongs.add(entry)
+  queueSyncChange('notebookSongs', entry.id)
 }
 
 export async function removeSongFromNotebook(entryId: string): Promise<void> {
@@ -79,4 +84,6 @@ export async function moveSongInNotebook(
     await db.notebookSongs.update(a.id, { position: b.position })
     await db.notebookSongs.update(b.id, { position: a.position })
   })
+  queueSyncChange('notebookSongs', a.id)
+  queueSyncChange('notebookSongs', b.id)
 }

@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { isCloudEnabled } from '@/lib/supabaseClient'
 import { signIn, signUp, useAuthUser } from '@/lib/auth'
-import { syncNow } from '@/lib/sync'
+import { startAutoSync } from '@/lib/sync'
 import AccordionArt from './AccordionArt'
 import SplashScreen from './SplashScreen'
 
@@ -16,23 +16,13 @@ type Mode = 'signin' | 'signup'
  */
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuthUser()
-  const syncedFor = useRef<string | null>(null)
 
-  // Sincroniza sozinho ao abrir o app logado (uma vez por sessão), em vez
-  // de depender de alguém lembrar de tocar em "Sincronizar agora" nos dois
-  // aparelhos — é isso que fazia uma música criada no PC nunca aparecer
-  // sozinha no celular. Espera alguns segundos antes de começar, de
-  // propósito: assim não compete com os primeiros toques da pessoa (ex:
-  // mudar um ajuste em Configurações) logo que o app abre. Roda em
-  // segundo plano, sem travar a tela; o botão manual em Configurações
-  // continua ali para forçar uma atualização na hora.
+  // Sincroniza ao entrar, ao voltar para o app e periodicamente enquanto
+  // ele está aberto. Assim uma música criada em um aparelho aparece no
+  // outro sem precisar sair da conta ou apertar o botão manual.
   useEffect(() => {
-    if (!user || syncedFor.current === user.id) return
-    syncedFor.current = user.id
-    const timeout = setTimeout(() => {
-      syncNow(user.id).catch(() => {})
-    }, 3000)
-    return () => clearTimeout(timeout)
+    if (!user) return
+    return startAutoSync(user.id)
   }, [user])
 
   // Nuvem não configurada (ex: rodando local sem as variáveis de
