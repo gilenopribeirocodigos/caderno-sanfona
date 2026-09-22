@@ -25,6 +25,12 @@ export async function deleteNotebook(id: string): Promise<void> {
     await db.notebooks.delete(id)
     await db.notebookSongs.where('notebookId').equals(id).delete()
   })
+
+  // Apaga na nuvem também (se configurada) — ver comentário equivalente
+  // em songsRepo.ts/deleteSong.
+  import('./sync')
+    .then((m) => m.deleteRemoteNotebook(id))
+    .catch(() => {})
 }
 
 /** Adiciona uma música ao final do caderno (item 5-6), sem duplicar. */
@@ -48,6 +54,10 @@ export async function addSongToNotebook(notebookId: string, songId: string): Pro
 
 export async function removeSongFromNotebook(entryId: string): Promise<void> {
   await db.notebookSongs.delete(entryId)
+
+  import('./sync')
+    .then((m) => m.deleteRemoteNotebookSong(entryId))
+    .catch(() => {})
 }
 
 /** Reordena a música pressionada uma posição para cima/baixo (item 6, "Modo Organizar"). */

@@ -267,3 +267,23 @@ async function performSync(userId: string): Promise<void> {
     if (error) throw error
   }
 }
+
+// Apagar não era enviado pra nuvem antes — só criar/editar (upsert). Por
+// isso excluir uma música no aparelho, e depois sincronizar, trazia ela de
+// volta (ainda existia na nuvem). Estas funções são chamadas direto na
+// hora de excluir (ver songsRepo/notebooksRepo), então a nuvem já fica
+// correta antes mesmo da próxima sincronização completa.
+export async function deleteRemoteSong(id: string): Promise<void> {
+  if (!supabase) return
+  await supabase.from('songs').delete().eq('id', id)
+}
+
+export async function deleteRemoteNotebook(id: string): Promise<void> {
+  if (!supabase) return
+  await supabase.from('notebooks').delete().eq('id', id)
+}
+
+export async function deleteRemoteNotebookSong(id: string): Promise<void> {
+  if (!supabase) return
+  await supabase.from('notebook_songs').delete().eq('id', id)
+}

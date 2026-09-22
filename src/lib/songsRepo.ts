@@ -76,6 +76,14 @@ export async function deleteSong(id: string): Promise<void> {
     await db.songVersions.where('songId').equals(id).delete()
     await db.practiceHistory.where('songId').equals(id).delete()
   })
+
+  // Apaga na nuvem também (se configurada), sem esperar a próxima
+  // sincronização geral — senão a música voltava sozinha ao sincronizar,
+  // porque ainda existia lá. Carregado sob demanda para não pesar o app
+  // pra quem não usa nuvem.
+  import('./sync')
+    .then((m) => m.deleteRemoteSong(id))
+    .catch(() => {})
 }
 
 export async function toggleFavorite(id: string, favorite: boolean): Promise<void> {
