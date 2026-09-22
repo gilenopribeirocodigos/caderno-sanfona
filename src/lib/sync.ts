@@ -145,7 +145,42 @@ function settingsFromRemote(r: any): AppSettings {
   }
 }
 
-export async function syncNow(userId: string): Promise<void> {
+// Garante que nunca existam duas sincronizações rodando ao mesmo tempo —
+// por exemplo, a automática (ao abrir o app) e um toque em "Sincronizar
+// agora" logo em seguida. Sem isso, duas idas e voltas concorrentes podiam
+// se atropelar (uma lia o banco local enquanto a outra ainda estava
+// escrevendo nele), o que explica tanto travamentos quanto dados
+// duplicados. Uma segunda chamada, nesse caso, só espera a primeira acabar.
+let inFlightSync: Promise<void> | null = null
+const SYNC_TIMEOUT_MS = 25_000
+
+export function syncNow(userId: string): Promise<void> {
+  if (inFlightSync) return inFlightSync
+  inFlightSync = runSync(userId).finally(() => {
+    inFlightSync = null
+  })
+  return inFlightSync
+}
+
+async function runSync(userId: string): Promise<void> {
+  // Nunca deixa girar para sempre numa conexão ruim (item do celular
+  // "travando"): depois de um tempo razoável, desiste com um erro claro
+  // em vez de deixar o botão preso em "Sincronizando..." por horas.
+  let timeoutId: ReturnType<typeof setTimeout>
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(
+      () => reject(new Error('Sincronização demorou demais — verifique sua internet e tente de novo.')),
+      SYNC_TIMEOUT_MS,
+    )
+  })
+  try {
+    await Promise.race([performSync(userId), timeout])
+  } finally {
+    clearTimeout(timeoutId!)
+  }
+}
+
+async function performSync(userId: string): Promise<void> {
   if (!supabase) throw new Error('Nuvem não configurada')
 
   // 1) Traz primeiro o estado atual da nuvem (o que veio de outros
