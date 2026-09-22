@@ -8,6 +8,7 @@ import { useSettings } from '@/lib/useSettings'
 import { firstChord, uniqueChordsInSong } from '@/utils/chordpro'
 import ChordSheet from '@/components/ChordSheet'
 import AccordionVisualPanel from '@/components/AccordionVisualPanel'
+import BatuqueControl from '@/components/BatuqueControl'
 import type { NotebookSong } from '@/types'
 
 const SPEED_PRESETS = [
@@ -79,6 +80,7 @@ export default function Play() {
 
   const [controlsVisible, setControlsVisible] = useState(true)
   const [showVisual, setShowVisual] = useState(false)
+  const [showBatuque, setShowBatuque] = useState(false)
   const [activeChord, setActiveChord] = useState<string | undefined>()
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [scrolling, setScrolling] = useState(false)
@@ -297,6 +299,14 @@ export default function Play() {
               Sanfona visual
             </button>
             <button
+              className={`tap-target rounded-md border px-2 py-1 text-xs ${
+                showBatuque ? 'border-slate-900 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border-slate-300 dark:border-slate-700'
+              }`}
+              onClick={() => setShowBatuque((v) => !v)}
+            >
+              🥁 Batuque
+            </button>
+            <button
               className="tap-target rounded-md border border-slate-300 px-2 py-1 text-xs dark:border-slate-700"
               onClick={() => setControlsVisible(false)}
               title="Esconde os botões para tocar sem distração (toque em ⋮ Controles para trazê-los de volta)"
@@ -320,6 +330,10 @@ export default function Play() {
           onChordTap={setActiveChord}
         />
       </div>
+
+      {showBatuque && (
+        <BatuqueControl key={currentSongId} songRhythm={song.rhythm} songBpm={song.bpm} />
+      )}
 
       {showVisual && (
         <div className="border-t border-slate-200 p-2 dark:border-slate-800">
