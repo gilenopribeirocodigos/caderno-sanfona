@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Link, Outlet, useLocation } from 'react-router-dom'
 import AccordionArt from './AccordionArt'
 
 // Carregado sob demanda: depende do SDK do Supabase, só baixado quando a
@@ -20,6 +20,8 @@ const NAV_ITEMS = [
  * o sanfoneiro segura o aparelho com pouca liberdade de toque.
  */
 export default function AppShell() {
+  const location = useLocation()
+
   return (
     <div className="flex h-full flex-col md:flex-row">
       <aside className="safe-top relative hidden shrink-0 overflow-hidden border-r border-slate-200 bg-surface px-3 py-4 dark:border-slate-800 md:flex md:w-56 md:flex-col md:gap-1">
@@ -29,22 +31,25 @@ export default function AppShell() {
           <AccordionArt className="h-7 w-auto shrink-0" />
           <h1 className="text-base font-semibold leading-tight">Caderno de Sanfona</h1>
         </div>
-        {NAV_ITEMS.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.end}
-            className={({ isActive }) =>
-              `tap-target relative flex items-center rounded-lg px-3 py-2 text-sm font-medium ${
+        {NAV_ITEMS.map((item) => {
+          // Usa o mesmo regex da barra superior para decidir o item ativo
+          // (em vez do comparador padrão do NavLink, que só reconhecia
+          // "/editor/novo" exatamente — não "/editor/<id da música>").
+          const isActive = item.match.test(location.pathname)
+          return (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={`tap-target relative flex items-center rounded-lg px-3 py-2 text-sm font-medium ${
                 isActive
                   ? 'bg-[var(--color-brand)] text-white'
                   : 'text-slate-600 hover:bg-surface-alt dark:text-slate-300'
-              }`
-            }
-          >
-            {item.label}
-          </NavLink>
-        ))}
+              }`}
+            >
+              {item.label}
+            </Link>
+          )
+        })}
         <VersionTag className="relative mt-auto px-2 pt-4" />
       </aside>
 
@@ -64,22 +69,22 @@ export default function AppShell() {
 
       <nav className="safe-bottom flex shrink-0 flex-col border-t border-slate-200 bg-surface dark:border-slate-800 md:hidden">
         <div className="flex gap-1 px-1 pt-1">
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) =>
-                `tap-target flex flex-1 flex-col items-center justify-center rounded-lg py-1.5 text-xs font-medium transition-colors ${
+          {NAV_ITEMS.map((item) => {
+            const isActive = item.match.test(location.pathname)
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`tap-target flex flex-1 flex-col items-center justify-center rounded-lg py-1.5 text-xs font-medium transition-colors ${
                   isActive
                     ? 'bg-[var(--color-brand)] text-white'
                     : 'text-slate-500 dark:text-slate-400'
-                }`
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
+                }`}
+              >
+                {item.label}
+              </Link>
+            )
+          })}
         </div>
         <VersionTag className="pb-1 text-center" />
       </nav>

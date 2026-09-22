@@ -210,9 +210,15 @@ async function performSync(userId: string): Promise<void> {
     if (res.error) throw new Error(`${label}: ${res.error.message}`)
   }
 
+  // "settings" fica de fora dessa transação de propósito: é a tabela que
+  // a tela de Configurações usa toda hora, e uma transação grande (com
+  // músicas, cadernos etc.) pode demorar mais em aparelhos mais fracos —
+  // prender "settings" nela deixava os botões de Configurações lentos
+  // até a sincronização inteira terminar. Separada, o registro de
+  // configurações é gravado sozinho, quase instantâneo.
   await db.transaction(
     'rw',
-    [db.songs, db.notebooks, db.notebookSongs, db.songVersions, db.practiceHistory, db.settings],
+    [db.songs, db.notebooks, db.notebookSongs, db.songVersions, db.practiceHistory],
     async () => {
       if (remoteSongs.data) await db.songs.bulkPut(remoteSongs.data.map(songFromRemote))
       if (remoteNotebooks.data) await db.notebooks.bulkPut(remoteNotebooks.data.map(notebookFromRemote))
@@ -220,9 +226,9 @@ async function performSync(userId: string): Promise<void> {
         await db.notebookSongs.bulkPut(remoteNotebookSongs.data.map(notebookSongFromRemote))
       if (remoteVersions.data) await db.songVersions.bulkPut(remoteVersions.data.map(songVersionFromRemote))
       if (remotePractice.data) await db.practiceHistory.bulkPut(remotePractice.data.map(practiceFromRemote))
-      if (remoteSettings.data) await db.settings.put(settingsFromRemote(remoteSettings.data))
     },
   )
+  if (remoteSettings.data) await db.settings.put(settingsFromRemote(remoteSettings.data))
 
   // 2) Só agora lê o estado local (já com o que veio da nuvem, mais
   // qualquer edição feita nesse meio tempo) e envia pra nuvem — assim uma
