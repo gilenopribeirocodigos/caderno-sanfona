@@ -7,7 +7,9 @@ interface NoteBuilderKeyboardProps {
   onToggleNote: (note: string) => void
 }
 
-const WHITE_SEQUENCE = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
+// O teclado é desenhado de cima para baixo. No instrumento, as notas sobem
+// de baixo para cima: Dó, Ré, Mi, Fá, Sol, Lá, Si.
+const WHITE_SEQUENCE_TOP_TO_BOTTOM = ['B', 'A', 'G', 'F', 'E', 'D', 'C']
 // Sustenidos existentes após cada nota branca (nenhum entre E-F e B-C).
 const SHARP_AFTER: Record<string, string | null> = {
   C: 'C#', D: 'D#', E: null, F: 'F#', G: 'G#', A: 'A#', B: null,
@@ -28,14 +30,15 @@ const CORNER = 8
  * conhecido (ver `chordFromNotes`).
  */
 export default function NoteBuilderKeyboard({ selectedNotes, notation, onToggleNote }: NoteBuilderKeyboardProps) {
-  const whiteKeys = WHITE_SEQUENCE
+  const whiteKeys = WHITE_SEQUENCE_TOP_TO_BOTTOM
   const height = whiteKeys.length * WHITE_KEY_H
   const width = WHITE_KEY_W + 8
 
   const blackKeys: { note: string; y: number }[] = []
-  whiteKeys.forEach((note, i) => {
-    const sharp = SHARP_AFTER[note]
-    if (sharp && i < whiteKeys.length - 1) {
+  whiteKeys.forEach((_note, i) => {
+    const lowerWhiteKey = whiteKeys[i + 1]
+    const sharp = lowerWhiteKey ? SHARP_AFTER[lowerWhiteKey] : null
+    if (sharp) {
       blackKeys.push({ note: sharp, y: (i + 1) * WHITE_KEY_H - BLACK_KEY_H / 2 })
     }
   })
