@@ -87,7 +87,7 @@ export default function BassDiagram({
                   const owner = cellOwner.get(`${rowIndex}-${noteIndex}`)
                   const color = owner ? colorByChord.get(owner) : undefined
                   const isActive = owner === activeChord
-                  const canClick = interactive && col !== 'Baixo' && onSelectChord
+                  const canClick = interactive && !['Contra', 'Baixo'].includes(col) && onSelectChord
                   return (
                     <button
                       key={`${note}-${noteIndex}`}
