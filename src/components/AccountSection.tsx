@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { isCloudEnabled } from '@/lib/supabaseClient'
 import { useAuthUser } from '@/lib/auth'
 import { syncNow } from '@/lib/sync'
@@ -9,9 +9,23 @@ import { syncNow } from '@/lib/sync'
  */
 export default function AccountSection() {
   const { user } = useAuthUser()
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(() => localStorage.getItem('lastSyncError'))
   const [busy, setBusy] = useState(false)
   const [lastSync, setLastSync] = useState<string | null>(() => localStorage.getItem('lastSync'))
+
+  useEffect(() => {
+    const onError = (event: Event) => setError((event as CustomEvent<string>).detail)
+    const onSuccess = (event: Event) => {
+      setError(null)
+      setLastSync((event as CustomEvent<string>).detail)
+    }
+    window.addEventListener('caderno-sync-error', onError)
+    window.addEventListener('caderno-sync-success', onSuccess)
+    return () => {
+      window.removeEventListener('caderno-sync-error', onError)
+      window.removeEventListener('caderno-sync-success', onSuccess)
+    }
+  }, [])
 
   if (!isCloudEnabled || !user) {
     return (
