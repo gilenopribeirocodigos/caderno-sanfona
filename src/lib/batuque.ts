@@ -1,8 +1,31 @@
 import zabumbaBassUrl from '@/assets/sounds/zabumba-bass.mp3'
 import zabumbaSlapUrl from '@/assets/sounds/zabumba-slap.mp3'
 import trianguloUrl from '@/assets/sounds/triangulo.mp3'
+import kickUrl from '@/assets/sounds/kick.wav'
+import snareUrl from '@/assets/sounds/snare.wav'
+import hihatUrl from '@/assets/sounds/hihat.wav'
 
-export type BatuqueInstrument = 'zabumbaBass' | 'zabumbaSlap' | 'triangulo'
+export type BatuqueInstrument = 'zabumbaBass' | 'zabumbaSlap' | 'triangulo' | 'kick' | 'snare' | 'hihat'
+
+// Os seis instrumentos se agrupam em três "trilhas" que a pessoa liga e
+// desliga por conta própria — igual ao eBatuque, onde dá pra tocar só com
+// triângulo, só com zabumba, só com bateria, ou com a combinação que quiser.
+export type InstrumentGroup = 'triangulo' | 'zabumba' | 'bateria'
+
+export const INSTRUMENT_GROUPS: { id: InstrumentGroup; label: string }[] = [
+  { id: 'triangulo', label: 'Triângulo' },
+  { id: 'zabumba', label: 'Zabumba' },
+  { id: 'bateria', label: 'Bateria' },
+]
+
+const INSTRUMENT_GROUP: Record<BatuqueInstrument, InstrumentGroup> = {
+  triangulo: 'triangulo',
+  zabumbaBass: 'zabumba',
+  zabumbaSlap: 'zabumba',
+  kick: 'bateria',
+  snare: 'bateria',
+  hihat: 'bateria',
+}
 
 export interface BatuquePattern {
   id: string
@@ -18,7 +41,14 @@ export interface BatuquePattern {
 // nordestino). Não são partituras oficiais — é o feijão-com-arroz de cada
 // ritmo, dá pra ajustar depois. A zabumba tem dois toques (grave, com a
 // baqueta grossa, e agudo/seco, com a fina) que se revezam; o triângulo
-// marca a subdivisão por cima.
+// marca a subdivisão por cima. A "bateria" segue o mesmo desenho rítmico
+// (bumbo com a zabumba grave, caixa no acento da zabumba aguda, chimbau
+// junto com o triângulo), para quem preferir esse timbre.
+const BAIAO_BASS = [true, false, false, false, true, false, false, false]
+const BAIAO_TRIANGULO = [true, true, true, true, true, true, true, true]
+const XOTE_BASS = [true, false, false, false, true, false, false, false]
+const XOTE_TRIANGULO = [true, false, true, false, true, false, true, false]
+
 export const BATUQUE_PATTERNS: BatuquePattern[] = [
   {
     id: 'baiao',
@@ -26,9 +56,12 @@ export const BATUQUE_PATTERNS: BatuquePattern[] = [
     stepsPerBar: 8,
     defaultBpm: 100,
     hits: {
-      zabumbaBass: [true, false, false, false, true, false, false, false],
+      zabumbaBass: BAIAO_BASS,
       zabumbaSlap: [false, false, true, false, false, true, false, true],
-      triangulo: [true, true, true, true, true, true, true, true],
+      triangulo: BAIAO_TRIANGULO,
+      kick: BAIAO_BASS,
+      snare: [false, false, false, false, false, false, false, true],
+      hihat: BAIAO_TRIANGULO,
     },
   },
   {
@@ -37,9 +70,12 @@ export const BATUQUE_PATTERNS: BatuquePattern[] = [
     stepsPerBar: 8,
     defaultBpm: 80,
     hits: {
-      zabumbaBass: [true, false, false, false, true, false, false, false],
+      zabumbaBass: XOTE_BASS,
       zabumbaSlap: [false, false, false, false, false, false, true, false],
-      triangulo: [true, false, true, false, true, false, true, false],
+      triangulo: XOTE_TRIANGULO,
+      kick: XOTE_BASS,
+      snare: [false, false, false, false, false, false, true, false],
+      hihat: XOTE_TRIANGULO,
     },
   },
 ]
@@ -53,6 +89,9 @@ const SAMPLE_URLS: Record<BatuqueInstrument, string> = {
   zabumbaBass: zabumbaBassUrl,
   zabumbaSlap: zabumbaSlapUrl,
   triangulo: trianguloUrl,
+  kick: kickUrl,
+  snare: snareUrl,
+  hihat: hihatUrl,
 }
 
 // Agenda os toques com antecedência (lookahead) em vez de tocar cada som
@@ -72,16 +111,24 @@ export class BatuqueEngine {
   private currentStep = 0
   private pattern: BatuquePattern = BATUQUE_PATTERNS[0]
   private bpm = 100
+  private enabledGroups: Set<InstrumentGroup> = new Set(['triangulo', 'zabumba'])
   private onStep?: (step: number) => void
 
   get isPlaying(): boolean {
     return this.timerId !== null
   }
 
-  async start(pattern: BatuquePattern, bpm: number, volume: number, onStep?: (step: number) => void): Promise<void> {
+  async start(
+    pattern: BatuquePattern,
+    bpm: number,
+    volume: number,
+    enabledGroups: Set<InstrumentGroup>,
+    onStep?: (step: number) => void,
+  ): Promise<void> {
     this.stop()
     this.pattern = pattern
     this.bpm = bpm
+    this.enabledGroups = enabledGroups
     this.onStep = onStep
 
     if (!this.ctx) this.ctx = new AudioContext()
@@ -107,6 +154,10 @@ export class BatuqueEngine {
 
   setPattern(pattern: BatuquePattern): void {
     this.pattern = pattern
+  }
+
+  setEnabledGroups(groups: Set<InstrumentGroup>): void {
+    this.enabledGroups = groups
   }
 
   stop(): void {
@@ -147,6 +198,7 @@ export class BatuqueEngine {
 
   private scheduleStep(step: number, time: number): void {
     for (const instrument of Object.keys(this.pattern.hits) as BatuqueInstrument[]) {
+      if (!this.enabledGroups.has(INSTRUMENT_GROUP[instrument])) continue
       if (!this.pattern.hits[instrument][step]) continue
       const buffer = this.buffers[instrument]
       if (!buffer || !this.ctx || !this.gain) continue

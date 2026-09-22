@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { BATUQUE_PATTERNS, BatuqueEngine, patternForRhythm } from '@/lib/batuque'
+import {
+  BATUQUE_PATTERNS,
+  BatuqueEngine,
+  INSTRUMENT_GROUPS,
+  patternForRhythm,
+  type InstrumentGroup,
+} from '@/lib/batuque'
 
 interface BatuqueControlProps {
   /** Ritmo e BPM da música, usados só para já vir com o padrão certo marcado. */
@@ -7,12 +13,13 @@ interface BatuqueControlProps {
   songBpm?: number
 }
 
-/** Metrônomo + Batuque (item 76): toca zabumba e triângulo no ritmo escolhido, junto com o Modo Tocar. */
+/** Metrônomo + Batuque (item 76): toca zabumba, triângulo e/ou bateria no ritmo escolhido, junto com o Modo Tocar. */
 export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlProps) {
   const [patternId, setPatternId] = useState(() => patternForRhythm(songRhythm).id)
   const pattern = BATUQUE_PATTERNS.find((p) => p.id === patternId) ?? BATUQUE_PATTERNS[0]
   const [bpm, setBpm] = useState(songBpm ?? pattern.defaultBpm)
   const [volume, setVolume] = useState(0.8)
+  const [groups, setGroups] = useState<Set<InstrumentGroup>>(new Set(['triangulo', 'zabumba']))
   const [playing, setPlaying] = useState(false)
   const [beat, setBeat] = useState(0)
   const engineRef = useRef<BatuqueEngine>()
@@ -36,15 +43,29 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [patternId])
 
+  useEffect(() => {
+    engineRef.current?.setEnabledGroups(groups)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groups])
+
   async function toggle() {
     const engine = engineRef.current!
     if (playing) {
       engine.stop()
       setPlaying(false)
     } else {
-      await engine.start(pattern, bpm, volume, setBeat)
+      await engine.start(pattern, bpm, volume, groups, setBeat)
       setPlaying(true)
     }
+  }
+
+  function toggleGroup(id: InstrumentGroup) {
+    setGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
 
   return (
@@ -103,6 +124,24 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
           style={{ opacity: beat % (pattern.stepsPerBar / 2) === 0 ? 1 : 0.25 }}
         />
       )}
+
+      {/* Cada instrumento liga/desliga por conta própria, igual ao
+          eBatuque — dá pra tocar só com um, ou combinar os três. */}
+      <div className="flex w-full gap-1">
+        {INSTRUMENT_GROUPS.map((g) => (
+          <button
+            key={g.id}
+            className={`tap-target flex-1 rounded-md border px-2 py-1 ${
+              groups.has(g.id)
+                ? 'border-[var(--color-brand)] bg-[var(--color-brand)] text-white'
+                : 'border-slate-300 text-slate-500 dark:border-slate-700 dark:text-slate-400'
+            }`}
+            onClick={() => toggleGroup(g.id)}
+          >
+            {g.label}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
