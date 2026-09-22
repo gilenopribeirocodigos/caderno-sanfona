@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import AccordionArt from './AccordionArt'
 
@@ -21,6 +21,26 @@ const NAV_ITEMS = [
  */
 export default function AppShell() {
   const location = useLocation()
+
+  // Em tela cheia (Modo Tocar), some com toda a "casca" do app — barra
+  // lateral, topo e navegação inferior — mesmo se o celular virar para
+  // paisagem e a largura "enganar" o layout achando que é um desktop.
+  // Tela cheia de verdade deve ocupar a tela inteira, só com os próprios
+  // controles da música por cima.
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  useEffect(() => {
+    const handler = () => setIsFullscreen(Boolean(document.fullscreenElement))
+    document.addEventListener('fullscreenchange', handler)
+    return () => document.removeEventListener('fullscreenchange', handler)
+  }, [])
+
+  if (isFullscreen) {
+    return (
+      <div className="h-full bg-surface-alt">
+        <Outlet />
+      </div>
+    )
+  }
 
   return (
     <div className="flex h-full flex-col md:flex-row">
