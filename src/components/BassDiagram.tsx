@@ -14,17 +14,21 @@ interface BassDiagramProps {
   onSelectChord?: (chord: string) => void
 }
 
-// Colunas funcionais mostradas: "Contra" fica de fora (item auxiliar, sem
-// destaque próprio) para manter a grade limpa e focada no que é acionável.
-const VISIBLE_COLUMNS = ['Baixo', 'Maior', 'Menor', 'Sétima', 'Diminuto']
-const ROW_HEIGHT = 44
-const ROW_SHIFT = 16 // px de deslocamento por linha, para lembrar o layout diagonal real da sanfona
+const VISIBLE_COLUMNS = ['Contra', 'Baixo', 'Maior', 'Menor', 'Sétima', 'Diminuto']
+const COLUMN_LABELS: Record<string, string> = {
+  Contra: '3ª',
+  Baixo: 'B',
+  Maior: 'M',
+  Menor: 'm',
+  Sétima: '7',
+  Diminuto: '°',
+}
+const COLUMN_SHIFT = 6
 
 /**
- * Mapa dos baixos da mão esquerda (itens 55-67, 1123-1157): as notas descem
- * na tela (leitura vertical) e cada linha de botões é deslocada
- * diagonalmente da anterior, lembrando o layout físico real do instrumento.
- * Os nomes das notas ficam numa coluna fixa que nunca sai da tela.
+ * Mapa físico dos baixos da mão esquerda (itens 55-67, 1123-1157): cada
+ * coluna vertical representa uma fileira real do Stradella. O pequeno
+ * deslocamento entre colunas reproduz a diagonal dos botões do instrumento.
  *
  * Cada acorde da música ganha sua própria cor (mesma cor usada no teclado),
  * para diferenciar rapidamente qual botão pertence a qual acorde quando a
@@ -59,44 +63,39 @@ export default function BassDiagram({
   return (
     <div>
       <p className="mb-1 text-[10px] text-slate-400">
-        Ordem em cada botão: Baixo · Maior · Menor · Sétima{columns.includes('Diminuto') ? ' · Diminuto' : ''}
+        Fileiras: Contrabaixo · Fundamental · Maior · Menor · Sétima{columns.includes('Diminuto') ? ' · Diminuto' : ''}
       </p>
-      <div className="flex max-h-80 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700">
-        <div className="flex shrink-0 flex-col border-r border-slate-200 bg-surface dark:border-slate-700">
-          {notes.map((note) => (
-            <div
-              key={note}
-              style={{ height: ROW_HEIGHT }}
-              className="flex w-10 items-center justify-center border-b border-slate-100 text-xs font-semibold text-slate-500 dark:border-slate-800"
-            >
-              {formatChordForDisplay(note, notation)}
-            </div>
-          ))}
-        </div>
-
-        <div className="overflow-x-auto">
-          <div className="flex flex-col py-1">
-            {notes.map((note, noteIndex) => (
+      <div className="max-h-80 overflow-auto rounded-lg border border-slate-200 dark:border-slate-700">
+        <div className="min-w-max p-2">
+          <div className="mb-1 flex gap-1.5 text-center text-[9px] font-semibold text-slate-400">
+            {columns.map((col) => (
+              <div key={col} className="w-9" title={col === 'Contra' ? 'Contrabaixo (terça maior)' : col}>
+                {COLUMN_LABELS[col]}
+              </div>
+            ))}
+          </div>
+          <div className="flex items-start gap-1.5 pb-8">
+            {columns.map((col, columnIndex) => (
               <div
-                key={note}
-                style={{ height: ROW_HEIGHT, marginLeft: noteIndex * ROW_SHIFT }}
-                className="flex shrink-0 items-center gap-1.5 pr-4"
+                key={col}
+                style={{ paddingTop: columnIndex * COLUMN_SHIFT }}
+                className="flex w-9 shrink-0 flex-col gap-1.5"
               >
-                {columns.map((col) => {
+                {notes.map((note, noteIndex) => {
                   const chord = col === 'Baixo' ? note : chordLabelForRow(note, col)
                   const rowIndex = rowIndexByName.get(col)
                   const owner = cellOwner.get(`${rowIndex}-${noteIndex}`)
                   const color = owner ? colorByChord.get(owner) : undefined
                   const isActive = owner === activeChord
-                  const canClick = interactive && col !== 'Baixo' && onSelectChord
+                  const canClick = interactive && !['Contra', 'Baixo'].includes(col) && onSelectChord
                   return (
                     <button
-                      key={col}
+                      key={`${note}-${noteIndex}`}
                       type="button"
                       disabled={!canClick}
                       onClick={() => canClick && onSelectChord!(chord)}
                       title={`${col}: ${formatChordForDisplay(chord, notation)}${owner ? ` (acorde ${formatChordForDisplay(owner, notation)})` : ''}`}
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-bold transition-colors ${
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 text-[9px] font-bold transition-colors ${
                         color
                           ? isActive
                             ? color.solid
