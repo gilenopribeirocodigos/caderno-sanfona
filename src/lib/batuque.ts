@@ -6,10 +6,6 @@ import snareUrl from '@/assets/sounds/snare.wav'
 import hihatUrl from '@/assets/sounds/hihat.wav'
 
 export type BatuqueInstrument = 'zabumbaBass' | 'zabumbaSlap' | 'triangulo' | 'kick' | 'snare' | 'hihat'
-
-// Os seis instrumentos se agrupam em três "trilhas" que a pessoa liga e
-// desliga por conta própria — igual ao eBatuque, onde dá pra tocar só com
-// triângulo, só com zabumba, só com bateria, ou com a combinação que quiser.
 export type InstrumentGroup = 'triangulo' | 'zabumba' | 'bateria'
 
 export const INSTRUMENT_GROUPS: { id: InstrumentGroup; label: string }[] = [
@@ -18,50 +14,97 @@ export const INSTRUMENT_GROUPS: { id: InstrumentGroup; label: string }[] = [
   { id: 'bateria', label: 'Bateria' },
 ]
 
-const INSTRUMENT_GROUP: Record<BatuqueInstrument, InstrumentGroup> = {
-  triangulo: 'triangulo',
-  zabumbaBass: 'zabumba',
-  zabumbaSlap: 'zabumba',
-  kick: 'bateria',
-  snare: 'bateria',
-  hihat: 'bateria',
+/** Uma variação de batida para um instrumento, dentro de um ritmo — cada
+ * grupo (triângulo/zabumba/bateria) escolhe a sua independentemente,
+ * igual ao eBatuque ("baião 1", "baião 2"...). */
+export interface Variation {
+  id: string
+  label: string
+  hits: Partial<Record<BatuqueInstrument, boolean[]>>
 }
 
-export interface BatuquePattern {
+export interface Rhythm {
   id: string
   label: string
   /** Semicolcheias por compasso (2/4 = 8 semicolcheias). */
   stepsPerBar: number
   defaultBpm: number
-  /** Um booleano por passo, por instrumento — true = toca nesse passo. */
-  hits: Record<BatuqueInstrument, boolean[]>
+  variations: Record<InstrumentGroup, Variation[]>
 }
 
-// Padrões de partida comuns a esses dois ritmos (a base do forró
+// Variações de partida comuns a esses dois ritmos (a base do forró
 // nordestino). Não são partituras oficiais — é o feijão-com-arroz de cada
 // ritmo, dá pra ajustar depois. A zabumba tem dois toques (grave, com a
 // baqueta grossa, e agudo/seco, com a fina) que se revezam; o triângulo
-// marca a subdivisão por cima. A "bateria" segue o mesmo desenho rítmico
-// (bumbo com a zabumba grave, caixa no acento da zabumba aguda, chimbau
-// junto com o triângulo), para quem preferir esse timbre.
-const BAIAO_BASS = [true, false, false, false, true, false, false, false]
-const BAIAO_TRIANGULO = [true, true, true, true, true, true, true, true]
-const XOTE_BASS = [true, false, false, false, true, false, false, false]
-const XOTE_TRIANGULO = [true, false, true, false, true, false, true, false]
-
-export const BATUQUE_PATTERNS: BatuquePattern[] = [
+// marca a subdivisão por cima; a bateria (bumbo/caixa/chimbau) segue o
+// mesmo desenho, para quem preferir esse timbre.
+export const RHYTHMS: Rhythm[] = [
   {
     id: 'baiao',
     label: 'Baião',
     stepsPerBar: 8,
     defaultBpm: 100,
-    hits: {
-      zabumbaBass: BAIAO_BASS,
-      zabumbaSlap: [false, false, true, false, false, true, false, true],
-      triangulo: BAIAO_TRIANGULO,
-      kick: BAIAO_BASS,
-      snare: [false, false, false, false, false, false, false, true],
-      hihat: BAIAO_TRIANGULO,
+    variations: {
+      triangulo: [
+        { id: 't1', label: 'Corrido (semicolcheias)', hits: { triangulo: [true, true, true, true, true, true, true, true] } },
+        { id: 't2', label: 'Simples (colcheias)', hits: { triangulo: [true, false, true, false, true, false, true, false] } },
+        { id: 't3', label: 'Com quebra', hits: { triangulo: [true, true, false, true, true, true, false, true] } },
+      ],
+      zabumba: [
+        {
+          id: 'z1',
+          label: 'Padrão',
+          hits: {
+            zabumbaBass: [true, false, false, false, true, false, false, false],
+            zabumbaSlap: [false, false, true, false, false, true, false, true],
+          },
+        },
+        {
+          id: 'z2',
+          label: 'Sincopada',
+          hits: {
+            zabumbaBass: [true, false, false, false, true, false, false, false],
+            zabumbaSlap: [false, false, false, true, false, false, true, true],
+          },
+        },
+        {
+          id: 'z3',
+          label: 'Enxuta',
+          hits: {
+            zabumbaBass: [true, false, false, false, true, false, false, false],
+            zabumbaSlap: [false, false, false, false, false, true, false, false],
+          },
+        },
+      ],
+      bateria: [
+        {
+          id: 'b1',
+          label: 'Padrão',
+          hits: {
+            kick: [true, false, false, false, true, false, false, false],
+            snare: [false, false, false, false, false, false, false, true],
+            hihat: [true, true, true, true, true, true, true, true],
+          },
+        },
+        {
+          id: 'b2',
+          label: 'Com abertura',
+          hits: {
+            kick: [true, false, false, false, true, false, false, false],
+            snare: [false, false, false, true, false, false, true, false],
+            hihat: [true, false, true, false, true, false, true, false],
+          },
+        },
+        {
+          id: 'b3',
+          label: 'Minimalista',
+          hits: {
+            kick: [true, false, false, false, true, false, false, false],
+            snare: [false, false, false, false, false, false, true, false],
+            hihat: [true, false, false, false, true, false, false, false],
+          },
+        },
+      ],
     },
   },
   {
@@ -69,20 +112,74 @@ export const BATUQUE_PATTERNS: BatuquePattern[] = [
     label: 'Xote',
     stepsPerBar: 8,
     defaultBpm: 80,
-    hits: {
-      zabumbaBass: XOTE_BASS,
-      zabumbaSlap: [false, false, false, false, false, false, true, false],
-      triangulo: XOTE_TRIANGULO,
-      kick: XOTE_BASS,
-      snare: [false, false, false, false, false, false, true, false],
-      hihat: XOTE_TRIANGULO,
+    variations: {
+      triangulo: [
+        { id: 't1', label: 'Padrão (colcheias)', hits: { triangulo: [true, false, true, false, true, false, true, false] } },
+        { id: 't2', label: 'Cheio (semicolcheias)', hits: { triangulo: [true, true, true, true, true, true, true, true] } },
+        { id: 't3', label: 'Só nos tempos', hits: { triangulo: [true, false, false, false, true, false, false, false] } },
+      ],
+      zabumba: [
+        {
+          id: 'z1',
+          label: 'Padrão',
+          hits: {
+            zabumbaBass: [true, false, false, false, true, false, false, false],
+            zabumbaSlap: [false, false, false, false, false, false, true, false],
+          },
+        },
+        {
+          id: 'z2',
+          label: 'Resposta antecipada',
+          hits: {
+            zabumbaBass: [true, false, false, false, true, false, false, false],
+            zabumbaSlap: [false, false, false, false, false, true, false, false],
+          },
+        },
+        {
+          id: 'z3',
+          label: 'Mais preenchida',
+          hits: {
+            zabumbaBass: [true, false, false, false, true, false, false, false],
+            zabumbaSlap: [false, false, true, false, false, false, true, false],
+          },
+        },
+      ],
+      bateria: [
+        {
+          id: 'b1',
+          label: 'Padrão',
+          hits: {
+            kick: [true, false, false, false, true, false, false, false],
+            snare: [false, false, false, false, false, false, true, false],
+            hihat: [true, false, true, false, true, false, true, false],
+          },
+        },
+        {
+          id: 'b2',
+          label: 'Com chimbau cheio',
+          hits: {
+            kick: [true, false, false, false, true, false, false, false],
+            snare: [false, false, false, false, false, false, true, false],
+            hihat: [true, true, true, true, true, true, true, true],
+          },
+        },
+        {
+          id: 'b3',
+          label: 'Minimalista',
+          hits: {
+            kick: [true, false, false, false, true, false, false, false],
+            snare: [false, false, false, false, false, false, true, false],
+            hihat: [true, false, false, false, true, false, false, false],
+          },
+        },
+      ],
     },
   },
 ]
 
-export function patternForRhythm(rhythm: string | undefined): BatuquePattern {
-  const found = BATUQUE_PATTERNS.find((p) => p.label.toLowerCase() === rhythm?.toLowerCase())
-  return found ?? BATUQUE_PATTERNS[0]
+export function rhythmForLabel(label: string | undefined): Rhythm {
+  const found = RHYTHMS.find((r) => r.label.toLowerCase() === label?.toLowerCase())
+  return found ?? RHYTHMS[0]
 }
 
 const SAMPLE_URLS: Record<BatuqueInstrument, string> = {
@@ -92,6 +189,16 @@ const SAMPLE_URLS: Record<BatuqueInstrument, string> = {
   kick: kickUrl,
   snare: snareUrl,
   hihat: hihatUrl,
+}
+
+export type VariationSelection = Record<InstrumentGroup, string>
+
+export function defaultSelection(rhythm: Rhythm): VariationSelection {
+  return {
+    triangulo: rhythm.variations.triangulo[0].id,
+    zabumba: rhythm.variations.zabumba[0].id,
+    bateria: rhythm.variations.bateria[0].id,
+  }
 }
 
 // Agenda os toques com antecedência (lookahead) em vez de tocar cada som
@@ -109,7 +216,8 @@ export class BatuqueEngine {
   private timerId: ReturnType<typeof setInterval> | null = null
   private nextStepTime = 0
   private currentStep = 0
-  private pattern: BatuquePattern = BATUQUE_PATTERNS[0]
+  private rhythm: Rhythm = RHYTHMS[0]
+  private selection: VariationSelection = defaultSelection(RHYTHMS[0])
   private bpm = 100
   private enabledGroups: Set<InstrumentGroup> = new Set(['triangulo', 'zabumba'])
   private onStep?: (step: number) => void
@@ -119,14 +227,16 @@ export class BatuqueEngine {
   }
 
   async start(
-    pattern: BatuquePattern,
+    rhythm: Rhythm,
+    selection: VariationSelection,
     bpm: number,
     volume: number,
     enabledGroups: Set<InstrumentGroup>,
     onStep?: (step: number) => void,
   ): Promise<void> {
     this.stop()
-    this.pattern = pattern
+    this.rhythm = rhythm
+    this.selection = selection
     this.bpm = bpm
     this.enabledGroups = enabledGroups
     this.onStep = onStep
@@ -152,8 +262,12 @@ export class BatuqueEngine {
     if (this.gain) this.gain.gain.value = volume
   }
 
-  setPattern(pattern: BatuquePattern): void {
-    this.pattern = pattern
+  setRhythm(rhythm: Rhythm): void {
+    this.rhythm = rhythm
+  }
+
+  setSelection(selection: VariationSelection): void {
+    this.selection = selection
   }
 
   setEnabledGroups(groups: Set<InstrumentGroup>): void {
@@ -192,20 +306,24 @@ export class BatuqueEngine {
     while (this.nextStepTime < this.ctx.currentTime + SCHEDULE_AHEAD_S) {
       this.scheduleStep(this.currentStep, this.nextStepTime)
       this.nextStepTime += this.stepDurationSeconds()
-      this.currentStep = (this.currentStep + 1) % this.pattern.stepsPerBar
+      this.currentStep = (this.currentStep + 1) % this.rhythm.stepsPerBar
     }
   }
 
   private scheduleStep(step: number, time: number): void {
-    for (const instrument of Object.keys(this.pattern.hits) as BatuqueInstrument[]) {
-      if (!this.enabledGroups.has(INSTRUMENT_GROUP[instrument])) continue
-      if (!this.pattern.hits[instrument][step]) continue
-      const buffer = this.buffers[instrument]
-      if (!buffer || !this.ctx || !this.gain) continue
-      const source = this.ctx.createBufferSource()
-      source.buffer = buffer
-      source.connect(this.gain)
-      source.start(time)
+    for (const group of INSTRUMENT_GROUPS.map((g) => g.id)) {
+      if (!this.enabledGroups.has(group)) continue
+      const variation = this.rhythm.variations[group].find((v) => v.id === this.selection[group])
+      if (!variation) continue
+      for (const [instrument, hits] of Object.entries(variation.hits) as [BatuqueInstrument, boolean[]][]) {
+        if (!hits[step]) continue
+        const buffer = this.buffers[instrument]
+        if (!buffer || !this.ctx || !this.gain) continue
+        const source = this.ctx.createBufferSource()
+        source.buffer = buffer
+        source.connect(this.gain)
+        source.start(time)
+      }
     }
     if (this.onStep && this.ctx) {
       const delayMs = Math.max(0, (time - this.ctx.currentTime) * 1000)

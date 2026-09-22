@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  BATUQUE_PATTERNS,
   BatuqueEngine,
+  defaultSelection,
   INSTRUMENT_GROUPS,
-  patternForRhythm,
+  RHYTHMS,
+  rhythmForLabel,
   type InstrumentGroup,
+  type VariationSelection,
 } from '@/lib/batuque'
 
 interface BatuqueControlProps {
@@ -15,9 +17,10 @@ interface BatuqueControlProps {
 
 /** Metrônomo + Batuque (item 76): toca zabumba, triângulo e/ou bateria no ritmo escolhido, junto com o Modo Tocar. */
 export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlProps) {
-  const [patternId, setPatternId] = useState(() => patternForRhythm(songRhythm).id)
-  const pattern = BATUQUE_PATTERNS.find((p) => p.id === patternId) ?? BATUQUE_PATTERNS[0]
-  const [bpm, setBpm] = useState(songBpm ?? pattern.defaultBpm)
+  const [rhythmId, setRhythmId] = useState(() => rhythmForLabel(songRhythm).id)
+  const rhythm = RHYTHMS.find((r) => r.id === rhythmId) ?? RHYTHMS[0]
+  const [selection, setSelection] = useState<VariationSelection>(() => defaultSelection(rhythm))
+  const [bpm, setBpm] = useState(songBpm ?? rhythm.defaultBpm)
   const [volume, setVolume] = useState(0.8)
   const [groups, setGroups] = useState<Set<InstrumentGroup>>(new Set(['triangulo', 'zabumba']))
   const [playing, setPlaying] = useState(false)
@@ -39,14 +42,24 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
   }, [volume])
 
   useEffect(() => {
-    engineRef.current?.setPattern(pattern)
+    engineRef.current?.setRhythm(rhythm)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [patternId])
+  }, [rhythmId])
+
+  useEffect(() => {
+    engineRef.current?.setSelection(selection)
+  }, [selection])
 
   useEffect(() => {
     engineRef.current?.setEnabledGroups(groups)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groups])
+
+  function changeRhythm(id: string) {
+    setRhythmId(id)
+    const next = RHYTHMS.find((r) => r.id === id) ?? RHYTHMS[0]
+    setSelection(defaultSelection(next))
+  }
 
   async function toggle() {
     const engine = engineRef.current!
@@ -54,7 +67,7 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
       engine.stop()
       setPlaying(false)
     } else {
-      await engine.start(pattern, bpm, volume, groups, setBeat)
+      await engine.start(rhythm, selection, bpm, volume, groups, setBeat)
       setPlaying(true)
     }
   }
@@ -69,77 +82,93 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 bg-surface px-3 py-2 text-xs dark:border-slate-800">
-      <button
-        className={`tap-target rounded-md border px-3 py-1 font-medium ${
-          playing ? 'border-red-400 text-red-500' : 'border-slate-300 dark:border-slate-700'
-        }`}
-        onClick={toggle}
-      >
-        {playing ? '⏸ Parar batuque' : '🥁 Tocar batuque'}
-      </button>
-
-      <select
-        className="tap-target rounded-md border border-slate-300 px-1 py-1 dark:border-slate-700 dark:bg-slate-800"
-        value={patternId}
-        onChange={(e) => setPatternId(e.target.value)}
-      >
-        {BATUQUE_PATTERNS.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.label}
-          </option>
-        ))}
-      </select>
-
-      <div className="flex items-center gap-1">
+    <div className="flex flex-col gap-2 border-t border-slate-200 bg-surface px-3 py-2 text-xs dark:border-slate-800">
+      <div className="flex flex-wrap items-center gap-2">
         <button
-          className="tap-target rounded-md border border-slate-300 px-2 py-1 dark:border-slate-700"
-          onClick={() => setBpm((b) => Math.max(40, b - 4))}
+          className={`tap-target rounded-md border px-3 py-1 font-medium ${
+            playing ? 'border-red-400 text-red-500' : 'border-slate-300 dark:border-slate-700'
+          }`}
+          onClick={toggle}
         >
-          −
+          {playing ? '⏸ Parar batuque' : '🥁 Tocar batuque'}
         </button>
-        <span className="w-14 text-center font-medium">{bpm} BPM</span>
-        <button
-          className="tap-target rounded-md border border-slate-300 px-2 py-1 dark:border-slate-700"
-          onClick={() => setBpm((b) => Math.min(220, b + 4))}
+
+        <select
+          className="tap-target rounded-md border border-slate-300 px-1 py-1 dark:border-slate-700 dark:bg-slate-800"
+          value={rhythmId}
+          onChange={(e) => changeRhythm(e.target.value)}
         >
-          +
-        </button>
+          {RHYTHMS.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.label}
+            </option>
+          ))}
+        </select>
+
+        <div className="flex items-center gap-1">
+          <button
+            className="tap-target rounded-md border border-slate-300 px-2 py-1 dark:border-slate-700"
+            onClick={() => setBpm((b) => Math.max(40, b - 4))}
+          >
+            −
+          </button>
+          <span className="w-14 text-center font-medium">{bpm} BPM</span>
+          <button
+            className="tap-target rounded-md border border-slate-300 px-2 py-1 dark:border-slate-700"
+            onClick={() => setBpm((b) => Math.min(220, b + 4))}
+          >
+            +
+          </button>
+        </div>
+
+        <input
+          type="range"
+          min={0}
+          max={1}
+          step={0.05}
+          value={volume}
+          onChange={(e) => setVolume(Number(e.target.value))}
+          className="w-16"
+          aria-label="Volume do batuque"
+        />
+
+        {playing && (
+          <span
+            className="h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--color-brand)]"
+            style={{ opacity: beat % (rhythm.stepsPerBar / 2) === 0 ? 1 : 0.25 }}
+          />
+        )}
       </div>
 
-      <input
-        type="range"
-        min={0}
-        max={1}
-        step={0.05}
-        value={volume}
-        onChange={(e) => setVolume(Number(e.target.value))}
-        className="w-16"
-        aria-label="Volume do batuque"
-      />
-
-      {playing && (
-        <span
-          className="h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--color-brand)]"
-          style={{ opacity: beat % (pattern.stepsPerBar / 2) === 0 ? 1 : 0.25 }}
-        />
-      )}
-
       {/* Cada instrumento liga/desliga por conta própria, igual ao
-          eBatuque — dá pra tocar só com um, ou combinar os três. */}
-      <div className="flex w-full gap-1">
+          eBatuque — e cada um tem suas próprias variações de batida
+          dentro do ritmo escolhido, pra combinar como preferir. */}
+      <div className="flex flex-col gap-1">
         {INSTRUMENT_GROUPS.map((g) => (
-          <button
-            key={g.id}
-            className={`tap-target flex-1 rounded-md border px-2 py-1 ${
-              groups.has(g.id)
-                ? 'border-[var(--color-brand)] bg-[var(--color-brand)] text-white'
-                : 'border-slate-300 text-slate-500 dark:border-slate-700 dark:text-slate-400'
-            }`}
-            onClick={() => toggleGroup(g.id)}
-          >
-            {g.label}
-          </button>
+          <div key={g.id} className="flex items-center gap-1">
+            <button
+              className={`tap-target w-24 shrink-0 rounded-md border px-2 py-1 ${
+                groups.has(g.id)
+                  ? 'border-[var(--color-brand)] bg-[var(--color-brand)] text-white'
+                  : 'border-slate-300 text-slate-500 dark:border-slate-700 dark:text-slate-400'
+              }`}
+              onClick={() => toggleGroup(g.id)}
+            >
+              {g.label}
+            </button>
+            <select
+              className="tap-target flex-1 rounded-md border border-slate-300 px-1 py-1 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800"
+              disabled={!groups.has(g.id)}
+              value={selection[g.id]}
+              onChange={(e) => setSelection((prev) => ({ ...prev, [g.id]: e.target.value }))}
+            >
+              {rhythm.variations[g.id].map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.label}
+                </option>
+              ))}
+            </select>
+          </div>
         ))}
       </div>
     </div>
