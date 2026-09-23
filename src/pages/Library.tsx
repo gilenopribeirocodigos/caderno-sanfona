@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db'
-import { createSong, deleteSong, parseTagsInput, toggleFavorite } from '@/lib/songsRepo'
+import { createSong, deleteSong, DuplicateSongError, parseTagsInput, toggleFavorite } from '@/lib/songsRepo'
 import { useSettings } from '@/lib/useSettings'
 import { downloadSongChordPro, downloadSongText, printSongs } from '@/utils/export'
 import SongForm, { emptySongForm, type SongFormValues } from '@/components/SongForm'
@@ -15,6 +15,7 @@ type FormMode = { kind: 'closed' } | { kind: 'create' }
 export default function Library() {
   const songs = useLiveQuery(() => db.songs.toArray(), [])
   const [formMode, setFormMode] = useState<FormMode>({ kind: 'closed' })
+  const [createError, setCreateError] = useState<DuplicateSongError | null>(null)
   const settings = useSettings()
 
   const [search, setSearch] = useState('')
@@ -72,17 +73,23 @@ export default function Library() {
   }, [songs, search, keyFilter, rhythmFilter, difficultyFilter, onlyFavorites, sortMode])
 
   async function handleCreate(values: SongFormValues) {
-    await createSong({
-      title: values.title,
-      artist: values.artist,
-      originalKey: values.originalKey,
-      rhythm: values.rhythm,
-      difficulty: values.difficulty || undefined,
-      tags: parseTagsInput(values.tagsText),
-      notes: values.notes,
-      lyrics: '',
-    })
-    setFormMode({ kind: 'closed' })
+    setCreateError(null)
+    try {
+      await createSong({
+        title: values.title,
+        artist: values.artist,
+        originalKey: values.originalKey,
+        rhythm: values.rhythm,
+        difficulty: values.difficulty || undefined,
+        tags: parseTagsInput(values.tagsText),
+        notes: values.notes,
+        lyrics: '',
+      })
+      setFormMode({ kind: 'closed' })
+    } catch (error) {
+      if (error instanceof DuplicateSongError) setCreateError(error)
+      else throw error
+    }
   }
 
   return (
@@ -92,7 +99,7 @@ export default function Library() {
         {formMode.kind === 'closed' && (
           <button
             className="tap-target rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white dark:bg-slate-100 dark:text-slate-900"
-            onClick={() => setFormMode({ kind: 'create' })}
+            onClick={() => { setCreateError(null); setFormMode({ kind: 'create' }) }}
           >
             + Nova música
           </button>
@@ -101,10 +108,16 @@ export default function Library() {
 
       {formMode.kind === 'create' && (
         <div className="mt-3">
+          {createError && (
+            <p role="alert" className="mb-2 rounded-md bg-amber-100 p-3 text-sm text-amber-950 dark:bg-amber-950 dark:text-amber-100">
+              {createError.message}{' '}
+              <Link className="font-semibold underline" to={`/editor/${createError.existingSongId}`}>Abrir música existente</Link>
+            </p>
+          )}
           <SongForm
             initial={emptySongForm()}
             submitLabel="Criar música"
-            onCancel={() => setFormMode({ kind: 'closed' })}
+            onCancel={() => { setCreateError(null); setFormMode({ kind: 'closed' }) }}
             onSubmit={handleCreate}
           />
         </div>

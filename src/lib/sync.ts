@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient'
 import { db, LOCAL_USER_ID } from './db'
+import { consolidateDuplicateSongs } from './deduplicateSongs'
 import {
   getPendingChanges,
   pendingKey,
@@ -160,6 +161,30 @@ function settingsFromRemote(r: any): AppSettings {
 let inFlightSync: Promise<void> | null = null
 const SYNC_TIMEOUT_MS = 25_000
 const SYNC_ERROR_KEY = 'lastSyncError'
+const DUPLICATE_TOMBSTONES_KEY = 'mergedDuplicateSongIds'
+
+function mergedDuplicateIds(): string[] {
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem(DUPLICATE_TOMBSTONES_KEY) ?? '[]')
+    return Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string') : []
+  } catch { return [] }
+}
+
+function rememberMergedDuplicates(ids: string[]): void {
+  if (ids.length) localStorage.setItem(DUPLICATE_TOMBSTONES_KEY, JSON.stringify([...new Set([...mergedDuplicateIds(), ...ids])]))
+}
+
+async function deleteMergedDuplicatesFromCloud(userId: string): Promise<void> {
+  if (!supabase) return
+  for (const id of mergedDuplicateIds()) {
+    for (const table of ['notebook_songs', 'practice_history', 'song_versions'] as const) {
+      const { error } = await supabase.from(table).delete().eq('song_id', id).eq('user_id', userId)
+      if (error) throw error
+    }
+    const { error } = await supabase.from('songs').delete().eq('id', id).eq('user_id', userId)
+    if (error) throw error
+  }
+}
 
 let backgroundSyncTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -329,6 +354,10 @@ async function runSync(userId: string): Promise<void> {
 async function performSync(userId: string): Promise<void> {
   if (!supabase) throw new Error('Nuvem não configurada')
 
+  // IDs já reunidos continuam bloqueados, inclusive se outro aparelho
+  // com uma versão antiga do app reenviar a cópia depois.
+  await deleteMergedDuplicatesFromCloud(userId)
+
   // 1) Traz primeiro o estado atual da nuvem (o que veio de outros
   // aparelhos) e funde localmente. Isso roda logo ao abrir o app — antes
   // de a pessoa mexer em qualquer coisa — de propósito: fazer essa parte
@@ -412,6 +441,11 @@ async function performSync(userId: string): Promise<void> {
     await db.settings.put(settingsFromRemote(remoteSettings.data))
   }
 
+  // Registros criados separadamente com a mesma letra têm IDs diferentes.
+  // A sincronização por ID não os reconhece como a mesma música.
+  const duplicateIds = await consolidateDuplicateSongs()
+  rememberMergedDuplicates(duplicateIds)
+
   // 2) Só agora lê o estado local (já com o que veio da nuvem, mais
   // qualquer edição feita nesse meio tempo) e envia pra nuvem — assim uma
   // mudança feita durante a sincronização nunca é perdida nem revertida.
@@ -454,6 +488,10 @@ async function performSync(userId: string): Promise<void> {
     const { error } = await supabase.from('settings').upsert(settingsToRemote(settings, userId))
     if (error) throw error
   }
+
+  // Só remove as cópias da nuvem depois de enviar a música preservada,
+  // suas versões e as referências dos cadernos e do histórico de prática.
+  await deleteMergedDuplicatesFromCloud(userId)
 }
 
 function songContent(song: Song): string {
