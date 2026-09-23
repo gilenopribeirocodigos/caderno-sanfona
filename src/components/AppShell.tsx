@@ -48,7 +48,7 @@ export default function AppShell() {
         {/* Marca d'água decorativa, presença sutil da sanfona dentro do app */}
         <AccordionArt className="pointer-events-none absolute -bottom-10 -left-16 h-64 w-auto -rotate-6 opacity-[0.05] dark:opacity-[0.08]" />
         <div className="relative mb-4 flex items-center gap-2 px-2">
-          <AccordionArt className="h-7 w-auto shrink-0" />
+          <AccordionArt animated className="h-7 w-auto shrink-0" />
           <h1 className="text-base font-bold leading-tight tracking-tight">Caderno de Sanfona</h1>
         </div>
         {NAV_ITEMS.map((item) => {
@@ -122,7 +122,7 @@ function TopBar() {
     <header className="safe-top relative flex shrink-0 items-center justify-between gap-3 border-b border-[var(--color-gold)]/30 bg-gradient-to-r from-[var(--color-brand-dark)] via-[var(--color-brand)] to-[var(--color-brand-dark)] px-4 py-2.5 text-white">
       {/* Recorte próprio para a marca d'água não vazar, sem cortar o menu de conta abaixo */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <AccordionArt className="absolute -top-10 right-6 h-24 w-auto rotate-[15deg] opacity-20" />
+        <AccordionArt animated className="absolute -top-10 right-6 h-24 w-auto rotate-[15deg] opacity-20" />
       </div>
       <span className="relative truncate text-sm font-semibold tracking-wide">
         {current?.label ?? 'Caderno de Sanfona'}

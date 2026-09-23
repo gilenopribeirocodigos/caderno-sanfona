@@ -71,6 +71,7 @@ export default function AccordionArt({
         <rect x="14" y="10" width="100" height="248" rx="18" fill={`url(#${uid}-sheen)`} />
       </g>
       <rect x="14" y="10" width="100" height="248" rx="18" fill="none" stroke="var(--color-gold)" strokeOpacity="0.5" strokeWidth="1.5" />
+      <path className={animated ? 'accordion-glint' : undefined} d="M22 30v199" stroke="var(--color-gold)" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
       <rect x="29" y="28" width="71" height="205" rx="7" fill="#27151a" stroke="var(--color-gold)" strokeOpacity="0.6" />
       {Array.from({ length: 14 }).map((_, i) => (
         <g key={i}>
@@ -123,6 +124,7 @@ export default function AccordionArt({
         <rect x="382" y="14" width="128" height="252" rx="18" fill={`url(#${uid}-sheen)`} />
       </g>
       <rect x="382" y="14" width="128" height="252" rx="18" fill="none" stroke="var(--color-gold)" strokeOpacity="0.5" strokeWidth="1.5" />
+      <path className={animated ? 'accordion-glint' : undefined} d="M501 35v205" stroke="var(--color-gold)" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
       {/* grelha decorativa em leque */}
       <g stroke="var(--color-gold)" strokeOpacity="0.35" strokeWidth="1.5" fill="none">
         {[-32, -16, 0, 16, 32].map((angle) => (

@@ -87,7 +87,7 @@ function LoginScreen() {
       <div className="relative z-10 flex w-full max-w-sm flex-col items-center">
         <div className="mb-6 flex flex-col items-center text-center">
           {/* Ilustração em destaque, com o fole "respirando" como se estivesse tocando */}
-          <AccordionArt animated className="h-32 w-auto drop-shadow-2xl sm:h-36" />
+          <AccordionArt animated className="accordion-hero h-32 w-auto drop-shadow-2xl sm:h-36" />
           <h1 className="mt-3 text-2xl font-bold text-white">Caderno de Sanfona</h1>
           <p className="mt-1 text-sm text-white/70">
             Seu caderno pessoal de letras, cifras e repertórios
