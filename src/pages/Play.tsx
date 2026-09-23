@@ -9,6 +9,7 @@ import { firstChord, uniqueChordsInSong } from '@/utils/chordpro'
 import ChordSheet from '@/components/ChordSheet'
 import AccordionVisualPanel from '@/components/AccordionVisualPanel'
 import BatuqueControl from '@/components/BatuqueControl'
+import ChordPreviewPopup from '@/components/ChordPreviewPopup'
 import type { NotebookSong } from '@/types'
 
 const SPEED_PRESETS = [
@@ -82,6 +83,7 @@ export default function Play() {
   const [showVisual, setShowVisual] = useState(false)
   const [showBatuque, setShowBatuque] = useState(false)
   const [activeChord, setActiveChord] = useState<string | undefined>()
+  const [previewChord, setPreviewChord] = useState<{ chord: string; x: number; y: number } | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [scrolling, setScrolling] = useState(false)
   const [speedLevel, setSpeedLevel] = useState(2)
@@ -328,8 +330,20 @@ export default function Play() {
           // acorde da música aparecia marcado sem nenhuma explicação.
           activeChord={showVisual ? activeChord : undefined}
           onChordTap={setActiveChord}
+          onChordPreview={(chord, x, y) => setPreviewChord({ chord, x, y })}
         />
       </div>
+
+      {previewChord && (
+        <ChordPreviewPopup
+          chord={previewChord.chord}
+          x={previewChord.x}
+          y={previewChord.y}
+          accordionType={settings.accordionType}
+          notation={settings.notation}
+          onClose={() => setPreviewChord(null)}
+        />
+      )}
 
       {showBatuque && (
         <BatuqueControl key={currentSongId} songRhythm={song.rhythm} songBpm={song.bpm} />

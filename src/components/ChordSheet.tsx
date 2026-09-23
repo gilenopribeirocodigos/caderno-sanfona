@@ -13,6 +13,8 @@ interface ChordSheetProps {
   onChordMove?: (from: WordRef, to: WordRef) => void
   /** Modo leitura: tocar num acorde já existente o marca como "atual" (Modo Sanfona Visual). */
   onChordTap?: (chord: string) => void
+  /** PROTÓTIPO: tocar num acorde mostra um preview rápido (teclado + baixo) pertinho do toque. */
+  onChordPreview?: (chord: string, x: number, y: number) => void
   activeChord?: string
 }
 
@@ -32,6 +34,7 @@ export default function ChordSheet({
   onWordClick,
   onChordMove,
   onChordTap,
+  onChordPreview,
   activeChord,
 }: ChordSheetProps) {
   const [dragChord, setDragChord] = useState<string | null>(null)
@@ -114,7 +117,7 @@ export default function ChordSheet({
         return (
           <div key={li} className="flex flex-wrap items-end gap-x-1 gap-y-1">
             {line.tokens.map((token, ti) => {
-              const clickable = Boolean(onWordClick || (onChordTap && token.chord))
+              const clickable = Boolean(onWordClick || ((onChordTap || onChordPreview) && token.chord))
               const isDropTarget = dropTarget?.lineIndex === li && dropTarget?.tokenIndex === ti
               return (
                 <span
@@ -122,10 +125,13 @@ export default function ChordSheet({
                   data-li={li}
                   data-ti={ti}
                   onPointerDown={(e) => handlePointerDown(e, li, ti, token.chord)}
-                  onClick={() => {
+                  onClick={(e) => {
                     if (dragState.current?.moved) return
                     if (onWordClick) onWordClick(li, ti)
-                    else if (onChordTap && token.chord) onChordTap(token.chord)
+                    else if (token.chord) {
+                      onChordTap?.(token.chord)
+                      onChordPreview?.(token.chord, e.clientX, e.clientY)
+                    }
                   }}
                   className={`flex flex-col items-start ${clickable ? 'cursor-pointer touch-none' : ''} ${
                     onWordClick ? 'rounded px-0.5 hover:bg-surface-alt' : ''
