@@ -1,8 +1,8 @@
-import { db } from './db'
+import { db, deletionId } from './db'
 import type { ChordData, Song, SongVersion } from '@/types'
 import { buildChordData, stripChords, transposeChordProSource } from '@/utils/chordpro'
 import { semitonesBetweenKeys } from '@/utils/chords'
-import { queueSyncChange } from './syncQueue'
+import { queueSyncChange, removePendingChange } from './syncQueue'
 
 function newId(): string {
   return crypto.randomUUID()
@@ -97,20 +97,16 @@ export async function updateSong(id: string, changes: Partial<Song>): Promise<vo
 }
 
 export async function deleteSong(id: string): Promise<void> {
-  await db.transaction('rw', db.songs, db.notebookSongs, db.songVersions, db.practiceHistory, async () => {
+  const markerId = deletionId('songs', id)
+  await db.transaction('rw', db.songs, db.notebookSongs, db.songVersions, db.practiceHistory, db.syncDeletions, async () => {
+    await db.syncDeletions.put({ id: markerId, table: 'songs', recordId: id, deletedAt: new Date().toISOString() })
     await db.songs.delete(id)
     await db.notebookSongs.where('songId').equals(id).delete()
     await db.songVersions.where('songId').equals(id).delete()
     await db.practiceHistory.where('songId').equals(id).delete()
   })
-
-  // Apaga na nuvem também (se configurada), sem esperar a próxima
-  // sincronização geral — senão a música voltava sozinha ao sincronizar,
-  // porque ainda existia lá. Carregado sob demanda para não pesar o app
-  // pra quem não usa nuvem.
-  import('./sync')
-    .then((m) => m.deleteRemoteSong(id))
-    .catch(() => {})
+  removePendingChange({ table: 'songs', id })
+  queueSyncChange('syncDeletions', markerId)
 }
 
 export async function toggleFavorite(id: string, favorite: boolean): Promise<void> {

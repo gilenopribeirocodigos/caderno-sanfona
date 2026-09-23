@@ -1,6 +1,6 @@
-import { db } from './db'
+import { db, deletionId } from './db'
 import type { Notebook } from '@/types'
-import { queueSyncChange } from './syncQueue'
+import { queueSyncChange, removePendingChange } from './syncQueue'
 
 function newId(): string {
   return crypto.randomUUID()
@@ -24,16 +24,14 @@ export async function renameNotebook(id: string, name: string): Promise<void> {
 }
 
 export async function deleteNotebook(id: string): Promise<void> {
-  await db.transaction('rw', db.notebooks, db.notebookSongs, async () => {
+  const markerId = deletionId('notebooks', id)
+  await db.transaction('rw', db.notebooks, db.notebookSongs, db.syncDeletions, async () => {
+    await db.syncDeletions.put({ id: markerId, table: 'notebooks', recordId: id, deletedAt: new Date().toISOString() })
     await db.notebooks.delete(id)
     await db.notebookSongs.where('notebookId').equals(id).delete()
   })
-
-  // Apaga na nuvem também (se configurada) — ver comentário equivalente
-  // em songsRepo.ts/deleteSong.
-  import('./sync')
-    .then((m) => m.deleteRemoteNotebook(id))
-    .catch(() => {})
+  removePendingChange({ table: 'notebooks', id })
+  queueSyncChange('syncDeletions', markerId)
 }
 
 /** Adiciona uma música ao final do caderno (item 5-6), sem duplicar. */
@@ -58,11 +56,13 @@ export async function addSongToNotebook(notebookId: string, songId: string): Pro
 }
 
 export async function removeSongFromNotebook(entryId: string): Promise<void> {
-  await db.notebookSongs.delete(entryId)
-
-  import('./sync')
-    .then((m) => m.deleteRemoteNotebookSong(entryId))
-    .catch(() => {})
+  const markerId = deletionId('notebook_songs', entryId)
+  await db.transaction('rw', db.notebookSongs, db.syncDeletions, async () => {
+    await db.syncDeletions.put({ id: markerId, table: 'notebook_songs', recordId: entryId, deletedAt: new Date().toISOString() })
+    await db.notebookSongs.delete(entryId)
+  })
+  removePendingChange({ table: 'notebookSongs', id: entryId })
+  queueSyncChange('syncDeletions', markerId)
 }
 
 /** Reordena a música pressionada uma posição para cima/baixo (item 6, "Modo Organizar"). */

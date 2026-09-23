@@ -1,4 +1,4 @@
-import { db } from './db'
+import { db, deletionId } from './db'
 import { normalizedIdentity } from './songsRepo'
 import { queueSyncChange, removePendingChange } from './syncQueue'
 import type { Song, SongVersion } from '@/types'
@@ -26,7 +26,7 @@ export async function consolidateDuplicateSongs(): Promise<string[]> {
   const changedNotebookSongs = new Set<string>()
   const changedPractice = new Set<string>()
 
-  await db.transaction('rw', [db.songs, db.songVersions, db.notebookSongs, db.practiceHistory], async () => {
+  await db.transaction('rw', [db.songs, db.songVersions, db.notebookSongs, db.practiceHistory, db.syncDeletions], async () => {
     for (const group of groups.values()) {
       if (group.length < 2) continue
       group.sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id))
@@ -71,6 +71,10 @@ export async function consolidateDuplicateSongs(): Promise<string[]> {
         keeper.tags = [...new Set([...keeper.tags, ...duplicate.tags])]
         keeper.lastPracticedAt = [keeper.lastPracticedAt, duplicate.lastPracticedAt].filter(Boolean).sort().at(-1)
         keeper.notes ||= duplicate.notes
+        await db.syncDeletions.put({
+          id: deletionId('songs', duplicate.id), table: 'songs', recordId: duplicate.id,
+          deletedAt: new Date().toISOString(),
+        })
         await db.songs.delete(duplicate.id)
         removedIds.push(duplicate.id)
       }
@@ -81,6 +85,7 @@ export async function consolidateDuplicateSongs(): Promise<string[]> {
   })
 
   for (const id of removedIds) removePendingChange({ table: 'songs', id })
+  for (const id of removedIds) queueSyncChange('syncDeletions', deletionId('songs', id))
   for (const id of changedIds) queueSyncChange('songs', id)
   for (const id of changedVersions) queueSyncChange('songVersions', id)
   for (const id of changedNotebookSongs) queueSyncChange('notebookSongs', id)

@@ -8,6 +8,19 @@ import type {
   AppSettings,
 } from '@/types'
 
+export type DeletableTable = 'songs' | 'notebooks' | 'notebook_songs'
+
+export interface SyncDeletion {
+  id: string
+  table: DeletableTable
+  recordId: string
+  deletedAt: string
+}
+
+export function deletionId(table: DeletableTable, recordId: string): string {
+  return `${table}:${recordId}`
+}
+
 /**
  * Banco local no navegador (IndexedDB), espelhando o modelo de dados da
  * seção 44 da especificação. É a fonte da verdade enquanto não há login
@@ -20,6 +33,7 @@ class CadernoSanfonaDB extends Dexie {
   songVersions!: EntityTable<SongVersion, 'id'>
   practiceHistory!: EntityTable<PracticeHistoryEntry, 'id'>
   settings!: EntityTable<AppSettings, 'userId'>
+  syncDeletions!: EntityTable<SyncDeletion, 'id'>
 
   constructor() {
     super('caderno-sanfona')
@@ -30,6 +44,15 @@ class CadernoSanfonaDB extends Dexie {
       songVersions: 'id, songId, createdAt',
       practiceHistory: 'id, songId, date',
       settings: 'userId',
+    })
+    this.version(2).stores({
+      songs: 'id, title, artist, favorite, lastPracticedAt, timesPlayed, createdAt, *tags',
+      notebooks: 'id, name, createdAt',
+      notebookSongs: 'id, notebookId, songId, [notebookId+position]',
+      songVersions: 'id, songId, createdAt',
+      practiceHistory: 'id, songId, date',
+      settings: 'userId',
+      syncDeletions: 'id, table, recordId, deletedAt',
     })
   }
 }
