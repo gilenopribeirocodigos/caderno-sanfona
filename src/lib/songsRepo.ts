@@ -8,6 +8,24 @@ function newId(): string {
   return crypto.randomUUID()
 }
 
+export function normalizedIdentity(value?: string): string {
+  return (value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('pt-BR')
+}
+
+export class DuplicateSongError extends Error {
+  constructor(public readonly existingSongId: string) {
+    super('Esta música já está na Biblioteca. Abra a música existente para continuar a edição.')
+  }
+}
+
+export async function findDuplicateSong(title: string, artist?: string): Promise<Song | undefined> {
+  const titleKey = normalizedIdentity(title)
+  const artistKey = normalizedIdentity(artist)
+  return db.songs.filter((song) =>
+    normalizedIdentity(song.title) === titleKey && normalizedIdentity(song.artist) === artistKey,
+  ).first()
+}
+
 export interface SongDetailsInput {
   title: string
   artist?: string
@@ -24,27 +42,33 @@ export interface CreateSongInput extends SongDetailsInput {
 
 /** Cria uma música nova a partir da letra colada/digitada (item 7). */
 export async function createSong(input: CreateSongInput): Promise<Song> {
-  const now = new Date().toISOString()
-  const song: Song = {
-    id: newId(),
-    title: input.title.trim(),
-    artist: input.artist?.trim() || undefined,
-    originalKey: input.originalKey,
-    preferredKey: input.originalKey,
-    lyrics: input.lyrics,
-    chordData: { chordProSource: input.lyrics, lines: [] },
-    rhythm: input.rhythm?.trim() || undefined,
-    difficulty: input.difficulty,
-    tags: input.tags,
-    notes: input.notes?.trim() || undefined,
-    favorite: false,
-    timesPlayed: 0,
-    createdAt: now,
-    updatedAt: now,
-  }
-  await db.songs.add(song)
-  queueSyncChange('songs', song.id)
-  return song
+  return db.transaction('rw', db.songs, async () => {
+    const existing = await findDuplicateSong(input.title, input.artist)
+    if (existing) throw new DuplicateSongError(existing.id)
+    const now = new Date().toISOString()
+    const song: Song = {
+      id: newId(),
+      title: input.title.trim(),
+      artist: input.artist?.trim() || undefined,
+      originalKey: input.originalKey,
+      preferredKey: input.originalKey,
+      lyrics: input.lyrics,
+      chordData: { chordProSource: input.lyrics, lines: [] },
+      rhythm: input.rhythm?.trim() || undefined,
+      difficulty: input.difficulty,
+      tags: input.tags,
+      notes: input.notes?.trim() || undefined,
+      favorite: false,
+      timesPlayed: 0,
+      createdAt: now,
+      updatedAt: now,
+    }
+    await db.songs.add(song)
+    return song
+  }).then((song) => {
+    queueSyncChange('songs', song.id)
+    return song
+  })
 }
 
 /** Atualiza só os dados cadastrais da música (item 4), sem mexer na letra/cifra. */
