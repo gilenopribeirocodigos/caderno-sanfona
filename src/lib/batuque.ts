@@ -967,10 +967,19 @@ interface GroupClock {
   currentStep: number
 }
 
+// As amostras (compradas) foram gravadas num nível relativamente baixo.
+// Em vez de deixar cada grupo tocar só no volume "cru" do arquivo, todo
+// mundo passa por esse ganho geral + compressor (igual um limitador de
+// masterização) antes da saída — aumenta o volume percebido sem estourar
+// quando vários instrumentos tocam ao mesmo tempo.
+const MASTER_GAIN = 1.8
+const COMPRESSOR_SETTINGS = { threshold: -12, knee: 20, ratio: 8, attack: 0.003, release: 0.25 }
+
 export class BatuqueEngine {
   private ctx: AudioContext | null = null
   private buffers: Partial<Record<BatuqueInstrument, AudioBuffer>> = {}
   private loopBufferCache = new Map<string, AudioBuffer>()
+  private masterGain: GainNode | null = null
   private groupGains: Partial<Record<InstrumentGroup, GainNode>> = {}
   private groupClocks: Partial<Record<InstrumentGroup, GroupClock>> = {}
   private loopSources: Partial<Record<InstrumentGroup, AudioBufferSourceNode>> = {}
@@ -1004,6 +1013,7 @@ export class BatuqueEngine {
 
     if (!this.ctx) this.ctx = new AudioContext()
     if (this.ctx.state === 'suspended') await this.ctx.resume()
+    this.ensureMasterChain()
     await this.loadBuffers()
 
     for (const group of enabledGroups) this.ensureGroupRunning(group)
@@ -1080,11 +1090,28 @@ export class BatuqueEngine {
     }
   }
 
+  private ensureMasterChain(): void {
+    if (!this.ctx || this.masterGain) return
+    const compressor = this.ctx.createDynamicsCompressor()
+    compressor.threshold.value = COMPRESSOR_SETTINGS.threshold
+    compressor.knee.value = COMPRESSOR_SETTINGS.knee
+    compressor.ratio.value = COMPRESSOR_SETTINGS.ratio
+    compressor.attack.value = COMPRESSOR_SETTINGS.attack
+    compressor.release.value = COMPRESSOR_SETTINGS.release
+    compressor.connect(this.ctx.destination)
+
+    const master = this.ctx.createGain()
+    master.gain.value = MASTER_GAIN
+    master.connect(compressor)
+    this.masterGain = master
+  }
+
   private ensureGroupRunning(group: InstrumentGroup): void {
     if (!this.ctx || this.groupClocks[group] || this.loopSources[group]) return
+    this.ensureMasterChain()
     const gain = this.ctx.createGain()
     gain.gain.value = this.groupSettings[group].volume
-    gain.connect(this.ctx.destination)
+    gain.connect(this.masterGain!)
     this.groupGains[group] = gain
 
     const loopUrl = this.loopUrls[group]

@@ -19,7 +19,7 @@ export default function ChordPreviewPopup({ chord, x, y, accordionType, notation
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
       <div
-        className="fixed z-50 rounded-xl border border-slate-200 bg-surface p-2.5 pt-4 shadow-2xl dark:border-slate-700 relative"
+        className="fixed z-50 rounded-xl border border-slate-200 bg-surface p-2.5 pt-4 shadow-2xl dark:border-slate-700"
         style={{ left: Math.min(Math.max(8, x - width / 2), window.innerWidth - width - 8), top: y + 14, width }}
       >
         <button className="tap-target absolute right-1.5 top-1.5 text-xs text-slate-400" onClick={onClose}>
