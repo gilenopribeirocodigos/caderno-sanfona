@@ -78,6 +78,24 @@ import blockLoopXote90_02Url from '@/assets/sounds/block-loop-xote-90-02.wav'
 import blockLoopXote90_03Url from '@/assets/sounds/block-loop-xote-90-03.wav'
 import ganzaLoopXote70Url from '@/assets/sounds/ganza-loop-xote-70.wav'
 import ganzaLoopXote90Url from '@/assets/sounds/ganza-loop-xote-90.wav'
+import trianguloLoopRastape140M1Url from '@/assets/sounds/triangulo-loop-rastape-140-m1.wav'
+import trianguloLoopRastape140M2Url from '@/assets/sounds/triangulo-loop-rastape-140-m2.wav'
+import trianguloLoopRastape160M1Url from '@/assets/sounds/triangulo-loop-rastape-160-m1.wav'
+import trianguloLoopRastape160M2Url from '@/assets/sounds/triangulo-loop-rastape-160-m2.wav'
+import agogoLoopRastape140Url from '@/assets/sounds/agogo-loop-rastape-140.wav'
+import agogoLoopRastape160Url from '@/assets/sounds/agogo-loop-rastape-160.wav'
+import zabumbaLoopRastape140_01bMUrl from '@/assets/sounds/zabumba-loop-rastape-140-01-bM.wav'
+import zabumbaLoopRastape140_01tMUrl from '@/assets/sounds/zabumba-loop-rastape-140-01-tM.wav'
+import zabumbaLoopRastape140_02bMUrl from '@/assets/sounds/zabumba-loop-rastape-140-02-bM.wav'
+import zabumbaLoopRastape140_02tMUrl from '@/assets/sounds/zabumba-loop-rastape-140-02-tM.wav'
+import zabumbaLoopRastape140_03bMUrl from '@/assets/sounds/zabumba-loop-rastape-140-03-bM.wav'
+import zabumbaLoopRastape140_03tMUrl from '@/assets/sounds/zabumba-loop-rastape-140-03-tM.wav'
+import zabumbaLoopRastape160_01bMUrl from '@/assets/sounds/zabumba-loop-rastape-160-01-bM.wav'
+import zabumbaLoopRastape160_01tMUrl from '@/assets/sounds/zabumba-loop-rastape-160-01-tM.wav'
+import zabumbaLoopRastape160_02bMUrl from '@/assets/sounds/zabumba-loop-rastape-160-02-bM.wav'
+import zabumbaLoopRastape160_02tMUrl from '@/assets/sounds/zabumba-loop-rastape-160-02-tM.wav'
+import zabumbaLoopRastape160_04bMUrl from '@/assets/sounds/zabumba-loop-rastape-160-04-bM.wav'
+import zabumbaLoopRastape160_04tMUrl from '@/assets/sounds/zabumba-loop-rastape-160-04-tM.wav'
 
 // O triângulo e a zabumba têm dois (ou mais) toques fisicamente diferentes
 // no instrumento de verdade — cada um vira uma "voz" própria aqui, com seu
@@ -617,6 +635,132 @@ export const RHYTHMS: Rhythm[] = [
       ],
     },
   },
+  {
+    id: 'rastape',
+    label: 'Arrasta-pé',
+    stepsPerBar: 8,
+    defaultBpm: 140,
+    // Garanhão & Barsalini (2023) descrevem o arrasta-pé como uma variação
+    // mais rápida do xote ("zabumba se assemelham às do xote, no entanto
+    // com andamento rápido"), daí o BPM bem mais alto (140/160) — os
+    // padrões programados em si são aproximação própria.
+    variations: {
+      triangulo: [
+        {
+          id: 't1',
+          label: 'Colcheias',
+          source: `Padrão: aproximação própria, mesma lógica do xote em andamento mais rápido. Som: ${SOM_COMPRADO}`,
+          hits: {
+            trianguloFechado: [false, false, true, false, false, false, true, false],
+            trianguloAberto: [true, false, false, false, true, false, false, false],
+          },
+        },
+        {
+          id: 't2',
+          label: 'Nos tempos',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
+          hits: { trianguloAberto: [true, false, false, false, true, false, false, false] },
+        },
+      ],
+      zabumba: [
+        {
+          id: 'z1',
+          label: 'Padrão',
+          source: `Padrão: aproximação própria, mesma lógica do xote em andamento mais rápido. Som: ${SOM_COMPRADO}`,
+          hits: {
+            zabumbaMallet: [true, false, false, false, true, false, true, false],
+            zabumbaBacalhauSuave: [false, false, false, false, false, false, true, false],
+          },
+        },
+        {
+          id: 'z2',
+          label: 'Mais preenchida',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
+          hits: {
+            zabumbaMallet: [true, false, false, false, true, false, true, false],
+            zabumbaBacalhauForte: [false, false, true, false, false, false, false, false],
+            zabumbaBacalhauSuave: [false, false, false, false, false, false, true, false],
+          },
+        },
+      ],
+      agogo: [
+        {
+          id: 'a1',
+          label: 'Corrido (alternando)',
+          source: 'aproximação própria',
+          hits: {
+            agogoAgudo: [true, false, true, false, true, false, true, false],
+            agogoGrave: [false, true, false, true, false, true, false, true],
+          },
+        },
+        {
+          id: 'a2',
+          label: 'Nos tempos',
+          source: 'aproximação própria',
+          hits: {
+            agogoAgudo: [true, false, false, false, false, false, false, false],
+            agogoGrave: [false, false, false, false, true, false, false, false],
+          },
+        },
+      ],
+      block: [
+        {
+          id: 'bl1',
+          label: 'Clave simples',
+          source: 'aproximação própria',
+          hits: {
+            blockGrave: [true, false, false, false, false, false, false, false],
+            blockAgudo: [false, false, false, false, true, false, false, false],
+          },
+        },
+        {
+          id: 'bl2',
+          label: 'Alternado (colcheias)',
+          source: 'aproximação própria',
+          hits: {
+            blockGrave: [true, false, false, false, true, false, false, false],
+            blockAgudo: [false, false, true, false, false, false, true, false],
+          },
+        },
+      ],
+      ganza: [
+        {
+          id: 'g1',
+          label: 'Colcheias',
+          source: 'aproximação própria',
+          hits: { ganza: [true, false, true, false, true, false, true, false] },
+        },
+        {
+          id: 'g2',
+          label: 'Contínuo (semicolcheias)',
+          source: 'aproximação própria',
+          hits: { ganza: [true, true, true, true, true, true, true, true] },
+        },
+      ],
+      bateria: [
+        {
+          id: 'b1',
+          label: 'Padrão',
+          source: 'aproximação própria, adaptação bumbo=zabumba/caixa=bacalhau/chimbal=triângulo (sons CC0, sem correspondente comprado)',
+          hits: {
+            kick: [true, false, false, false, true, false, true, false],
+            snare: [false, false, false, false, false, false, true, false],
+            hihat: [true, false, true, false, true, false, true, false],
+          },
+        },
+        {
+          id: 'b2',
+          label: 'Minimalista',
+          source: 'aproximação própria',
+          hits: {
+            kick: [true, false, false, false, true, false, false, false],
+            snare: [false, false, false, false, false, false, true, false],
+            hihat: [true, false, false, false, true, false, false, false],
+          },
+        },
+      ],
+    },
+  },
 ]
 
 export function rhythmForLabel(label: string | undefined): Rhythm {
@@ -736,6 +880,32 @@ const LOOP_OPTIONS: Partial<Record<string, Partial<Record<InstrumentGroup, LoopO
     ganza: [
       { id: 'g70-1', label: 'Ganza 70-1', bpm: 70, url: ganzaLoopXote70Url },
       { id: 'g90-1', label: 'Ganza 90-1', bpm: 90, url: ganzaLoopXote90Url },
+    ],
+  },
+  rastape: {
+    triangulo: [
+      { id: 't140-1', label: 'Triangulo 140-1', bpm: 140, url: trianguloLoopRastape140M1Url },
+      { id: 't140-2', label: 'Triangulo 140-2', bpm: 140, url: trianguloLoopRastape140M2Url },
+      { id: 't160-1', label: 'Triangulo 160-1', bpm: 160, url: trianguloLoopRastape160M1Url },
+      { id: 't160-2', label: 'Triangulo 160-2', bpm: 160, url: trianguloLoopRastape160M2Url },
+    ],
+    zabumba: [
+      { id: 'z140-1', label: 'Zabumba 140-1', bpm: 140, url: zabumbaLoopRastape140_01bMUrl },
+      { id: 'z140-2', label: 'Zabumba 140-2', bpm: 140, url: zabumbaLoopRastape140_01tMUrl },
+      { id: 'z140-3', label: 'Zabumba 140-3', bpm: 140, url: zabumbaLoopRastape140_02bMUrl },
+      { id: 'z140-4', label: 'Zabumba 140-4', bpm: 140, url: zabumbaLoopRastape140_02tMUrl },
+      { id: 'z140-5', label: 'Zabumba 140-5', bpm: 140, url: zabumbaLoopRastape140_03bMUrl },
+      { id: 'z140-6', label: 'Zabumba 140-6', bpm: 140, url: zabumbaLoopRastape140_03tMUrl },
+      { id: 'z160-1', label: 'Zabumba 160-1', bpm: 160, url: zabumbaLoopRastape160_01bMUrl },
+      { id: 'z160-2', label: 'Zabumba 160-2', bpm: 160, url: zabumbaLoopRastape160_01tMUrl },
+      { id: 'z160-3', label: 'Zabumba 160-3', bpm: 160, url: zabumbaLoopRastape160_02bMUrl },
+      { id: 'z160-4', label: 'Zabumba 160-4', bpm: 160, url: zabumbaLoopRastape160_02tMUrl },
+      { id: 'z160-5', label: 'Zabumba 160-5', bpm: 160, url: zabumbaLoopRastape160_04bMUrl },
+      { id: 'z160-6', label: 'Zabumba 160-6', bpm: 160, url: zabumbaLoopRastape160_04tMUrl },
+    ],
+    agogo: [
+      { id: 'a140-1', label: 'Agogo 140-1', bpm: 140, url: agogoLoopRastape140Url },
+      { id: 'a160-1', label: 'Agogo 160-1', bpm: 160, url: agogoLoopRastape160Url },
     ],
   },
 }

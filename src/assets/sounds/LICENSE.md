@@ -42,6 +42,12 @@ primeiros loops de Xote de verdade; até aqui o Xote só tinha padrões
 programados por mim. Andamentos: 70 e 90 BPM (mais lentos que os outros
 ritmos, condizente com o Xote ser mais cadenciado).
 
+Loops do ritmo **Arrasta-pé** (arquivos `*-loop-rastape-*.wav`), mesmo
+Vol. 04 — quarto ritmo do app, também virou opção própria no seletor.
+Andamentos bem mais rápidos (140/160 BPM), condizente com a descrição
+de Garanhão & Barsalini (2023): zabumba parecida com a do xote, "porém
+com andamento rápido".
+
 ## CC0 (domínio público) — bigsoundbank.com, autor Joseph Sardin / freewavesamples.com
 
 Usados só na trilha "Bateria" (kit eletrônico, sem correspondente comprado):
