@@ -5,6 +5,7 @@ import { db } from '@/lib/db'
 import {
   parseTagsInput,
   saveChordData,
+  restoreSongVersion,
   setInitialLyrics,
   transposeSongBySemitones,
   transposeSongToKey,
@@ -62,6 +63,7 @@ function SongPicker() {
 
 function SongEditor({ songId }: { songId: string }) {
   const song = useLiveQuery(() => db.songs.get(songId), [songId])
+  const savedVersions = useLiveQuery(() => db.songVersions.where('songId').equals(songId).reverse().sortBy('createdAt'), [songId])
   const settings = useSettings()
 
   const [lyricsDraft, setLyricsDraft] = useState('')
@@ -72,6 +74,7 @@ function SongEditor({ songId }: { songId: string }) {
   const [rawDraft, setRawDraft] = useState('')
   const [tab, setTab] = useState<'cifra' | 'dados'>('cifra')
   const [dadosSaved, setDadosSaved] = useState(false)
+  const [showChordHelp, setShowChordHelp] = useState(() => localStorage.getItem('editorChordHelpDismissed') !== '1')
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>()
   const lastLoadedSource = useRef<string | undefined>(undefined)
 
@@ -189,6 +192,30 @@ function SongEditor({ songId }: { songId: string }) {
         <SaveIndicator state={saveState} />
       </div>
 
+      {(savedVersions?.length ?? 0) > 0 && (
+        <details className="mt-3 rounded-lg bg-surface px-3 py-2">
+          <summary className="tap-target cursor-pointer text-sm font-medium">Versões salvas ({savedVersions!.length})</summary>
+          <ul className="mt-2 flex flex-col gap-2">
+            {savedVersions!.map((version) => (
+              <li key={version.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-2 text-xs dark:border-slate-700">
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium">{version.name}</span>
+                  <span className="text-slate-500">Tom {version.key} · {new Date(version.createdAt).toLocaleString('pt-BR')}</span>
+                </span>
+                <button
+                  className="tap-target rounded-md border border-slate-300 px-2 py-1.5 dark:border-slate-700"
+                  onClick={async () => {
+                    if (window.confirm('Restaurar esta versão? A versão atual também será salva no histórico.')) {
+                      await restoreSongVersion(songId, version.id)
+                    }
+                  }}
+                >Restaurar</button>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+
       <div className="mt-3 flex gap-2 border-b border-slate-200 dark:border-slate-800">
         <button
           className={`tap-target px-3 py-2 text-sm font-medium ${
@@ -246,6 +273,12 @@ function SongEditor({ songId }: { songId: string }) {
           {!rawMode ? (
             <>
               <div className="mt-4 rounded-lg bg-surface p-4">
+                {showChordHelp && (
+                  <div role="note" className="mb-3 flex items-start justify-between gap-3 rounded-md bg-surface-alt px-3 py-2 text-xs text-slate-600 dark:text-slate-300">
+                    <p>Toque em uma palavra para adicionar ou alterar a cifra. Para mover uma cifra, arraste-a até outra palavra.</p>
+                    <button className="shrink-0 underline" onClick={() => { localStorage.setItem('editorChordHelpDismissed', '1'); setShowChordHelp(false) }}>Entendi</button>
+                  </div>
+                )}
                 {lines && (
                   <ChordSheet
                     lines={lines}

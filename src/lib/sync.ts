@@ -3,6 +3,7 @@ import { db, LOCAL_USER_ID } from './db'
 import {
   getPendingChanges,
   pendingKey,
+  queueSyncChange,
   removePendingChange,
   type SyncTable,
 } from './syncQueue'
@@ -20,9 +21,8 @@ import type {
  * nuvem (o que veio de outros aparelhos) e funde localmente, e só depois
  * envia o estado local — já atualizado — de volta para a nuvem. Nessa
  * ordem, uma edição feita durante a sincronização nunca é perdida nem
- * revertida por engano. Se a MESMA música foi editada em dois aparelhos
- * entre uma sincronização e outra, vale a edição do aparelho que
- * sincronizar por último — aceitável para uso pessoal, mas vale saber.
+ * revertida por engano. Em conflitos entre aparelhos, a cópia substituída
+ * é preservada no histórico da música antes de enviar a versão mais nova.
  */
 
 function songToRemote(s: Song, userId: string) {
@@ -236,7 +236,8 @@ async function pushPendingChanges(userId: string): Promise<void> {
 
 export function syncNow(userId: string): Promise<void> {
   if (inFlightSync) return inFlightSync
-  inFlightSync = pushPendingChanges(userId)
+  inFlightSync = preservePendingSongConflicts(userId)
+    .then(() => pushPendingChanges(userId))
     .then(() => runSync(userId))
     .then(() => {
       const now = new Date().toLocaleString('pt-BR')
@@ -249,6 +250,37 @@ export function syncNow(userId: string): Promise<void> {
       if (getPendingChanges().length > 0) scheduleBackgroundSync(0)
     })
   return inFlightSync
+}
+
+async function preservePendingSongConflicts(userId: string): Promise<void> {
+  if (!supabase) return
+  const pending = new Set(getPendingChanges().filter((change) => change.table === 'songs').map((change) => change.id))
+  if (pending.size === 0) return
+  const localSongs = new Map((await db.songs.bulkGet([...pending])).filter((song): song is Song => Boolean(song)).map((song) => [song.id, song]))
+  const { data, error } = await supabase.from('songs').select('*').eq('user_id', userId).in('id', [...pending])
+  if (error) throw new Error(`songs: ${error.message}`)
+  let preserved = 0
+  for (const row of data ?? []) {
+    const remote = songFromRemote(row)
+    const local = localSongs.get(remote.id)
+    if (!local || songContent(local) === songContent(remote)) continue
+    const copy: SongVersion = {
+      id: crypto.randomUUID(),
+      songId: remote.id,
+      name: `Cópia da nuvem preservada · ${new Date().toLocaleString('pt-BR')}`,
+      key: remote.preferredKey,
+      lyrics: remote.lyrics,
+      chordData: remote.chordData,
+      createdAt: new Date().toISOString(),
+    }
+    await db.songVersions.add(copy)
+    queueSyncChange('songVersions', copy.id)
+    preserved += 1
+  }
+  if (preserved) {
+    localStorage.setItem('lastSyncConflictCount', String(preserved))
+    window.dispatchEvent(new CustomEvent('caderno-sync-conflict', { detail: { count: preserved } }))
+  }
 }
 
 /** Mantém aparelhos abertos atualizados e sincroniza ao voltar ao app. */
@@ -330,6 +362,7 @@ async function performSync(userId: string): Promise<void> {
   // prender "settings" nela deixava os botões de Configurações lentos
   // até a sincronização inteira terminar. Separada, o registro de
   // configurações é gravado sozinho, quase instantâneo.
+  let preservedConflicts = 0
   await db.transaction(
     'rw',
     [db.songs, db.notebooks, db.notebookSongs, db.songVersions, db.practiceHistory],
@@ -337,13 +370,30 @@ async function performSync(userId: string): Promise<void> {
       if (remoteSongs.data) {
         const pending = new Set(getPendingChanges().map(pendingKey))
         const localSongs = new Map((await db.songs.toArray()).map((song) => [song.id, song]))
-        const incoming = remoteSongs.data
-          .map(songFromRemote)
-          .filter((remote) => {
+        const conflicts: Song[] = []
+        const incoming = remoteSongs.data.map(songFromRemote).filter((remote) => {
             if (pending.has(`songs:${remote.id}`)) return false
             const local = localSongs.get(remote.id)
-            return !local || Date.parse(remote.updatedAt) >= Date.parse(local.updatedAt)
+            if (!local) return true
+            const remoteIsNewer = Date.parse(remote.updatedAt) > Date.parse(local.updatedAt)
+            const hasDifferentContent = songContent(local) !== songContent(remote)
+            if (remoteIsNewer && hasDifferentContent) conflicts.push(local)
+            return remoteIsNewer
           })
+        // Preserve the local version before accepting a newer copy from
+        // another device. This makes last-write-wins recoverable.
+        for (const local of conflicts) {
+          await db.songVersions.add({
+                id: crypto.randomUUID(),
+                songId: local.id,
+                name: `Cópia preservada antes da sincronização · ${new Date().toLocaleString('pt-BR')}`,
+                key: local.preferredKey,
+                lyrics: local.lyrics,
+                chordData: local.chordData,
+                createdAt: new Date().toISOString(),
+              })
+          preservedConflicts += 1
+        }
         if (incoming.length > 0) await db.songs.bulkPut(incoming)
       }
       if (remoteNotebooks.data) await db.notebooks.bulkPut(remoteNotebooks.data.map(notebookFromRemote))
@@ -353,6 +403,10 @@ async function performSync(userId: string): Promise<void> {
       if (remotePractice.data) await db.practiceHistory.bulkPut(remotePractice.data.map(practiceFromRemote))
     },
   )
+  if (preservedConflicts) {
+    localStorage.setItem('lastSyncConflictCount', String(preservedConflicts))
+    window.dispatchEvent(new CustomEvent('caderno-sync-conflict', { detail: { count: preservedConflicts } }))
+  }
   const pendingAfterPull = new Set(getPendingChanges().map(pendingKey))
   if (remoteSettings.data && !pendingAfterPull.has(`settings:${LOCAL_USER_ID}`)) {
     await db.settings.put(settingsFromRemote(remoteSettings.data))
@@ -400,6 +454,14 @@ async function performSync(userId: string): Promise<void> {
     const { error } = await supabase.from('settings').upsert(settingsToRemote(settings, userId))
     if (error) throw error
   }
+}
+
+function songContent(song: Song): string {
+  return JSON.stringify([
+    song.title, song.artist, song.originalKey, song.preferredKey, song.lyrics,
+    song.chordData, song.bpm, song.rhythm, song.timeSignature, song.difficulty,
+    song.notes, song.tags, song.favorite,
+  ])
 }
 
 // Apagar não era enviado pra nuvem antes — só criar/editar (upsert). Por
