@@ -71,11 +71,19 @@ export default function AccordionArt({
         <rect x="14" y="10" width="100" height="248" rx="18" fill={`url(#${uid}-sheen)`} />
       </g>
       <rect x="14" y="10" width="100" height="248" rx="18" fill="none" stroke="var(--color-gold)" strokeOpacity="0.5" strokeWidth="1.5" />
-      <rect x="30" y="30" width="68" height="200" rx="6" fill={`url(#${uid}-key)`} />
-      {Array.from({ length: 10 }).map((_, i) => (
-        <line key={i} x1="30" y1={30 + (i + 1) * (200 / 11)} x2="98" y2={30 + (i + 1) * (200 / 11)} stroke="#c9b98d" strokeWidth="1" />
+      <rect x="29" y="28" width="71" height="205" rx="7" fill="#27151a" stroke="var(--color-gold)" strokeOpacity="0.6" />
+      {Array.from({ length: 14 }).map((_, i) => (
+        <g key={i}>
+          <rect x="32" y={31 + i * 14.2} width="65" height="13.5" rx="1.5" fill={`url(#${uid}-key)`} stroke="#b9aa8d" strokeWidth="0.65" />
+          <path d={`M34 ${42 + i * 14.2}h61`} stroke="#c9b98d" strokeOpacity="0.55" strokeWidth="0.7" />
+        </g>
       ))}
-      <line x1="64" y1="30" x2="64" y2="230" stroke="#d8cba9" strokeWidth="1" strokeDasharray="2 3" />
+      {/* Duas e três teclas pretas por oitava, no sentido de baixo para cima. */}
+      {Array.from({ length: 2 }).flatMap((_, octave) =>
+        [0, 1, 3, 4, 5].map((step) => (
+          <rect key={`${octave}-${step}`} x="32" y={31 + (octave * 7 + step) * 14.2 + 10} width="38" height="9" rx="1.5" fill="#171c27" stroke="#68717d" strokeWidth="0.65" />
+        )),
+      )}
       {/* correia decorativa superior */}
       <rect x="18" y="4" width="92" height="12" rx="6" fill={`url(#${uid}-strap)`} />
       <rect x="56" y="2" width="16" height="16" rx="2" fill="var(--color-gold)" stroke="#7a5a12" strokeWidth="0.75" />
@@ -101,6 +109,9 @@ export default function AccordionArt({
             />
           )
         })}
+        {Array.from({ length: N - 1 }).map((_, i) => (
+          <path key={`rib-${i}`} d={`M${foleStart + (i + 1) * step} 27V235`} stroke="var(--color-gold)" strokeOpacity="0.22" strokeWidth="1.2" />
+        ))}
       </g>
       {/* friso dourado nas quinas do fole junto aos corpos (fixo, não "respira") */}
       <rect x={foleStart - 4} y="20" width="8" height="224" rx="3" fill="var(--color-gold)" opacity="0.55" />
@@ -118,13 +129,13 @@ export default function AccordionArt({
           <path key={angle} d={`M446,42 L${446 + 30 * Math.sin((angle * Math.PI) / 180)},${42 - 28 * Math.cos((angle * Math.PI) / 180)}`} />
         ))}
       </g>
-      {Array.from({ length: 6 }).map((_, row) =>
-        Array.from({ length: 3 }).map((_, col) => (
+      {Array.from({ length: 7 }).map((_, row) =>
+        Array.from({ length: 4 }).map((_, col) => (
           <circle
             key={`${row}-${col}`}
-            cx={402 + col * 20 + (row % 2) * 4}
-            cy={88 + row * 32}
-            r="8"
+            cx={400 + col * 24 + (row % 2) * 5}
+            cy={79 + row * 25}
+            r="6.5"
             fill={`url(#${uid}-button)`}
             stroke="#7a5a12"
             strokeWidth="1"

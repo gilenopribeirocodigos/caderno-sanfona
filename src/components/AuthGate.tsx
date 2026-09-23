@@ -94,7 +94,7 @@ function LoginScreen() {
           </p>
         </div>
 
-        <div className="rounded-xl bg-surface p-5 shadow-2xl">
+        <div className="w-full rounded-2xl border border-white/20 bg-surface p-5 shadow-2xl">
           {signedUp ? (
             <div className="text-center">
               <p className="text-sm">
