@@ -16,6 +16,18 @@ import trianguloLoopBaiao100M1Url from '@/assets/sounds/triangulo-loop-baiao-100
 import trianguloLoopBaiao100M2Url from '@/assets/sounds/triangulo-loop-baiao-100-m2.wav'
 import trianguloLoopBaiao120M1Url from '@/assets/sounds/triangulo-loop-baiao-120-m1.wav'
 import trianguloLoopBaiao120M2Url from '@/assets/sounds/triangulo-loop-baiao-120-m2.wav'
+import zabumbaLoop120_01bMUrl from '@/assets/sounds/zabumba-loop-baiao-120-01-bM.wav'
+import zabumbaLoop120_01tMUrl from '@/assets/sounds/zabumba-loop-baiao-120-01-tM.wav'
+import zabumbaLoop120_02bMUrl from '@/assets/sounds/zabumba-loop-baiao-120-02-bM.wav'
+import zabumbaLoop120_02tMUrl from '@/assets/sounds/zabumba-loop-baiao-120-02-tM.wav'
+import zabumbaLoop120_03bMUrl from '@/assets/sounds/zabumba-loop-baiao-120-03-bM.wav'
+import zabumbaLoop120_03tMUrl from '@/assets/sounds/zabumba-loop-baiao-120-03-tM.wav'
+import zabumbaLoop100_04bMUrl from '@/assets/sounds/zabumba-loop-baiao-100-04-bM.wav'
+import zabumbaLoop100_04tMUrl from '@/assets/sounds/zabumba-loop-baiao-100-04-tM.wav'
+import zabumbaLoop100_05bMUrl from '@/assets/sounds/zabumba-loop-baiao-100-05-bM.wav'
+import zabumbaLoop100_05tMUrl from '@/assets/sounds/zabumba-loop-baiao-100-05-tM.wav'
+import zabumbaLoop100_06bMUrl from '@/assets/sounds/zabumba-loop-baiao-100-06-bM.wav'
+import zabumbaLoop100_06tMUrl from '@/assets/sounds/zabumba-loop-baiao-100-06-tM.wav'
 
 // O triângulo e a zabumba têm dois (ou mais) toques fisicamente diferentes
 // no instrumento de verdade — cada um vira uma "voz" própria aqui, com seu
@@ -451,6 +463,24 @@ const LOOP_OPTIONS: Partial<Record<string, Partial<Record<InstrumentGroup, LoopO
       { id: 'loop100m2', label: '100 BPM (mic 2)', bpm: 100, url: trianguloLoopBaiao100M2Url },
       { id: 'loop120m1', label: '120 BPM (mic 1)', bpm: 120, url: trianguloLoopBaiao120M1Url },
       { id: 'loop120m2', label: '120 BPM (mic 2)', bpm: 120, url: trianguloLoopBaiao120M2Url },
+    ],
+    // Zabumba 1-6 = 120 BPM, Zabumba 7-12 = 100 BPM (cada número é uma
+    // variação/take diferente tocada pelo percussionista; dentro de cada
+    // uma, dois microfones — bM grave, tM agudo — contam como dois números
+    // separados, a pedido, pra não esconder nenhum arquivo comprado).
+    zabumba: [
+      { id: 'zloop1', label: 'Zabumba 1', bpm: 120, url: zabumbaLoop120_01bMUrl },
+      { id: 'zloop2', label: 'Zabumba 2', bpm: 120, url: zabumbaLoop120_01tMUrl },
+      { id: 'zloop3', label: 'Zabumba 3', bpm: 120, url: zabumbaLoop120_02bMUrl },
+      { id: 'zloop4', label: 'Zabumba 4', bpm: 120, url: zabumbaLoop120_02tMUrl },
+      { id: 'zloop5', label: 'Zabumba 5', bpm: 120, url: zabumbaLoop120_03bMUrl },
+      { id: 'zloop6', label: 'Zabumba 6', bpm: 120, url: zabumbaLoop120_03tMUrl },
+      { id: 'zloop7', label: 'Zabumba 7', bpm: 100, url: zabumbaLoop100_04bMUrl },
+      { id: 'zloop8', label: 'Zabumba 8', bpm: 100, url: zabumbaLoop100_04tMUrl },
+      { id: 'zloop9', label: 'Zabumba 9', bpm: 100, url: zabumbaLoop100_05bMUrl },
+      { id: 'zloop10', label: 'Zabumba 10', bpm: 100, url: zabumbaLoop100_05tMUrl },
+      { id: 'zloop11', label: 'Zabumba 11', bpm: 100, url: zabumbaLoop100_06bMUrl },
+      { id: 'zloop12', label: 'Zabumba 12', bpm: 100, url: zabumbaLoop100_06tMUrl },
     ],
   },
 }
