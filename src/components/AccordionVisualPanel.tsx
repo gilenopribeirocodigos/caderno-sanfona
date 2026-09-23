@@ -64,10 +64,10 @@ export default function AccordionVisualPanel({
   }
 
   return (
-    <div className="rounded-lg bg-surface p-3">
+    <div className="rounded-xl border border-stone-200 bg-surface p-3 shadow-sm dark:border-slate-700">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-sm font-medium">
+          <p className="text-sm font-semibold tracking-tight">
             {activeChord ? (
               <>
                 Acorde: <strong>{formatChordForDisplay(activeChord, notation)}</strong>

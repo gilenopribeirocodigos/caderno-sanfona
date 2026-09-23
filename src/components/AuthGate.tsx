@@ -63,7 +63,7 @@ function LoginScreen() {
 
   return (
     <div
-      className="relative flex h-full items-center justify-center overflow-y-auto p-4"
+      className="relative flex h-full w-full min-w-0 items-center justify-center overflow-x-hidden overflow-y-auto p-4"
       style={{
         background:
           'radial-gradient(120% 100% at 15% 0%, var(--color-brand) 0%, var(--color-brand-dark) 45%, #1a0710 100%)',
@@ -94,7 +94,7 @@ function LoginScreen() {
           </p>
         </div>
 
-        <div className="rounded-xl bg-surface p-5 shadow-2xl">
+        <div className="w-full rounded-2xl border border-white/20 bg-surface p-5 shadow-2xl">
           {signedUp ? (
             <div className="text-center">
               <p className="text-sm">
