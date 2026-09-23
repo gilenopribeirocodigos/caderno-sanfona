@@ -132,20 +132,26 @@ function LoginScreen() {
                 </button>
               </div>
               <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+                <label htmlFor="login-email" className="sr-only">E-mail</label>
                 <input
+                  id="login-email"
                   type="email"
                   required
                   placeholder="E-mail"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
                 />
                 <div className="relative">
+                  <label htmlFor="login-password" className="sr-only">Senha</label>
                   <input
+                    id="login-password"
                     type={showPassword ? 'text' : 'password'}
                     required
                     minLength={6}
                     placeholder="Senha (mínimo 6 caracteres)"
+                    autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="tap-target w-full rounded-md border border-slate-300 px-3 py-2 pr-10 text-sm dark:border-slate-700 dark:bg-slate-800"
