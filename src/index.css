@@ -61,7 +61,7 @@ body {
   }
 }
 
-/* "Respiração" do fole da sanfona ilustrada (tela de login) */
+/* Movimento vetorial leve: só transform e opacity, sem vídeo ou redesenho em JS. */
 @keyframes accordion-breathe {
   0%,
   100% {
@@ -71,10 +71,24 @@ body {
     transform: scaleX(0.91);
   }
 }
+@keyframes accordion-reveal {
+  from { opacity: 0; transform: translateY(9px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes accordion-glint {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.8; }
+}
 .accordion-breathe {
   transform-box: fill-box;
   transform-origin: center;
   animation: accordion-breathe 2.8s ease-in-out infinite;
+}
+.accordion-hero {
+  animation: accordion-reveal 800ms ease-out both;
+}
+.accordion-glint {
+  animation: accordion-glint 3.4s ease-in-out infinite;
 }
 .accordion-breathe-slow {
   animation-duration: 6s;
@@ -85,7 +99,9 @@ body {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .accordion-breathe {
+  .accordion-breathe,
+  .accordion-hero,
+  .accordion-glint {
     animation: none;
   }
 }
