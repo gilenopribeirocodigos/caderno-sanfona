@@ -176,51 +176,35 @@ export default function Library() {
 
       <ul className="mt-4 flex flex-col gap-2">
         {visibleSongs.map((song) => (
-          <li key={song.id} className="rounded-lg bg-surface px-3 py-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">{song.title}</p>
-                <p className="text-xs text-slate-500">
+          <li key={song.id} className="rounded-lg bg-surface p-3">
+            <div className="flex min-w-0 items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-base font-semibold leading-snug">{song.title}</p>
+                <p className="mt-1 truncate text-xs text-slate-500" title={[song.artist, `Tom ${song.preferredKey}`, song.rhythm, song.difficulty].filter(Boolean).join(' · ')}>
                   {song.artist ? `${song.artist} · ` : ''}Tom {song.preferredKey}
                   {song.rhythm ? ` · ${song.rhythm}` : ''}
                   {song.difficulty ? ` · ${song.difficulty}` : ''}
                   {song.timesPlayed > 0 ? ` · tocada ${song.timesPlayed}x` : ''}
                 </p>
-                {song.tags.length > 0 && (
-                  <p className="mt-1 text-xs text-slate-400">{song.tags.join(' · ')}</p>
-                )}
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  aria-label="Favoritar"
-                  className="tap-target text-lg"
-                  onClick={() => toggleFavorite(song.id, !song.favorite)}
-                >
-                  {song.favorite ? '★' : '☆'}
-                </button>
-                <Link
-                  to={`/tocar?song=${song.id}`}
-                  aria-label="Tocar"
-                  title="Tocar"
-                  className="tap-target flex items-center justify-center rounded-md bg-slate-900 px-2.5 py-1.5 text-sm text-white dark:bg-slate-100 dark:text-slate-900"
-                >
-                  ▶
-                </Link>
-                <Link
-                  to={`/editor/${song.id}`}
-                  className="tap-target text-xs text-slate-500 underline"
-                >
-                  Editar
-                </Link>
-                <DownloadMenu song={song} notation={settings.notation} accordionType={settings.accordionType} />
-                <button
-                  aria-label="Excluir"
-                  className="tap-target text-xs text-red-500 underline"
-                  onClick={() => deleteSong(song.id)}
-                >
-                  Excluir
-                </button>
-              </div>
+              <button
+                aria-label={song.favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                aria-pressed={song.favorite}
+                className="tap-target shrink-0 text-xl leading-none text-amber-500"
+                onClick={() => toggleFavorite(song.id, !song.favorite)}
+              >
+                {song.favorite ? '★' : '☆'}
+              </button>
+            </div>
+            {song.tags.length > 0 && <p className="mt-1 truncate text-xs text-slate-400">{song.tags.join(' · ')}</p>}
+            <div className="mt-3 flex items-center gap-2">
+              <Link
+                to={`/tocar?song=${song.id}`}
+                className="tap-target flex min-h-11 flex-1 items-center justify-center gap-2 rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white dark:bg-slate-100 dark:text-slate-900"
+              >
+                ▶ <span>Tocar</span>
+              </Link>
+              <SongActions song={song} notation={settings.notation} accordionType={settings.accordionType} onDelete={() => deleteSong(song.id)} />
             </div>
           </li>
         ))}
@@ -243,11 +227,12 @@ export default function Library() {
 
 /** Baixar/imprimir uma música (item "Exportar/Backup") — menu simples com
  * <details>, sem precisar de estado próprio pra abrir/fechar. */
-function DownloadMenu({ song, notation, accordionType }: { song: Song; notation: ChordNotation; accordionType: AccordionType }) {
+function SongActions({ song, notation, accordionType, onDelete }: { song: Song; notation: ChordNotation; accordionType: AccordionType; onDelete: () => void }) {
   return (
-    <details className="tap-target relative inline-block text-xs">
-      <summary className="cursor-pointer list-none text-slate-500 underline">Baixar</summary>
-      <div className="absolute right-0 z-20 mt-1 flex w-40 flex-col gap-1 rounded-md border border-slate-200 bg-surface p-2 shadow-lg dark:border-slate-700">
+    <details className="tap-target relative">
+      <summary aria-label={`Mais ações para ${song.title}`} className="flex min-h-11 cursor-pointer list-none items-center rounded-md border border-slate-300 px-3 text-sm dark:border-slate-700">Mais</summary>
+      <div className="absolute right-0 top-full z-20 mt-1 flex w-48 flex-col gap-1 rounded-md border border-slate-200 bg-surface p-2 text-sm shadow-lg dark:border-slate-700">
+        <Link to={`/editor/${song.id}`} className="rounded px-2 py-2 text-left hover:bg-surface-alt">Editar música</Link>
         <button
           className="rounded px-2 py-1.5 text-left hover:bg-surface-alt"
           onClick={() => downloadSongText(song, notation)}
@@ -266,6 +251,7 @@ function DownloadMenu({ song, notation, accordionType }: { song: Song; notation:
         >
           Imprimir / PDF
         </button>
+        <button className="rounded px-2 py-2 text-left text-red-600 hover:bg-surface-alt" onClick={onDelete}>Excluir música</button>
       </div>
     </details>
   )
