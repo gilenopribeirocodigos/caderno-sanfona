@@ -75,7 +75,7 @@ export default function AppShell() {
 
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <TopBar />
-        <div className="relative isolate flex-1 overflow-y-auto bg-surface-alt">
+        <div className="relative isolate flex-1 overflow-x-hidden overflow-y-auto bg-surface-alt">
           {/* Sanfona ao fundo do conteúdo, sutil e "respirando" — presença
               contínua da marca em toda tela, não só no topo/login. */}
           <AccordionArt
