@@ -1,25 +1,28 @@
 # Sons do Metrônomo/Batuque
 
-Amostras de percussão usadas no recurso de Metrônomo + Batuque.
+## Comprados pelo usuário — "BPL Vol. 02 (Baião and Côco)", brazilianmusician (Gumroad)
 
-## CC0 (domínio público) — bigsoundbank.com, autor Joseph Sardin
+Gravações reais de percussionista profissional (Firmino), feitas no Rio
+de Janeiro. Comprado e enviado pelo usuário; uso dentro deste app pessoal.
 
-- `zabumba-bass.mp3` — "Bass tom, #4" (pancada grave, baqueta grossa)
-- `zabumba-slap.mp3` — "High-pitched tom, 1" (pancada aguda/seca, baqueta fina)
-- `triangulo.mp3` — "Triangle #3"
+- `triangulo-fechado.wav` — "Brazilian Triangle, closed (m1)"
+- `triangulo-aberto.wav` — "Brazilian Triangle, open (m1) 112ms"
+- `zabumba-mallet.wav` — "Brazilian Zabumba (1-shot)" (toque grave, baqueta grossa)
+- `zabumba-mallet-aberto.wav` — "Brazilian Zabumba, open (1-shot)"
+- `zabumba-bacalhau-forte.wav` — "Brazilian Baiao, ZabumbaS Bacalhau (b&tM), hard" (toque agudo, baqueta fina)
+- `zabumba-bacalhau-suave.wav` — "Brazilian Baiao, ZabumbaS Bacalhau (b&tM), soft"
 
-## freewavesamples.com — licença própria (ver about-us-license)
+O pacote comprado trouxe mais variações (outro microfone — m2 — e outras
+durações de anel do triângulo; versões "Côco" do bacalhau). Não estão
+aqui porque são a mesma pancada captada de outro jeito, não um som
+diferente — usar as duas ao mesmo tempo duplicaria a mesma batida em vez
+de somar variedade. Ficam guardadas fora do repositório; se um dia
+quisermos mais variações, é só pedir de novo ao usuário.
 
-Uso explicitamente permitido para "web application (game, virtual drum
-machine, etc.)" hospedando os arquivos no próprio site, que é exatamente
-este caso.
+## CC0 (domínio público) — bigsoundbank.com, autor Joseph Sardin / freewavesamples.com
 
-- `kick.wav` — "Bass Drum 1" (Yamaha SY22)
-- `snare.wav` — "Snare Drum 23"
-- `hihat.wav` — "Closed Hi-Hat 3"
+Usados só na trilha "Bateria" (kit eletrônico, sem correspondente comprado):
 
-Não são gravações reais de zabumba/triângulo nordestino (raras com
-licença livre) — são timbres de percussão eletrônica/bateria próximos o
-suficiente para marcar o ritmo. Se no futuro surgirem amostras mais
-fiéis e igualmente livres, é só substituir os arquivos — o motor de
-áudio não muda.
+- `kick.wav` — "Bass Drum 1" (Yamaha SY22), freewavesamples.com
+- `snare.wav` — "Snare Drum 23", freewavesamples.com
+- `hihat.wav` — "Closed Hi-Hat 3", freewavesamples.com

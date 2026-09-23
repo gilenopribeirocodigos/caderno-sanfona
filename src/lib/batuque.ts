@@ -1,11 +1,30 @@
-import zabumbaBassUrl from '@/assets/sounds/zabumba-bass.mp3'
-import zabumbaSlapUrl from '@/assets/sounds/zabumba-slap.mp3'
-import trianguloUrl from '@/assets/sounds/triangulo.mp3'
+import trianguloFechadoUrl from '@/assets/sounds/triangulo-fechado.wav'
+import trianguloAbertoUrl from '@/assets/sounds/triangulo-aberto.wav'
+import zabumbaMalletUrl from '@/assets/sounds/zabumba-mallet.wav'
+import zabumbaMalletAbertoUrl from '@/assets/sounds/zabumba-mallet-aberto.wav'
+import zabumbaBacalhauForteUrl from '@/assets/sounds/zabumba-bacalhau-forte.wav'
+import zabumbaBacalhauSuaveUrl from '@/assets/sounds/zabumba-bacalhau-suave.wav'
 import kickUrl from '@/assets/sounds/kick.wav'
 import snareUrl from '@/assets/sounds/snare.wav'
 import hihatUrl from '@/assets/sounds/hihat.wav'
 
-export type BatuqueInstrument = 'zabumbaBass' | 'zabumbaSlap' | 'triangulo' | 'kick' | 'snare' | 'hihat'
+// O triângulo e a zabumba têm dois (ou mais) toques fisicamente diferentes
+// no instrumento de verdade — cada um vira uma "voz" própria aqui, com seu
+// próprio som e sua própria posição no compasso. Isso é o que permite
+// imitar a técnica real: abafar a maioria das notas do triângulo e deixar
+// só o acento soar aberto; ou tocar a primeira zabumbada abafada e a
+// segunda aberta, como descrito na literatura sobre baião.
+export type BatuqueInstrument =
+  | 'trianguloFechado'
+  | 'trianguloAberto'
+  | 'zabumbaMallet'
+  | 'zabumbaMalletAberto'
+  | 'zabumbaBacalhauForte'
+  | 'zabumbaBacalhauSuave'
+  | 'kick'
+  | 'snare'
+  | 'hihat'
+
 export type InstrumentGroup = 'triangulo' | 'zabumba' | 'bateria'
 
 export const INSTRUMENT_GROUPS: { id: InstrumentGroup; label: string }[] = [
@@ -37,20 +56,8 @@ export interface Rhythm {
   variations: Record<InstrumentGroup, Variation[]>
 }
 
-// Baião: a única referência específica encontrada foi o blog de um
-// baterista (That Drum Blog, "A forró primer part 2 - Baião"), que
-// descreve o triângulo/chimbal em texto; zabumba não tem posição exata
-// citável (só a ideia geral de "abafado, depois aberto"), então essas
-// variações ficam como aproximação própria.
-const BAIAO_BASS_PADRAO = [true, false, false, false, true, false, false, false]
-
-// Xote: aqui há bem mais material citável — um artigo acadêmico da
-// UNICAMP/ANPPOM (Garanhão & Barsalini, 2023) sobre a adaptação do xote
-// pra bateria, que cita e resume os métodos de Sergio Gomes (2005,
-// "Novos caminhos da bateria brasileira") e Climério Santos (2013,
-// "Forró: a codificação de Luiz Gonzaga"), além de analisar a gravação
-// de Cleber Almeida (Trio Curupira, "Siri na Lata", 2003).
-const XOTE_BASS_GOMES = [true, false, false, false, true, false, true, false]
+const SOM_COMPRADO =
+  'som real comprado pelo usuário — "BPL Vol. 02 (Baião and Côco)" (brazilianmusician/Gumroad), percussionista Firmino'
 
 export const RHYTHMS: Rhythm[] = [
   {
@@ -63,48 +70,62 @@ export const RHYTHMS: Rhythm[] = [
         {
           id: 't1',
           label: 'Corrido (semicolcheias)',
-          source: 'That Drum Blog, "A forró primer pt. 2": "all four subdivisions on the hi-hat"',
-          hits: { triangulo: [true, true, true, true, true, true, true, true] },
+          source: `Padrão: That Drum Blog, "A forró primer pt. 2" ("all four subdivisions on the hi-hat"). Som: ${SOM_COMPRADO} — fechado nas semicolcheias comuns, aberto no acento do tempo forte.`,
+          hits: {
+            trianguloFechado: [false, true, true, true, false, true, true, true],
+            trianguloAberto: [true, false, false, false, true, false, false, false],
+          },
         },
         {
           id: 't2',
-          label: '"1 e & " com fechamento no "a"',
-          source: 'That Drum Blog, mesma fonte: toca 1-e-&, fecha o chimbal no "a"',
-          hits: { triangulo: [true, true, true, false, true, true, true, false] },
+          label: '"1 e & " com acento aberto',
+          source: `Padrão: That Drum Blog, mesma fonte (toca 1-e-&, fecha no "a"). Som: ${SOM_COMPRADO} — acento aberto no "&".`,
+          hits: {
+            trianguloFechado: [true, true, false, false, true, true, false, false],
+            trianguloAberto: [false, false, true, false, false, false, true, false],
+          },
         },
         {
           id: 't3',
           label: 'Com quebra (simples)',
-          source: 'aproximação própria',
-          hits: { triangulo: [true, true, false, true, true, true, false, true] },
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
+          hits: {
+            trianguloFechado: [false, true, false, true, true, true, false, true],
+            trianguloAberto: [true, false, false, false, false, false, false, false],
+          },
         },
       ],
       zabumba: [
         {
           id: 'z1',
           label: 'Padrão',
-          source: 'aproximação própria — abafado/aberto alternando, conceito geral descrito no That Drum Blog',
+          source: `Padrão: That Drum Blog — "the first stroke is muted, while the second is open" (a 1ª zabumbada abafada, a 2ª aberta). Som: ${SOM_COMPRADO}`,
           hits: {
-            zabumbaBass: BAIAO_BASS_PADRAO,
-            zabumbaSlap: [false, false, true, false, false, true, false, true],
+            zabumbaMallet: [true, false, false, false, false, false, false, false],
+            zabumbaMalletAberto: [false, false, false, false, true, false, false, false],
+            zabumbaBacalhauForte: [false, false, false, false, false, false, false, true],
+            zabumbaBacalhauSuave: [false, false, true, false, false, true, false, false],
           },
         },
         {
           id: 'z2',
           label: 'Sincopada',
-          source: 'aproximação própria',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO} — bacalhau forte no par sincopado final`,
           hits: {
-            zabumbaBass: BAIAO_BASS_PADRAO,
-            zabumbaSlap: [false, false, false, true, false, false, true, true],
+            zabumbaMallet: [true, false, false, false, false, false, false, false],
+            zabumbaMalletAberto: [false, false, false, false, true, false, false, false],
+            zabumbaBacalhauForte: [false, false, false, false, false, false, true, true],
+            zabumbaBacalhauSuave: [false, false, false, true, false, false, false, false],
           },
         },
         {
           id: 'z3',
           label: 'Enxuta',
-          source: 'aproximação própria',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
           hits: {
-            zabumbaBass: BAIAO_BASS_PADRAO,
-            zabumbaSlap: [false, false, false, false, false, true, false, false],
+            zabumbaMallet: [true, false, false, false, false, false, false, false],
+            zabumbaMalletAberto: [false, false, false, false, true, false, false, false],
+            zabumbaBacalhauForte: [false, false, false, false, false, true, false, false],
           },
         },
       ],
@@ -112,9 +133,9 @@ export const RHYTHMS: Rhythm[] = [
         {
           id: 'b1',
           label: 'Padrão',
-          source: 'aproximação própria, adaptação bumbo=zabumba/caixa=bacalhau/chimbal=triângulo',
+          source: 'aproximação própria, adaptação bumbo=zabumba/caixa=bacalhau/chimbal=triângulo (sons CC0, sem correspondente comprado)',
           hits: {
-            kick: BAIAO_BASS_PADRAO,
+            kick: [true, false, false, false, true, false, false, false],
             snare: [false, false, false, false, false, false, false, true],
             hihat: [true, true, true, true, true, true, true, true],
           },
@@ -124,7 +145,7 @@ export const RHYTHMS: Rhythm[] = [
           label: 'Com abertura',
           source: 'aproximação própria',
           hits: {
-            kick: BAIAO_BASS_PADRAO,
+            kick: [true, false, false, false, true, false, false, false],
             snare: [false, false, false, true, false, false, true, false],
             hihat: [true, false, true, false, true, false, true, false],
           },
@@ -134,7 +155,7 @@ export const RHYTHMS: Rhythm[] = [
           label: 'Minimalista',
           source: 'aproximação própria',
           hits: {
-            kick: BAIAO_BASS_PADRAO,
+            kick: [true, false, false, false, true, false, false, false],
             snare: [false, false, false, false, false, false, true, false],
             hihat: [true, false, false, false, true, false, false, false],
           },
@@ -152,48 +173,53 @@ export const RHYTHMS: Rhythm[] = [
         {
           id: 't1',
           label: 'Colcheias (condução simples)',
-          source: 'Garanhão & Barsalini (2023), análise de Cleber Almeida em "Siri na Lata": "condução de chimbal em colcheias"',
-          hits: { triangulo: [true, false, true, false, true, false, true, false] },
+          source: `Padrão: Garanhão & Barsalini (2023), análise de Cleber Almeida em "Siri na Lata": "condução de chimbal em colcheias". Som: ${SOM_COMPRADO} — aberto nos tempos fortes, fechado nos contratempos`,
+          hits: {
+            trianguloFechado: [false, false, true, false, false, false, true, false],
+            trianguloAberto: [true, false, false, false, true, false, false, false],
+          },
         },
         {
           id: 't2',
           label: 'Nos tempos',
-          source: 'Santos (2013) via Garanhão & Barsalini (2023): agogô/triângulo "toca os tempos"',
-          hits: { triangulo: [true, false, false, false, true, false, false, false] },
+          source: `Padrão: Santos (2013) via Garanhão & Barsalini (2023). Som: ${SOM_COMPRADO} — aberto, por ser o toque de acento`,
+          hits: { trianguloAberto: [true, false, false, false, true, false, false, false] },
         },
         {
           id: 't3',
           label: 'No contratempo',
-          source: 'Gomes (2005) via Garanhão & Barsalini (2023): agogô/triângulo "executa os contratempos"',
-          hits: { triangulo: [false, false, true, false, false, false, true, false] },
+          source: `Padrão: Gomes (2005) via Garanhão & Barsalini (2023). Som: ${SOM_COMPRADO} — fechado, contratempo mais discreto`,
+          hits: { trianguloFechado: [false, false, true, false, false, false, true, false] },
         },
       ],
       zabumba: [
         {
           id: 'z1',
           label: 'Padrão (Gomes)',
-          source: 'Gomes (2005) via Garanhão & Barsalini (2023): "semínima no primeiro tempo, duas colcheias no segundo"',
+          source: `Padrão: Gomes (2005) via Garanhão & Barsalini (2023): "semínima no primeiro tempo, duas colcheias no segundo". Som: ${SOM_COMPRADO}`,
           hits: {
-            zabumbaBass: XOTE_BASS_GOMES,
-            zabumbaSlap: [false, false, false, false, false, false, true, false],
+            zabumbaMallet: [true, false, false, false, true, false, true, false],
+            zabumbaBacalhauForte: [false, false, false, false, false, false, false, false],
+            zabumbaBacalhauSuave: [false, false, false, false, false, false, true, false],
           },
         },
         {
           id: 'z2',
           label: 'Levada invertida (Cleber Almeida)',
-          source: 'Garanhão & Barsalini (2023): "dois bumbos (colcheias) no primeiro tempo e semínima no segundo"',
+          source: `Padrão: Garanhão & Barsalini (2023): "dois bumbos (colcheias) no primeiro tempo e semínima no segundo". Som: ${SOM_COMPRADO}`,
           hits: {
-            zabumbaBass: [true, false, true, false, true, false, false, false],
-            zabumbaSlap: [false, false, false, false, false, true, false, false],
+            zabumbaMallet: [true, false, true, false, true, false, false, false],
+            zabumbaBacalhauSuave: [false, false, false, false, false, true, false, false],
           },
         },
         {
           id: 'z3',
           label: 'Mais preenchida',
-          source: 'aproximação própria',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
           hits: {
-            zabumbaBass: XOTE_BASS_GOMES,
-            zabumbaSlap: [false, false, true, false, false, false, true, false],
+            zabumbaMallet: [true, false, false, false, true, false, true, false],
+            zabumbaBacalhauForte: [false, false, true, false, false, false, false, false],
+            zabumbaBacalhauSuave: [false, false, false, false, false, false, true, false],
           },
         },
       ],
@@ -201,9 +227,9 @@ export const RHYTHMS: Rhythm[] = [
         {
           id: 'b1',
           label: 'Padrão',
-          source: 'aproximação própria, adaptação bumbo=zabumba/caixa=bacalhau/chimbal=triângulo (mapeamento descrito em Garanhão, 2019, citado no artigo)',
+          source: 'aproximação própria, adaptação bumbo=zabumba/caixa=bacalhau/chimbal=triângulo (sons CC0, sem correspondente comprado)',
           hits: {
-            kick: XOTE_BASS_GOMES,
+            kick: [true, false, false, false, true, false, true, false],
             snare: [false, false, false, false, false, false, true, false],
             hihat: [true, false, true, false, true, false, true, false],
           },
@@ -213,7 +239,7 @@ export const RHYTHMS: Rhythm[] = [
           label: 'Com chimbau cheio',
           source: 'aproximação própria',
           hits: {
-            kick: XOTE_BASS_GOMES,
+            kick: [true, false, false, false, true, false, true, false],
             snare: [false, false, false, false, false, false, true, false],
             hihat: [true, true, true, true, true, true, true, true],
           },
@@ -239,9 +265,12 @@ export function rhythmForLabel(label: string | undefined): Rhythm {
 }
 
 const SAMPLE_URLS: Record<BatuqueInstrument, string> = {
-  zabumbaBass: zabumbaBassUrl,
-  zabumbaSlap: zabumbaSlapUrl,
-  triangulo: trianguloUrl,
+  trianguloFechado: trianguloFechadoUrl,
+  trianguloAberto: trianguloAbertoUrl,
+  zabumbaMallet: zabumbaMalletUrl,
+  zabumbaMalletAberto: zabumbaMalletAbertoUrl,
+  zabumbaBacalhauForte: zabumbaBacalhauForteUrl,
+  zabumbaBacalhauSuave: zabumbaBacalhauSuaveUrl,
   kick: kickUrl,
   snare: snareUrl,
   hihat: hihatUrl,
