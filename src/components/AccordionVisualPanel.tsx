@@ -5,6 +5,7 @@ import BassDiagram from './BassDiagram'
 import ChordKeyboards from './ChordKeyboards'
 import ChordPicker from './ChordPicker'
 import NoteBuilderKeyboard from './NoteBuilderKeyboard'
+import AccordionArt from './AccordionArt'
 
 interface AccordionVisualPanelProps {
   activeChord?: string
@@ -66,26 +67,29 @@ export default function AccordionVisualPanel({
   return (
     <div className="rounded-xl border border-stone-200 bg-surface p-3 shadow-sm dark:border-slate-700">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <p className="text-sm font-semibold tracking-tight">
-            {activeChord ? (
-              <>
-                Acorde: <strong>{formatChordForDisplay(activeChord, notation)}</strong>
-                {!songChords.includes(activeChord) && (
-                  <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-normal text-amber-700 dark:bg-amber-900 dark:text-amber-300">
-                    prévia — não está na música
-                  </span>
-                )}
-              </>
-            ) : (
-              'Toque num acorde da letra para ver aqui'
-            )}
-          </p>
-          {notes.length > 0 && (
-            <p className="text-xs text-slate-500">
-              Notas: {notes.map((n) => formatChordForDisplay(n, notation)).join(' · ')}
+        <div className="flex min-w-0 items-center gap-2">
+          <AccordionArt animated={Boolean(activeChord)} className="h-8 w-auto shrink-0 sm:h-11" />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold tracking-tight">
+              {activeChord ? (
+                <>
+                  Acorde: <strong>{formatChordForDisplay(activeChord, notation)}</strong>
+                  {!songChords.includes(activeChord) && (
+                    <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-normal text-amber-700 dark:bg-amber-900 dark:text-amber-300">
+                      prévia — não está na música
+                    </span>
+                  )}
+                </>
+              ) : (
+                'Toque num acorde da letra para ver aqui'
+              )}
             </p>
-          )}
+            {notes.length > 0 && (
+              <p className="text-xs text-slate-500">
+                Notas: {notes.map((n) => formatChordForDisplay(n, notation)).join(' · ')}
+              </p>
+            )}
+          </div>
         </div>
         <div className="flex flex-wrap gap-1 text-xs">
           <select
