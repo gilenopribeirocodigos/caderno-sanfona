@@ -12,8 +12,10 @@ import ganzaUrl from '@/assets/sounds/ganza.wav'
 import kickUrl from '@/assets/sounds/kick.wav'
 import snareUrl from '@/assets/sounds/snare.wav'
 import hihatUrl from '@/assets/sounds/hihat.wav'
-import trianguloLoopBaiao100Url from '@/assets/sounds/triangulo-loop-baiao-100.wav'
-import trianguloLoopBaiao120Url from '@/assets/sounds/triangulo-loop-baiao-120.wav'
+import trianguloLoopBaiao100M1Url from '@/assets/sounds/triangulo-loop-baiao-100-m1.wav'
+import trianguloLoopBaiao100M2Url from '@/assets/sounds/triangulo-loop-baiao-100-m2.wav'
+import trianguloLoopBaiao120M1Url from '@/assets/sounds/triangulo-loop-baiao-120-m1.wav'
+import trianguloLoopBaiao120M2Url from '@/assets/sounds/triangulo-loop-baiao-120-m2.wav'
 
 // O triângulo e a zabumba têm dois (ou mais) toques fisicamente diferentes
 // no instrumento de verdade — cada um vira uma "voz" própria aqui, com seu
@@ -445,18 +447,10 @@ export interface LoopOption {
 const LOOP_OPTIONS: Partial<Record<string, Partial<Record<InstrumentGroup, LoopOption[]>>>> = {
   baiao: {
     triangulo: [
-      {
-        id: 'loop100',
-        label: '100 BPM',
-        bpm: 100,
-        url: trianguloLoopBaiao100Url,
-      },
-      {
-        id: 'loop120',
-        label: '120 BPM',
-        bpm: 120,
-        url: trianguloLoopBaiao120Url,
-      },
+      { id: 'loop100m1', label: '100 BPM (mic 1)', bpm: 100, url: trianguloLoopBaiao100M1Url },
+      { id: 'loop100m2', label: '100 BPM (mic 2)', bpm: 100, url: trianguloLoopBaiao100M2Url },
+      { id: 'loop120m1', label: '120 BPM (mic 1)', bpm: 120, url: trianguloLoopBaiao120M1Url },
+      { id: 'loop120m2', label: '120 BPM (mic 2)', bpm: 120, url: trianguloLoopBaiao120M2Url },
     ],
   },
 }
