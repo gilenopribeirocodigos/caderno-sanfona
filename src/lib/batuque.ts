@@ -974,30 +974,76 @@ interface GroupClock {
 //    conjunto todo mais alto); 2) um limitador mais apertado na saída,
 //    que permite manter tudo perto do máximo sem estourar quando vários
 //    instrumentos tocam juntos.
-const TARGET_PEAK = 0.9
-const MAX_NORMALIZE_GAIN = 6
+// Normalizar só pelo PICO (like antes) não resolve pra instrumento grave
+// tipo zabumba: a "topada" da baqueta bate um pico alto e rápido, mas o
+// "bum" grave que a gente realmente ouve como volume tem energia mais
+// baixa que esse pico — normalizando só o pico, o som continua parecendo
+// fraco. Por isso mede a energia média (RMS) do áudio, que reflete
+// melhor o volume que o ouvido percebe, e só usa o pico como teto de
+// segurança (pra não estourar).
+const TARGET_RMS = 0.28
+const PEAK_CEILING = 0.98
+const MAX_NORMALIZE_GAIN = 10
 const MASTER_GAIN = 1.3
 const COMPRESSOR_SETTINGS = { threshold: -6, knee: 6, ratio: 20, attack: 0.001, release: 0.15 }
 
-/** Sobe (nunca abaixa) o volume de um áudio recém-carregado até ficar
- * perto do máximo (item "todo instrumento no mesmo nível") — sem isso,
- * um som gravado mais baixo continuava baixo mesmo com o limitador geral. */
+/** Sobe (nunca abaixa) o volume de um áudio recém-carregado até uma
+ * energia média (RMS) parecida com a dos outros instrumentos — sem
+ * isso, um som gravado mais baixo (ou mais grave) continuava soando
+ * mais fraco que os outros, mesmo com o limitador geral. */
 function normalizeBufferInPlace(buffer: AudioBuffer): void {
   let peak = 0
+  let sumSquares = 0
+  let sampleCount = 0
   for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
     const data = buffer.getChannelData(ch)
     for (let i = 0; i < data.length; i++) {
-      const abs = Math.abs(data[i])
+      const value = data[i]
+      const abs = Math.abs(value)
       if (abs > peak) peak = abs
+      sumSquares += value * value
+      sampleCount++
     }
   }
-  if (peak <= 0) return
-  const gain = Math.min(MAX_NORMALIZE_GAIN, TARGET_PEAK / peak)
+  if (peak <= 0 || sampleCount === 0) return
+  const rms = Math.sqrt(sumSquares / sampleCount)
+
+  // Sobe até a energia média alvo, mas nunca deixa o pico passar do teto
+  // de segurança (evita estourar num trecho mais forte da gravação).
+  const gain = Math.min(MAX_NORMALIZE_GAIN, TARGET_RMS / rms, PEAK_CEILING / peak)
   if (gain <= 1.01) return
   for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
     const data = buffer.getChannelData(ch)
     for (let i = 0; i < data.length; i++) data[i] *= gain
   }
+}
+
+// Ainda mais importante que o ganho pro zabumba: comprime a "topada" da
+// baqueta (o pico rápido e alto) ANTES de medir/normalizar, encolhendo a
+// diferença entre o pico e o corpo grave do som — sem isso, subir o
+// volume geral só deixava a topada mais alta e o "bum" continuava fraco.
+const TRANSIENT_COMPRESSOR_SETTINGS = { threshold: -35, knee: 10, ratio: 20, attack: 0.0005, release: 0.05 }
+
+/** Processa o áudio recém-carregado (comprime o transiente + normaliza)
+ * e devolve um buffer novo, mais "cheio" e parelho com os demais
+ * instrumentos — usado tanto nas batidas curtas quanto nos loops
+ * gravados ("Groove real"). */
+async function loudenBuffer(buffer: AudioBuffer): Promise<AudioBuffer> {
+  const offline = new OfflineAudioContext(buffer.numberOfChannels, buffer.length, buffer.sampleRate)
+  const source = offline.createBufferSource()
+  source.buffer = buffer
+  const compressor = offline.createDynamicsCompressor()
+  compressor.threshold.value = TRANSIENT_COMPRESSOR_SETTINGS.threshold
+  compressor.knee.value = TRANSIENT_COMPRESSOR_SETTINGS.knee
+  compressor.ratio.value = TRANSIENT_COMPRESSOR_SETTINGS.ratio
+  compressor.attack.value = TRANSIENT_COMPRESSOR_SETTINGS.attack
+  compressor.release.value = TRANSIENT_COMPRESSOR_SETTINGS.release
+  source.connect(compressor)
+  compressor.connect(offline.destination)
+  source.start()
+  const rendered = await offline.startRendering()
+  normalizeBufferInPlace(rendered)
+  return rendered
 }
 
 export class BatuqueEngine {
@@ -1165,8 +1211,8 @@ export class BatuqueEngine {
     if (cached) return cached
     const res = await fetch(url)
     const arrayBuffer = await res.arrayBuffer()
-    const buffer = await this.ctx!.decodeAudioData(arrayBuffer)
-    normalizeBufferInPlace(buffer)
+    const decoded = await this.ctx!.decodeAudioData(arrayBuffer)
+    const buffer = await loudenBuffer(decoded)
     this.loopBufferCache.set(url, buffer)
     return buffer
   }
@@ -1179,9 +1225,8 @@ export class BatuqueEngine {
         if (this.buffers[instrument]) return
         const res = await fetch(url)
         const arrayBuffer = await res.arrayBuffer()
-        const buffer = await this.ctx!.decodeAudioData(arrayBuffer)
-        normalizeBufferInPlace(buffer)
-        this.buffers[instrument] = buffer
+        const decoded = await this.ctx!.decodeAudioData(arrayBuffer)
+        this.buffers[instrument] = await loudenBuffer(decoded)
       }),
     )
   }
