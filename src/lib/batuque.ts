@@ -4,6 +4,11 @@ import zabumbaMalletUrl from '@/assets/sounds/zabumba-mallet.wav'
 import zabumbaMalletAbertoUrl from '@/assets/sounds/zabumba-mallet-aberto.wav'
 import zabumbaBacalhauForteUrl from '@/assets/sounds/zabumba-bacalhau-forte.wav'
 import zabumbaBacalhauSuaveUrl from '@/assets/sounds/zabumba-bacalhau-suave.wav'
+import agogoGraveUrl from '@/assets/sounds/agogo-grave.wav'
+import agogoAgudoUrl from '@/assets/sounds/agogo-agudo.wav'
+import blockGraveUrl from '@/assets/sounds/block-grave.wav'
+import blockAgudoUrl from '@/assets/sounds/block-agudo.wav'
+import ganzaUrl from '@/assets/sounds/ganza.wav'
 import kickUrl from '@/assets/sounds/kick.wav'
 import snareUrl from '@/assets/sounds/snare.wav'
 import hihatUrl from '@/assets/sounds/hihat.wav'
@@ -21,15 +26,23 @@ export type BatuqueInstrument =
   | 'zabumbaMalletAberto'
   | 'zabumbaBacalhauForte'
   | 'zabumbaBacalhauSuave'
+  | 'agogoAgudo'
+  | 'agogoGrave'
+  | 'blockAgudo'
+  | 'blockGrave'
+  | 'ganza'
   | 'kick'
   | 'snare'
   | 'hihat'
 
-export type InstrumentGroup = 'triangulo' | 'zabumba' | 'bateria'
+export type InstrumentGroup = 'triangulo' | 'zabumba' | 'agogo' | 'block' | 'ganza' | 'bateria'
 
 export const INSTRUMENT_GROUPS: { id: InstrumentGroup; label: string }[] = [
   { id: 'triangulo', label: 'Triângulo' },
   { id: 'zabumba', label: 'Zabumba' },
+  { id: 'agogo', label: 'Agogô' },
+  { id: 'block', label: 'Block' },
+  { id: 'ganza', label: 'Ganzá' },
   { id: 'bateria', label: 'Bateria' },
 ]
 
@@ -129,6 +142,81 @@ export const RHYTHMS: Rhythm[] = [
           },
         },
       ],
+      agogo: [
+        {
+          id: 'a1',
+          label: 'Corrido (alternando)',
+          source: `Padrão: aproximação própria, inspirada na descrição de Garanhão & Barsalini (2023) sobre o agogô no xote ("mantendo a mesma sequência de altura, agudo e grave"). Som: ${SOM_COMPRADO}`,
+          hits: {
+            agogoAgudo: [true, false, true, false, true, false, true, false],
+            agogoGrave: [false, true, false, true, false, true, false, true],
+          },
+        },
+        {
+          id: 'a2',
+          label: 'Nos tempos',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
+          hits: {
+            agogoAgudo: [true, false, false, false, false, false, false, false],
+            agogoGrave: [false, false, false, false, true, false, false, false],
+          },
+        },
+        {
+          id: 'a3',
+          label: 'Sincopado',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
+          hits: {
+            agogoAgudo: [false, false, false, true, false, false, false, false],
+            agogoGrave: [false, false, false, false, false, false, true, true],
+          },
+        },
+      ],
+      block: [
+        {
+          id: 'bl1',
+          label: 'Clave simples',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
+          hits: {
+            blockGrave: [true, false, false, false, false, false, false, false],
+            blockAgudo: [false, false, false, false, true, false, false, false],
+          },
+        },
+        {
+          id: 'bl2',
+          label: 'Síncopa',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
+          hits: { blockAgudo: [false, false, true, false, false, true, false, true] },
+        },
+        {
+          id: 'bl3',
+          label: 'Alternado (colcheias)',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
+          hits: {
+            blockGrave: [true, false, false, false, true, false, false, false],
+            blockAgudo: [false, false, true, false, false, false, true, false],
+          },
+        },
+      ],
+      ganza: [
+        {
+          id: 'g1',
+          label: 'Contínuo (semicolcheias)',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
+          hits: { ganza: [true, true, true, true, true, true, true, true] },
+        },
+        {
+          id: 'g2',
+          label: 'Colcheias',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
+          hits: { ganza: [true, false, true, false, true, false, true, false] },
+        },
+        {
+          id: 'g3',
+          label: 'Só nos tempos',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
+          hits: { ganza: [true, false, false, false, true, false, false, false] },
+        },
+      ],
       bateria: [
         {
           id: 'b1',
@@ -223,6 +311,81 @@ export const RHYTHMS: Rhythm[] = [
           },
         },
       ],
+      agogo: [
+        {
+          id: 'a1',
+          label: 'Nos tempos (Santos, 2013)',
+          source: `Padrão: Santos (2013) via Garanhão & Barsalini (2023): agogô "toca os tempos", mantendo a sequência agudo-grave. Som: ${SOM_COMPRADO}`,
+          hits: {
+            agogoAgudo: [true, false, false, false, false, false, false, false],
+            agogoGrave: [false, false, false, false, true, false, false, false],
+          },
+        },
+        {
+          id: 'a2',
+          label: 'No contratempo (Gomes, 2005)',
+          source: `Padrão: Gomes (2005) via Garanhão & Barsalini (2023): agogô "executa os contratempos", mantendo a sequência agudo-grave. Som: ${SOM_COMPRADO}`,
+          hits: {
+            agogoAgudo: [false, false, true, false, false, false, false, false],
+            agogoGrave: [false, false, false, false, false, false, true, false],
+          },
+        },
+        {
+          id: 'a3',
+          label: 'Corrido (colcheias)',
+          source: `Padrão: aproximação própria, combinando as duas citações acima numa condução mais cheia. Som: ${SOM_COMPRADO}`,
+          hits: {
+            agogoAgudo: [true, false, false, false, true, false, false, false],
+            agogoGrave: [false, false, true, false, false, false, true, false],
+          },
+        },
+      ],
+      block: [
+        {
+          id: 'bl1',
+          label: 'Clave simples',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
+          hits: {
+            blockGrave: [true, false, false, false, false, false, false, false],
+            blockAgudo: [false, false, false, false, true, false, false, false],
+          },
+        },
+        {
+          id: 'bl2',
+          label: 'Colcheias alternando',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
+          hits: {
+            blockGrave: [true, false, false, false, true, false, false, false],
+            blockAgudo: [false, false, true, false, false, false, true, false],
+          },
+        },
+        {
+          id: 'bl3',
+          label: 'Minimalista',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
+          hits: { blockGrave: [true, false, false, false, false, false, false, false] },
+        },
+      ],
+      ganza: [
+        {
+          id: 'g1',
+          label: 'Colcheias',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
+          hits: { ganza: [true, false, true, false, true, false, true, false] },
+        },
+        {
+          id: 'g2',
+          label: 'Contínuo (semicolcheias)',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
+          hits: { ganza: [true, true, true, true, true, true, true, true] },
+        },
+        {
+          id: 'g3',
+          label: 'Só nos tempos',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
+          hits: { ganza: [true, false, false, false, true, false, false, false] },
+        },
+      ],
       bateria: [
         {
           id: 'b1',
@@ -271,6 +434,11 @@ const SAMPLE_URLS: Record<BatuqueInstrument, string> = {
   zabumbaMalletAberto: zabumbaMalletAbertoUrl,
   zabumbaBacalhauForte: zabumbaBacalhauForteUrl,
   zabumbaBacalhauSuave: zabumbaBacalhauSuaveUrl,
+  agogoAgudo: agogoAgudoUrl,
+  agogoGrave: agogoGraveUrl,
+  blockAgudo: blockAgudoUrl,
+  blockGrave: blockGraveUrl,
+  ganza: ganzaUrl,
   kick: kickUrl,
   snare: snareUrl,
   hihat: hihatUrl,
@@ -279,11 +447,9 @@ const SAMPLE_URLS: Record<BatuqueInstrument, string> = {
 export type VariationSelection = Record<InstrumentGroup, string>
 
 export function defaultSelection(rhythm: Rhythm): VariationSelection {
-  return {
-    triangulo: rhythm.variations.triangulo[0].id,
-    zabumba: rhythm.variations.zabumba[0].id,
-    bateria: rhythm.variations.bateria[0].id,
-  }
+  return Object.fromEntries(
+    INSTRUMENT_GROUPS.map((g) => [g.id, rhythm.variations[g.id][0].id]),
+  ) as VariationSelection
 }
 
 export interface GroupSettings {
@@ -292,11 +458,9 @@ export interface GroupSettings {
 }
 
 export function defaultGroupSettings(rhythm: Rhythm): Record<InstrumentGroup, GroupSettings> {
-  return {
-    triangulo: { bpm: rhythm.defaultBpm, volume: 0.8 },
-    zabumba: { bpm: rhythm.defaultBpm, volume: 0.8 },
-    bateria: { bpm: rhythm.defaultBpm, volume: 0.8 },
-  }
+  return Object.fromEntries(
+    INSTRUMENT_GROUPS.map((g) => [g.id, { bpm: rhythm.defaultBpm, volume: 0.8 }]),
+  ) as Record<InstrumentGroup, GroupSettings>
 }
 
 // Agenda os toques com antecedência (lookahead) em vez de tocar cada som

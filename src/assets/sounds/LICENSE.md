@@ -11,6 +11,11 @@ de Janeiro. Comprado e enviado pelo usuário; uso dentro deste app pessoal.
 - `zabumba-mallet-aberto.wav` — "Brazilian Zabumba, open (1-shot)"
 - `zabumba-bacalhau-forte.wav` — "Brazilian Baiao, ZabumbaS Bacalhau (b&tM), hard" (toque agudo, baqueta fina)
 - `zabumba-bacalhau-suave.wav` — "Brazilian Baiao, ZabumbaS Bacalhau (b&tM), soft"
+- `agogo-grave.wav` — "Brazilian Agogo Low"
+- `agogo-agudo.wav` — "Brazilian Agogo High"
+- `block-grave.wav` — "Brazilian Block Low"
+- `block-agudo.wav` — "Brazilian Block High"
+- `ganza.wav` — "Brazilian Ganza (1-shot)"
 
 O pacote comprado trouxe mais variações (outro microfone — m2 — e outras
 durações de anel do triângulo; versões "Côco" do bacalhau). Não estão
