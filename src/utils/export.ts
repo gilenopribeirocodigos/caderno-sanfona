@@ -1,8 +1,9 @@
 import type { AccordionType, ChordNotation, LyricLine, Song } from '@/types'
-import { formatChordForDisplay, notesInChord } from './chords'
+import { formatChordForDisplay } from './chords'
 import { chordLabelForRow, columnsFor, getHighlightedButtons, rowsFor } from './accordion'
 import { colorMapForChords, type ChordColor } from './chordColors'
 import { uniqueChordsInSong } from './chordpro'
+import { keyboardLayoutForChord } from './keyboardVoicing'
 
 const SECTION_PREFIX = '## '
 
@@ -106,41 +107,35 @@ function escapeHtml(s: string): string {
 
 // Réplica compacta (em SVG puro) do VerticalKeyboard.tsx, pra usar na
 // impressão — não dá pra reaproveitar o componente React fora da tela.
-const KB_WHITE_SEQUENCE = ['B', 'A', 'G', 'F', 'E', 'D', 'C']
-const KB_SHARP_AFTER: Record<string, string | null> = { C: 'C#', D: 'D#', E: null, F: 'F#', G: 'G#', A: 'A#', B: null }
+// Usa a mesma lógica de "oitava mais próxima" (keyboardVoicing.ts).
 const KB_WHITE_W = 54
 const KB_WHITE_H = 15
 const KB_BLACK_W = 34
 const KB_BLACK_H = 11
+const KB_Y_PAD = KB_BLACK_H / 2
 
 function keyboardSvg(chord: string, notation: ChordNotation, hex: string, hexSoft: string): string {
-  const activeNotes = new Set(notesInChord(chord))
-  const height = KB_WHITE_SEQUENCE.length * KB_WHITE_H
+  const { whiteKeys, blackKeys, active } = keyboardLayoutForChord(chord)
+  const height = whiteKeys.length * KB_WHITE_H + KB_BLACK_H
   const width = KB_WHITE_W + 4
 
-  const blackKeys: { note: string; y: number }[] = []
-  KB_WHITE_SEQUENCE.forEach((_note, i) => {
-    const lowerWhiteKey = KB_WHITE_SEQUENCE[i + 1]
-    const sharp = lowerWhiteKey ? KB_SHARP_AFTER[lowerWhiteKey] : null
-    if (sharp) blackKeys.push({ note: sharp, y: (i + 1) * KB_WHITE_H - KB_BLACK_H / 2 })
-  })
-
-  const whiteRects = KB_WHITE_SEQUENCE.map((note, i) => {
-    const active = activeNotes.has(note)
-    const y = i * KB_WHITE_H
-    return `<rect x="0.5" y="${y + 0.5}" width="${KB_WHITE_W - 1}" height="${KB_WHITE_H - 1}" fill="${active ? hexSoft : '#ffffff'}" stroke="${active ? hex : '#94a3b8'}" stroke-width="${active ? 1.3 : 0.8}" />${
-      active ? `<circle cx="${KB_WHITE_W - 9}" cy="${y + KB_WHITE_H / 2}" r="3" fill="${hex}" />` : ''
-    }<text x="4" y="${y + KB_WHITE_H / 2}" dominant-baseline="central" font-size="7" font-weight="${active ? 700 : 400}" fill="#334155">${escapeHtml(formatChordForDisplay(note, notation))}</text>`
+  const whiteRects = whiteKeys.map((key, i) => {
+    const isActive = active.get(key.note) === key.chromaticIndex
+    const y = i * KB_WHITE_H + KB_Y_PAD
+    return `<rect x="0.5" y="${y + 0.5}" width="${KB_WHITE_W - 1}" height="${KB_WHITE_H - 1}" fill="${isActive ? hexSoft : '#ffffff'}" stroke="${isActive ? hex : '#94a3b8'}" stroke-width="${isActive ? 1.3 : 0.8}" />${
+      isActive ? `<circle cx="${KB_WHITE_W - 9}" cy="${y + KB_WHITE_H / 2}" r="3" fill="${hex}" />` : ''
+    }<text x="4" y="${y + KB_WHITE_H / 2}" dominant-baseline="central" font-size="7" font-weight="${isActive ? 700 : 400}" fill="#334155">${escapeHtml(formatChordForDisplay(key.note, notation))}</text>`
   }).join('')
 
   const blackRects = blackKeys
-    .map(({ note, y }) => {
-      const active = activeNotes.has(note)
-      return `<rect x="0" y="${y}" width="${KB_BLACK_W}" height="${KB_BLACK_H}" rx="1.5" fill="${active ? hex : '#0f172a'}" /><text x="3" y="${y + KB_BLACK_H / 2}" dominant-baseline="central" font-size="5.5" font-weight="600" fill="#fff">${escapeHtml(formatChordForDisplay(note, notation))}</text>`
+    .map((key) => {
+      const isActive = active.get(key.note) === key.chromaticIndex
+      const y = key.belowWhiteRow * KB_WHITE_H - KB_BLACK_H / 2 + KB_Y_PAD
+      return `<rect x="0" y="${y}" width="${KB_BLACK_W}" height="${KB_BLACK_H}" rx="1.5" fill="${isActive ? hex : '#0f172a'}" /><text x="3" y="${y + KB_BLACK_H / 2}" dominant-baseline="central" font-size="5.5" font-weight="600" fill="#fff">${escapeHtml(formatChordForDisplay(key.note, notation))}</text>`
     })
     .join('')
 
-  return `<svg width="${width}" height="${height + 2}" viewBox="0 0 ${width} ${height + 2}">${whiteRects}${blackRects}</svg>`
+  return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${whiteRects}${blackRects}</svg>`
 }
 
 // Mesma lógica do MiniBassPreview do balão de preview (ChordPreviewPopup):
