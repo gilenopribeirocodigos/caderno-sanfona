@@ -32,6 +32,28 @@ import agogoLoopBaiao100Url from '@/assets/sounds/agogo-loop-baiao-100.wav'
 import agogoLoopBaiao120Url from '@/assets/sounds/agogo-loop-baiao-120.wav'
 import ganzaLoopBaiao100Url from '@/assets/sounds/ganza-loop-baiao-100.wav'
 import ganzaLoopBaiao120Url from '@/assets/sounds/ganza-loop-baiao-120.wav'
+import trianguloLoopCoco100M1Url from '@/assets/sounds/triangulo-loop-coco-100-m1.wav'
+import trianguloLoopCoco100M2Url from '@/assets/sounds/triangulo-loop-coco-100-m2.wav'
+import trianguloLoopCoco120M1Url from '@/assets/sounds/triangulo-loop-coco-120-m1.wav'
+import trianguloLoopCoco120M2Url from '@/assets/sounds/triangulo-loop-coco-120-m2.wav'
+import zabumbaLoopCoco120_01bMUrl from '@/assets/sounds/zabumba-loop-coco-120-01-bM.wav'
+import zabumbaLoopCoco120_01tMUrl from '@/assets/sounds/zabumba-loop-coco-120-01-tM.wav'
+import zabumbaLoopCoco120_02bMUrl from '@/assets/sounds/zabumba-loop-coco-120-02-bM.wav'
+import zabumbaLoopCoco120_02tMUrl from '@/assets/sounds/zabumba-loop-coco-120-02-tM.wav'
+import zabumbaLoopCoco120_03bMUrl from '@/assets/sounds/zabumba-loop-coco-120-03-bM.wav'
+import zabumbaLoopCoco120_03tMUrl from '@/assets/sounds/zabumba-loop-coco-120-03-tM.wav'
+import zabumbaLoopCoco120_04bMUrl from '@/assets/sounds/zabumba-loop-coco-120-04-bM.wav'
+import zabumbaLoopCoco120_04tMUrl from '@/assets/sounds/zabumba-loop-coco-120-04-tM.wav'
+import zabumbaLoopCoco100_03bMUrl from '@/assets/sounds/zabumba-loop-coco-100-03-bM.wav'
+import zabumbaLoopCoco100_03tMUrl from '@/assets/sounds/zabumba-loop-coco-100-03-tM.wav'
+import zabumbaLoopCoco100_05bMUrl from '@/assets/sounds/zabumba-loop-coco-100-05-bM.wav'
+import zabumbaLoopCoco100_05tMUrl from '@/assets/sounds/zabumba-loop-coco-100-05-tM.wav'
+import zabumbaLoopCoco100_06bMUrl from '@/assets/sounds/zabumba-loop-coco-100-06-bM.wav'
+import zabumbaLoopCoco100_06tMUrl from '@/assets/sounds/zabumba-loop-coco-100-06-tM.wav'
+import blockLoopCoco100Url from '@/assets/sounds/block-loop-coco-100.wav'
+import blockLoopCoco120Url from '@/assets/sounds/block-loop-coco-120.wav'
+import ganzaLoopCoco100Url from '@/assets/sounds/ganza-loop-coco-100.wav'
+import ganzaLoopCoco120Url from '@/assets/sounds/ganza-loop-coco-120.wav'
 
 // O triângulo e a zabumba têm dois (ou mais) toques fisicamente diferentes
 // no instrumento de verdade — cada um vira uma "voz" própria aqui, com seu
@@ -440,6 +462,137 @@ export const RHYTHMS: Rhythm[] = [
       ],
     },
   },
+  {
+    id: 'coco',
+    label: 'Côco',
+    stepsPerBar: 8,
+    defaultBpm: 100,
+    // Sem citação específica levantada pro côco (ritmo distinto do
+    // baião/xote, mas também zabumba+triângulo em 2/4) — todos os padrões
+    // programados aqui são aproximação própria. O "groove real" comprado
+    // é que traz autenticidade de verdade pra esse ritmo.
+    variations: {
+      triangulo: [
+        {
+          id: 't1',
+          label: 'Corrido (semicolcheias)',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
+          hits: {
+            trianguloFechado: [false, true, true, true, false, true, true, true],
+            trianguloAberto: [true, false, false, false, true, false, false, false],
+          },
+        },
+        {
+          id: 't2',
+          label: 'Colcheias',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
+          hits: {
+            trianguloFechado: [false, false, true, false, false, false, true, false],
+            trianguloAberto: [true, false, false, false, true, false, false, false],
+          },
+        },
+      ],
+      zabumba: [
+        {
+          id: 'z1',
+          label: 'Padrão',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
+          hits: {
+            zabumbaMallet: [true, false, false, false, false, false, false, false],
+            zabumbaMalletAberto: [false, false, false, false, true, false, false, false],
+            zabumbaBacalhauForte: [false, false, false, false, false, false, false, true],
+            zabumbaBacalhauSuave: [false, false, true, false, false, true, false, false],
+          },
+        },
+        {
+          id: 'z2',
+          label: 'Sincopada',
+          source: `Padrão: aproximação própria. Som: ${SOM_COMPRADO}`,
+          hits: {
+            zabumbaMallet: [true, false, false, false, false, false, false, false],
+            zabumbaMalletAberto: [false, false, false, false, true, false, false, false],
+            zabumbaBacalhauForte: [false, false, false, true, false, false, true, true],
+          },
+        },
+      ],
+      agogo: [
+        {
+          id: 'a1',
+          label: 'Corrido (alternando)',
+          source: 'aproximação própria',
+          hits: {
+            agogoAgudo: [true, false, true, false, true, false, true, false],
+            agogoGrave: [false, true, false, true, false, true, false, true],
+          },
+        },
+        {
+          id: 'a2',
+          label: 'Nos tempos',
+          source: 'aproximação própria',
+          hits: {
+            agogoAgudo: [true, false, false, false, false, false, false, false],
+            agogoGrave: [false, false, false, false, true, false, false, false],
+          },
+        },
+      ],
+      block: [
+        {
+          id: 'bl1',
+          label: 'Clave simples',
+          source: 'aproximação própria',
+          hits: {
+            blockGrave: [true, false, false, false, false, false, false, false],
+            blockAgudo: [false, false, false, false, true, false, false, false],
+          },
+        },
+        {
+          id: 'bl2',
+          label: 'Alternado (colcheias)',
+          source: 'aproximação própria',
+          hits: {
+            blockGrave: [true, false, false, false, true, false, false, false],
+            blockAgudo: [false, false, true, false, false, false, true, false],
+          },
+        },
+      ],
+      ganza: [
+        {
+          id: 'g1',
+          label: 'Contínuo (semicolcheias)',
+          source: 'aproximação própria',
+          hits: { ganza: [true, true, true, true, true, true, true, true] },
+        },
+        {
+          id: 'g2',
+          label: 'Colcheias',
+          source: 'aproximação própria',
+          hits: { ganza: [true, false, true, false, true, false, true, false] },
+        },
+      ],
+      bateria: [
+        {
+          id: 'b1',
+          label: 'Padrão',
+          source: 'aproximação própria, adaptação bumbo=zabumba/caixa=bacalhau/chimbal=triângulo (sons CC0, sem correspondente comprado)',
+          hits: {
+            kick: [true, false, false, false, false, false, false, false],
+            snare: [false, false, false, false, false, false, false, true],
+            hihat: [true, true, true, true, true, true, true, true],
+          },
+        },
+        {
+          id: 'b2',
+          label: 'Com abertura',
+          source: 'aproximação própria',
+          hits: {
+            kick: [true, false, false, false, true, false, false, false],
+            snare: [false, false, false, true, false, false, true, false],
+            hihat: [true, false, true, false, true, false, true, false],
+          },
+        },
+      ],
+    },
+  },
 ]
 
 export function rhythmForLabel(label: string | undefined): Rhythm {
@@ -460,39 +613,71 @@ export interface LoopOption {
   url: string
 }
 
+// Convenção de nome: "<Instrumento> <BPM>-<N>" — o BPM fica explícito no
+// próprio rótulo (a pedido), então dois arquivos de instrumentos
+// diferentes com o mesmo BPM na frente do nome tocam juntos no tempo
+// certo, sem precisar decorar nada nem abrir "De onde veio?".
 const LOOP_OPTIONS: Partial<Record<string, Partial<Record<InstrumentGroup, LoopOption[]>>>> = {
   baiao: {
     triangulo: [
-      { id: 'loop100m1', label: '100 BPM (mic 1)', bpm: 100, url: trianguloLoopBaiao100M1Url },
-      { id: 'loop100m2', label: '100 BPM (mic 2)', bpm: 100, url: trianguloLoopBaiao100M2Url },
-      { id: 'loop120m1', label: '120 BPM (mic 1)', bpm: 120, url: trianguloLoopBaiao120M1Url },
-      { id: 'loop120m2', label: '120 BPM (mic 2)', bpm: 120, url: trianguloLoopBaiao120M2Url },
+      { id: 't100-1', label: 'Triangulo 100-1', bpm: 100, url: trianguloLoopBaiao100M1Url },
+      { id: 't100-2', label: 'Triangulo 100-2', bpm: 100, url: trianguloLoopBaiao100M2Url },
+      { id: 't120-1', label: 'Triangulo 120-1', bpm: 120, url: trianguloLoopBaiao120M1Url },
+      { id: 't120-2', label: 'Triangulo 120-2', bpm: 120, url: trianguloLoopBaiao120M2Url },
     ],
-    // Zabumba 1-6 = 120 BPM, Zabumba 7-12 = 100 BPM (cada número é uma
-    // variação/take diferente tocada pelo percussionista; dentro de cada
-    // uma, dois microfones — bM grave, tM agudo — contam como dois números
-    // separados, a pedido, pra não esconder nenhum arquivo comprado).
     zabumba: [
-      { id: 'zloop1', label: 'Zabumba 1', bpm: 120, url: zabumbaLoop120_01bMUrl },
-      { id: 'zloop2', label: 'Zabumba 2', bpm: 120, url: zabumbaLoop120_01tMUrl },
-      { id: 'zloop3', label: 'Zabumba 3', bpm: 120, url: zabumbaLoop120_02bMUrl },
-      { id: 'zloop4', label: 'Zabumba 4', bpm: 120, url: zabumbaLoop120_02tMUrl },
-      { id: 'zloop5', label: 'Zabumba 5', bpm: 120, url: zabumbaLoop120_03bMUrl },
-      { id: 'zloop6', label: 'Zabumba 6', bpm: 120, url: zabumbaLoop120_03tMUrl },
-      { id: 'zloop7', label: 'Zabumba 7', bpm: 100, url: zabumbaLoop100_04bMUrl },
-      { id: 'zloop8', label: 'Zabumba 8', bpm: 100, url: zabumbaLoop100_04tMUrl },
-      { id: 'zloop9', label: 'Zabumba 9', bpm: 100, url: zabumbaLoop100_05bMUrl },
-      { id: 'zloop10', label: 'Zabumba 10', bpm: 100, url: zabumbaLoop100_05tMUrl },
-      { id: 'zloop11', label: 'Zabumba 11', bpm: 100, url: zabumbaLoop100_06bMUrl },
-      { id: 'zloop12', label: 'Zabumba 12', bpm: 100, url: zabumbaLoop100_06tMUrl },
+      { id: 'z120-1', label: 'Zabumba 120-1', bpm: 120, url: zabumbaLoop120_01bMUrl },
+      { id: 'z120-2', label: 'Zabumba 120-2', bpm: 120, url: zabumbaLoop120_01tMUrl },
+      { id: 'z120-3', label: 'Zabumba 120-3', bpm: 120, url: zabumbaLoop120_02bMUrl },
+      { id: 'z120-4', label: 'Zabumba 120-4', bpm: 120, url: zabumbaLoop120_02tMUrl },
+      { id: 'z120-5', label: 'Zabumba 120-5', bpm: 120, url: zabumbaLoop120_03bMUrl },
+      { id: 'z120-6', label: 'Zabumba 120-6', bpm: 120, url: zabumbaLoop120_03tMUrl },
+      { id: 'z100-1', label: 'Zabumba 100-1', bpm: 100, url: zabumbaLoop100_04bMUrl },
+      { id: 'z100-2', label: 'Zabumba 100-2', bpm: 100, url: zabumbaLoop100_04tMUrl },
+      { id: 'z100-3', label: 'Zabumba 100-3', bpm: 100, url: zabumbaLoop100_05bMUrl },
+      { id: 'z100-4', label: 'Zabumba 100-4', bpm: 100, url: zabumbaLoop100_05tMUrl },
+      { id: 'z100-5', label: 'Zabumba 100-5', bpm: 100, url: zabumbaLoop100_06bMUrl },
+      { id: 'z100-6', label: 'Zabumba 100-6', bpm: 100, url: zabumbaLoop100_06tMUrl },
     ],
     agogo: [
-      { id: 'aloop100', label: '100 BPM', bpm: 100, url: agogoLoopBaiao100Url },
-      { id: 'aloop120', label: '120 BPM', bpm: 120, url: agogoLoopBaiao120Url },
+      { id: 'a100-1', label: 'Agogo 100-1', bpm: 100, url: agogoLoopBaiao100Url },
+      { id: 'a120-1', label: 'Agogo 120-1', bpm: 120, url: agogoLoopBaiao120Url },
     ],
     ganza: [
-      { id: 'gloop100', label: '100 BPM', bpm: 100, url: ganzaLoopBaiao100Url },
-      { id: 'gloop120', label: '120 BPM', bpm: 120, url: ganzaLoopBaiao120Url },
+      { id: 'g100-1', label: 'Ganza 100-1', bpm: 100, url: ganzaLoopBaiao100Url },
+      { id: 'g120-1', label: 'Ganza 120-1', bpm: 120, url: ganzaLoopBaiao120Url },
+    ],
+  },
+  coco: {
+    triangulo: [
+      { id: 't100-1', label: 'Triangulo 100-1', bpm: 100, url: trianguloLoopCoco100M1Url },
+      { id: 't100-2', label: 'Triangulo 100-2', bpm: 100, url: trianguloLoopCoco100M2Url },
+      { id: 't120-1', label: 'Triangulo 120-1', bpm: 120, url: trianguloLoopCoco120M1Url },
+      { id: 't120-2', label: 'Triangulo 120-2', bpm: 120, url: trianguloLoopCoco120M2Url },
+    ],
+    zabumba: [
+      { id: 'z120-1', label: 'Zabumba 120-1', bpm: 120, url: zabumbaLoopCoco120_01bMUrl },
+      { id: 'z120-2', label: 'Zabumba 120-2', bpm: 120, url: zabumbaLoopCoco120_01tMUrl },
+      { id: 'z120-3', label: 'Zabumba 120-3', bpm: 120, url: zabumbaLoopCoco120_02bMUrl },
+      { id: 'z120-4', label: 'Zabumba 120-4', bpm: 120, url: zabumbaLoopCoco120_02tMUrl },
+      { id: 'z120-5', label: 'Zabumba 120-5', bpm: 120, url: zabumbaLoopCoco120_03bMUrl },
+      { id: 'z120-6', label: 'Zabumba 120-6', bpm: 120, url: zabumbaLoopCoco120_03tMUrl },
+      { id: 'z120-7', label: 'Zabumba 120-7', bpm: 120, url: zabumbaLoopCoco120_04bMUrl },
+      { id: 'z120-8', label: 'Zabumba 120-8', bpm: 120, url: zabumbaLoopCoco120_04tMUrl },
+      { id: 'z100-1', label: 'Zabumba 100-1', bpm: 100, url: zabumbaLoopCoco100_03bMUrl },
+      { id: 'z100-2', label: 'Zabumba 100-2', bpm: 100, url: zabumbaLoopCoco100_03tMUrl },
+      { id: 'z100-3', label: 'Zabumba 100-3', bpm: 100, url: zabumbaLoopCoco100_05bMUrl },
+      { id: 'z100-4', label: 'Zabumba 100-4', bpm: 100, url: zabumbaLoopCoco100_05tMUrl },
+      { id: 'z100-5', label: 'Zabumba 100-5', bpm: 100, url: zabumbaLoopCoco100_06bMUrl },
+      { id: 'z100-6', label: 'Zabumba 100-6', bpm: 100, url: zabumbaLoopCoco100_06tMUrl },
+    ],
+    block: [
+      { id: 'bl100-1', label: 'Block 100-1', bpm: 100, url: blockLoopCoco100Url },
+      { id: 'bl120-1', label: 'Block 120-1', bpm: 120, url: blockLoopCoco120Url },
+    ],
+    ganza: [
+      { id: 'g100-1', label: 'Ganza 100-1', bpm: 100, url: ganzaLoopCoco100Url },
+      { id: 'g120-1', label: 'Ganza 120-1', bpm: 120, url: ganzaLoopCoco120Url },
     ],
   },
 }

@@ -29,7 +29,13 @@ em vez de notas programadas por mim; BPM fica preso ao andamento gravado):
 Diferente das amostras avulsas acima, aqui os dois microfones (m1/m2,
 bM/tM) ficam disponíveis os DOIS como opções separadas no app — a pedido
 explícito do usuário, para poder escolher/comparar, em vez de eu
-pré-selecionar um.
+pré-selecionar um. Nome de cada opção: "<Instrumento> <BPM>-<N>" (ex:
+"Zabumba 120-3") — o BPM já aparece no nome de propósito, pra dá pra ver
+de cara quais arquivos de instrumentos diferentes tocam no mesmo andamento.
+
+Loops do ritmo **Côco** (arquivos `*-loop-coco-*.wav`), mesmo pacote —
+Côco é um ritmo nordestino diferente de baião/xote, virou uma opção
+própria no seletor de ritmo em vez de ser misturado nos outros dois.
 
 ## CC0 (domínio público) — bigsoundbank.com, autor Joseph Sardin / freewavesamples.com
 
