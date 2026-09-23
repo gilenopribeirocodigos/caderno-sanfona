@@ -10,6 +10,8 @@ interface LessonModeProps {
   notation: ChordNotation
   accordionType: AccordionType
   onExit: () => void
+  onNextSong?: () => void
+  onPreviousSong?: () => void
 }
 
 const SECONDS_OPTIONS = [5, 8, 10, 15, 20, 30]
@@ -25,7 +27,7 @@ const SECONDS_OPTIONS = [5, 8, 10, 15, 20, 30]
  * de um pedal Bluetooth de "virar página" (seta, Page Up/Down) também
  * avançam — já funciona antes mesmo de existir um pedal de verdade.
  */
-export default function LessonMode({ song, notation, accordionType, onExit }: LessonModeProps) {
+export default function LessonMode({ song, notation, accordionType, onExit, onNextSong, onPreviousSong }: LessonModeProps) {
   const chunks = useMemo(() => buildLessonChunks(song.chordData.lines ?? []), [song])
   const [chunkIndex, setChunkIndex] = useState(0)
   const [auto, setAuto] = useState(false)
@@ -39,9 +41,17 @@ export default function LessonMode({ song, notation, accordionType, onExit }: Le
   const isLast = chunkIndex >= chunks.length - 1
 
   function next() {
+    if (isLast) {
+      onNextSong?.()
+      return
+    }
     setChunkIndex((i) => Math.min(chunks.length - 1, i + 1))
   }
   function previous() {
+    if (isFirst) {
+      onPreviousSong?.()
+      return
+    }
     setChunkIndex((i) => Math.max(0, i - 1))
   }
 
@@ -51,6 +61,8 @@ export default function LessonMode({ song, notation, accordionType, onExit }: Le
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null
+      if (target?.matches('input, select, textarea, [contenteditable="true"]')) return
       if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
         e.preventDefault()
         next()
@@ -62,7 +74,7 @@ export default function LessonMode({ song, notation, accordionType, onExit }: Le
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chunks.length])
+  }, [chunks.length, chunkIndex, onNextSong, onPreviousSong])
 
   useEffect(() => {
     if (!auto) return
@@ -90,8 +102,8 @@ export default function LessonMode({ song, notation, accordionType, onExit }: Le
   }
 
   return (
-    <div className="flex flex-1 flex-col bg-surface-alt">
-      <div className="safe-top flex items-center justify-between border-b border-slate-200 bg-surface px-3 py-2 text-xs dark:border-slate-800">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-surface-alt">
+      <div className="safe-top flex shrink-0 items-center justify-between border-b border-slate-200 bg-surface px-3 py-2 text-xs dark:border-slate-800">
         <div>
           <p className="font-semibold">🎓 Modo Aula — {song.title}</p>
           <p className="text-slate-500">
@@ -104,7 +116,7 @@ export default function LessonMode({ song, notation, accordionType, onExit }: Le
         </button>
       </div>
 
-      <div className="flex flex-1 flex-col items-center justify-center gap-6 overflow-y-auto p-4">
+      <div className="flex min-h-0 flex-1 flex-col items-center gap-6 overflow-y-auto p-4 md:justify-center">
         <div className="w-full max-w-xl">
           <ChordSheet lines={chunk.lines} notation={notation} fontSize={32} chordSize={26} />
         </div>
@@ -117,21 +129,21 @@ export default function LessonMode({ song, notation, accordionType, onExit }: Le
         )}
       </div>
 
-      <div className="safe-bottom flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-surface px-3 py-2 text-xs dark:border-slate-800">
+      <div className="safe-bottom flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-surface px-3 py-2 text-xs dark:border-slate-800">
         <div className="flex items-center gap-1">
           <button
             className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm disabled:opacity-30 dark:border-slate-700"
-            disabled={isFirst}
+            disabled={isFirst && !onPreviousSong}
             onClick={previous}
           >
-            ◀ Anterior
+            {isFirst && onPreviousSong ? '◀ Música anterior' : '◀ Anterior'}
           </button>
           <button
             className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm disabled:opacity-30 dark:border-slate-700"
-            disabled={isLast}
+            disabled={isLast && !onNextSong}
             onClick={next}
           >
-            Próximo ▶
+            {isLast && onNextSong ? 'Próxima música ▶' : 'Próximo ▶'}
           </button>
         </div>
         <div className="flex items-center gap-1">

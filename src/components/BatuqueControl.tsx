@@ -35,6 +35,7 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
   const [playing, setPlaying] = useState(false)
   const [beats, setBeats] = useState<Partial<Record<InstrumentGroup, number>>>({})
   const [showSources, setShowSources] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const engineRef = useRef<BatuqueEngine>()
 
   if (!engineRef.current) engineRef.current = new BatuqueEngine()
@@ -133,12 +134,20 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
   }
 
   const currentVariation = (id: InstrumentGroup) => rhythm.variations[id].find((v) => v.id === selection[id])
+  const activeBpms = INSTRUMENT_GROUPS
+    .filter((g) => groups.has(g.id) && !loopChoice[g.id])
+    .map((g) => groupSettings[g.id].bpm)
+  const tempoLabel = activeBpms.length === 0
+    ? 'Loop gravado'
+    : Math.min(...activeBpms) === Math.max(...activeBpms)
+      ? `${activeBpms[0]} BPM`
+      : `${Math.min(...activeBpms)}–${Math.max(...activeBpms)} BPM`
 
   return (
-    <div className="flex flex-col gap-2 border-t border-slate-200 bg-surface px-3 py-2 text-xs dark:border-slate-800">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="shrink-0 border-t border-slate-200 bg-surface px-3 py-2 text-xs dark:border-slate-800">
+      <div className="flex items-center gap-2">
         <button
-          className={`tap-target rounded-md border px-3 py-1 font-medium ${
+          className={`tap-target shrink-0 rounded-md border px-2 py-1 font-medium ${
             playing ? 'border-red-400 text-red-500' : 'border-slate-300 dark:border-slate-700'
           }`}
           onClick={toggle}
@@ -147,7 +156,8 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
         </button>
 
         <select
-          className="tap-target rounded-md border border-slate-300 px-1 py-1 dark:border-slate-700 dark:bg-slate-800"
+          aria-label="Ritmo do batuque"
+          className="tap-target min-w-0 flex-1 rounded-md border border-slate-300 px-1 py-1 dark:border-slate-700 dark:bg-slate-800 sm:flex-none"
           value={rhythmId}
           onChange={(e) => changeRhythm(e.target.value)}
         >
@@ -158,15 +168,25 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
           ))}
         </select>
 
-        <button
-          className="tap-target rounded-md border border-slate-300 px-2 py-1 text-slate-500 dark:border-slate-700 dark:text-slate-400"
-          onClick={() => setShowSources((v) => !v)}
-          title="Mostra de onde veio cada variação, pra você conferir a fonte"
-        >
-          {showSources ? 'Ocultar fontes' : 'De onde veio?'}
+        <button className="tap-target shrink-0 rounded-md border border-slate-300 px-2 py-1 dark:border-slate-700" onClick={() => setShowSettings(true)} aria-label={`Ajustes do batuque, ${tempoLabel}`}>
+          {tempoLabel}<span className="hidden sm:inline"> · Ajustes</span><span aria-hidden="true" className="sm:hidden"> ⚙</span>
         </button>
       </div>
 
+      {showSettings && <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 sm:items-center" onClick={() => setShowSettings(false)}>
+        <div role="dialog" aria-modal="true" aria-label="Ajustes do batuque" className="safe-bottom flex max-h-[75dvh] w-full max-w-2xl flex-col rounded-t-2xl bg-surface shadow-2xl sm:max-h-[85dvh] sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-2 dark:border-slate-800">
+            <div><p className="font-semibold">Ajustes do batuque</p><p className="text-slate-500">{rhythm.label} · {tempoLabel}</p></div>
+            <button className="tap-target rounded-md border border-slate-300 px-3 dark:border-slate-700" onClick={() => setShowSettings(false)}>Fechar</button>
+          </div>
+          <div className="min-h-0 overflow-y-auto p-3">
+          <button
+            className="tap-target mb-2 rounded-md border border-slate-300 px-2 py-1 text-slate-500 dark:border-slate-700 dark:text-slate-400"
+            onClick={() => setShowSources((v) => !v)}
+            title="Mostra de onde veio cada variação, pra você conferir a fonte"
+          >
+            {showSources ? 'Ocultar fontes' : 'De onde veio?'}
+          </button>
       {/* Cada instrumento liga/desliga por conta própria, com sua própria
           variação de batida, BPM e volume — totalmente independentes um
           do outro (a pedido: sim, isso significa que eles podem sair de
@@ -305,6 +325,9 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
           )
         })}
       </div>
+          </div>
+        </div>
+      </div>}
     </div>
   )
 }
