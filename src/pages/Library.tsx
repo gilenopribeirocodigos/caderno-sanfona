@@ -6,7 +6,7 @@ import { createSong, deleteSong, parseTagsInput, toggleFavorite } from '@/lib/so
 import { useSettings } from '@/lib/useSettings'
 import { downloadSongChordPro, downloadSongText, printSongs } from '@/utils/export'
 import SongForm, { emptySongForm, type SongFormValues } from '@/components/SongForm'
-import type { ChordNotation, Song } from '@/types'
+import type { AccordionType, ChordNotation, Song } from '@/types'
 
 type SortMode = 'alfabetica' | 'artista' | 'tom' | 'mais-tocadas' | 'recentes' | 'nao-treinadas'
 
@@ -212,7 +212,7 @@ export default function Library() {
                 >
                   Editar
                 </Link>
-                <DownloadMenu song={song} notation={settings.notation} />
+                <DownloadMenu song={song} notation={settings.notation} accordionType={settings.accordionType} />
                 <button
                   aria-label="Excluir"
                   className="tap-target text-xs text-red-500 underline"
@@ -243,7 +243,7 @@ export default function Library() {
 
 /** Baixar/imprimir uma música (item "Exportar/Backup") — menu simples com
  * <details>, sem precisar de estado próprio pra abrir/fechar. */
-function DownloadMenu({ song, notation }: { song: Song; notation: ChordNotation }) {
+function DownloadMenu({ song, notation, accordionType }: { song: Song; notation: ChordNotation; accordionType: AccordionType }) {
   return (
     <details className="tap-target relative inline-block text-xs">
       <summary className="cursor-pointer list-none text-slate-500 underline">Baixar</summary>
@@ -262,7 +262,7 @@ function DownloadMenu({ song, notation }: { song: Song; notation: ChordNotation 
         </button>
         <button
           className="rounded px-2 py-1.5 text-left hover:bg-surface-alt"
-          onClick={() => printSongs([song], notation, song.title)}
+          onClick={() => printSongs([song], notation, song.title, accordionType)}
         >
           Imprimir / PDF
         </button>

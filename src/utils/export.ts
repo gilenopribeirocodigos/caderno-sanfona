@@ -1,5 +1,8 @@
-import type { ChordNotation, LyricLine, Song } from '@/types'
-import { formatChordForDisplay } from './chords'
+import type { AccordionType, ChordNotation, LyricLine, Song } from '@/types'
+import { formatChordForDisplay, notesInChord } from './chords'
+import { chordLabelForRow, columnsFor, getHighlightedButtons, rowsFor } from './accordion'
+import { colorMapForChords, type ChordColor } from './chordColors'
+import { uniqueChordsInSong } from './chordpro'
 
 const SECTION_PREFIX = '## '
 
@@ -101,9 +104,98 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
+// Réplica compacta (em SVG puro) do VerticalKeyboard.tsx, pra usar na
+// impressão — não dá pra reaproveitar o componente React fora da tela.
+const KB_WHITE_SEQUENCE = ['B', 'A', 'G', 'F', 'E', 'D', 'C']
+const KB_SHARP_AFTER: Record<string, string | null> = { C: 'C#', D: 'D#', E: null, F: 'F#', G: 'G#', A: 'A#', B: null }
+const KB_WHITE_W = 54
+const KB_WHITE_H = 15
+const KB_BLACK_W = 34
+const KB_BLACK_H = 11
+
+function keyboardSvg(chord: string, notation: ChordNotation, hex: string, hexSoft: string): string {
+  const activeNotes = new Set(notesInChord(chord))
+  const height = KB_WHITE_SEQUENCE.length * KB_WHITE_H
+  const width = KB_WHITE_W + 4
+
+  const blackKeys: { note: string; y: number }[] = []
+  KB_WHITE_SEQUENCE.forEach((_note, i) => {
+    const lowerWhiteKey = KB_WHITE_SEQUENCE[i + 1]
+    const sharp = lowerWhiteKey ? KB_SHARP_AFTER[lowerWhiteKey] : null
+    if (sharp) blackKeys.push({ note: sharp, y: (i + 1) * KB_WHITE_H - KB_BLACK_H / 2 })
+  })
+
+  const whiteRects = KB_WHITE_SEQUENCE.map((note, i) => {
+    const active = activeNotes.has(note)
+    const y = i * KB_WHITE_H
+    return `<rect x="0.5" y="${y + 0.5}" width="${KB_WHITE_W - 1}" height="${KB_WHITE_H - 1}" fill="${active ? hexSoft : '#ffffff'}" stroke="${active ? hex : '#94a3b8'}" stroke-width="${active ? 1.3 : 0.8}" />${
+      active ? `<circle cx="${KB_WHITE_W - 9}" cy="${y + KB_WHITE_H / 2}" r="3" fill="${hex}" />` : ''
+    }<text x="4" y="${y + KB_WHITE_H / 2}" dominant-baseline="central" font-size="7" font-weight="${active ? 700 : 400}" fill="#334155">${escapeHtml(formatChordForDisplay(note, notation))}</text>`
+  }).join('')
+
+  const blackRects = blackKeys
+    .map(({ note, y }) => {
+      const active = activeNotes.has(note)
+      return `<rect x="0" y="${y}" width="${KB_BLACK_W}" height="${KB_BLACK_H}" rx="1.5" fill="${active ? hex : '#0f172a'}" /><text x="3" y="${y + KB_BLACK_H / 2}" dominant-baseline="central" font-size="5.5" font-weight="600" fill="#fff">${escapeHtml(formatChordForDisplay(note, notation))}</text>`
+    })
+    .join('')
+
+  return `<svg width="${width}" height="${height + 2}" viewBox="0 0 ${width} ${height + 2}">${whiteRects}${blackRects}</svg>`
+}
+
+// Mesma lógica do MiniBassPreview do balão de preview (ChordPreviewPopup):
+// mostra o botão certo do baixo junto com alguns vizinhos, pra dar pra
+// achar a posição dele no instrumento — não o mapa inteiro do Stradella.
+const PRINT_BASS_WINDOW = 1
+
+function miniBassHtml(chord: string, accordionType: AccordionType, notation: ChordNotation, hex: string, hexSoft: string): string {
+  const highlights = getHighlightedButtons(chord, accordionType)
+  const rows = rowsFor(accordionType)
+  const columns = columnsFor(accordionType)
+
+  const byRow = new Map<number, (typeof highlights)[number]>()
+  for (const h of highlights) if (!byRow.has(h.row)) byRow.set(h.row, h)
+  const items = [...byRow.entries()].sort((a, b) => a[0] - b[0])
+  if (items.length === 0) return ''
+
+  const cols = items
+    .map(([rowIndex, h], colPos) => {
+      const rowName = rows[rowIndex]
+      const start = Math.max(0, h.col - PRINT_BASS_WINDOW)
+      const end = Math.min(columns.length - 1, h.col + PRINT_BASS_WINDOW)
+      const buttons: string[] = []
+      for (let i = start; i <= end; i++) {
+        const label = chordLabelForRow(columns[i], rowName)
+        const isTarget = i === h.col
+        buttons.push(
+          `<span class="bass-btn${isTarget ? ' target' : ''}"${
+            isTarget ? ` style="border-color:${hex};color:${hex};background:${hexSoft}"` : ''
+          }>${escapeHtml(formatChordForDisplay(label, notation))}</span>`,
+        )
+      }
+      return `<div class="bass-col" style="padding-top:${colPos * 3}px"><span class="bass-col-label">${escapeHtml(rowName)}</span>${buttons.join('')}</div>`
+    })
+    .join('')
+
+  return `<div class="mini-bass">${cols}</div>`
+}
+
+function chordCardHtml(chord: string, accordionType: AccordionType, notation: ChordNotation, color: ChordColor): string {
+  return `<div class="chord-card" style="border-color:${color.hex}"><div class="chord-card-name" style="color:${color.hex}">${escapeHtml(
+    formatChordForDisplay(chord, notation),
+  )}</div><div class="chord-card-visual">${keyboardSvg(chord, notation, color.hex, color.hexSoft)}${miniBassHtml(
+    chord,
+    accordionType,
+    notation,
+    color.hex,
+    color.hexSoft,
+  )}</div></div>`
+}
+
 /** Uma música em HTML pronto pra impressão — acorde acima da palavra,
- * igual à tela, mas sem menu/barra do app. */
-function songToPrintHtml(song: Song, notation: ChordNotation): string {
+ * igual à tela, mas sem menu/barra do app. Ao lado da letra, um cartão por
+ * acorde da música com teclado + baixo (a "sanfona visual" no papel). */
+function songToPrintHtml(song: Song, notation: ChordNotation, accordionType: AccordionType): string {
   const lines = song.chordData.lines
     .map((line) => {
       if (line.section !== undefined) return `<h4>${escapeHtml(line.section)}</h4>`
@@ -126,20 +218,28 @@ function songToPrintHtml(song: Song, notation: ChordNotation): string {
     .filter(Boolean)
     .join(' · ')
 
+  const chords = uniqueChordsInSong(song.chordData.lines ?? [])
+  const colorMap = colorMapForChords(chords)
+  const chordCards = chords.map((c) => chordCardHtml(c, accordionType, notation, colorMap.get(c)!)).join('')
+
   return `
     <section class="song">
-      <h1>${escapeHtml(song.title)}</h1>
-      ${song.artist ? `<p class="artist">${escapeHtml(song.artist)}</p>` : ''}
-      <p class="meta">${escapeHtml(meta)}</p>
-      ${lines}
+      <div class="song-main">
+        <h1>${escapeHtml(song.title)}</h1>
+        ${song.artist ? `<p class="artist">${escapeHtml(song.artist)}</p>` : ''}
+        <p class="meta">${escapeHtml(meta)}</p>
+        ${lines}
+      </div>
+      ${chordCards ? `<aside class="song-chords">${chordCards}</aside>` : ''}
     </section>
   `
 }
 
 const PRINT_STYLES = `
   body { font-family: system-ui, sans-serif; color: #0f172a; margin: 2rem; }
-  .song { break-after: page; }
+  .song { display: flex; align-items: flex-start; gap: 1.2rem; break-after: page; }
   .song:last-child { break-after: auto; }
+  .song-main { flex: 1; min-width: 0; }
   h1 { font-size: 1.4rem; margin: 0 0 0.1rem; }
   .artist { margin: 0 0 0.2rem; color: #475569; }
   .meta { margin: 0 0 1rem; font-size: 0.85rem; color: #64748b; }
@@ -149,6 +249,15 @@ const PRINT_STYLES = `
   .word { display: flex; flex-direction: column; align-items: flex-start; }
   .chord { font-weight: bold; font-size: 0.85em; color: #0369a1; line-height: 1.1; }
   .lyric { line-height: 1.2; }
+  .song-chords { width: 130px; flex-shrink: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+  .chord-card { border: 1.5px solid; border-radius: 8px; padding: 0.3rem; break-inside: avoid; }
+  .chord-card-name { font-weight: bold; font-size: 0.85rem; margin-bottom: 0.2rem; }
+  .chord-card-visual { display: flex; gap: 0.3rem; align-items: flex-start; }
+  .mini-bass { display: flex; gap: 0.2rem; }
+  .bass-col { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
+  .bass-col-label { font-size: 0.5rem; text-transform: uppercase; color: #94a3b8; }
+  .bass-btn { display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 999px; border: 1px solid #cbd5e1; font-size: 0.45rem; font-weight: 700; color: #94a3b8; }
+  .bass-btn.target { border-width: 2px; }
   @media print {
     body { margin: 1cm; }
   }
@@ -156,11 +265,12 @@ const PRINT_STYLES = `
 
 /** Abre uma aba nova só com a(s) música(s), formatadas pra impressão, e
  * chama o diálogo de imprimir do navegador — de lá dá pra "Salvar como
- * PDF" (evita adicionar uma biblioteca de PDF só pra isso). */
-export function printSongs(songs: Song[], notation: ChordNotation, docTitle: string): void {
+ * PDF" (evita adicionar uma biblioteca de PDF só pra isso). Ao lado da
+ * letra de cada música, mostra um cartão por acorde com teclado + baixo. */
+export function printSongs(songs: Song[], notation: ChordNotation, docTitle: string, accordionType: AccordionType): void {
   const win = window.open('', '_blank')
   if (!win) return
-  const body = songs.map((s) => songToPrintHtml(s, notation)).join('\n')
+  const body = songs.map((s) => songToPrintHtml(s, notation, accordionType)).join('\n')
   win.document.write(`<!DOCTYPE html>
 <html lang="pt-BR">
 <head>

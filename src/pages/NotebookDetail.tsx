@@ -71,7 +71,7 @@ export default function NotebookDetail() {
                 </button>
                 <button
                   className="rounded px-2 py-1.5 text-left hover:bg-surface-alt"
-                  onClick={() => printSongs(notebookSongs, settings.notation, notebook.name)}
+                  onClick={() => printSongs(notebookSongs, settings.notation, notebook.name, settings.accordionType)}
                 >
                   Imprimir / PDF
                 </button>
