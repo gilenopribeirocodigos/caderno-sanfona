@@ -18,15 +18,14 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      // Desativado durante o desenvolvimento ativo: um Service Worker
-      // real de cache atrapalha os testes de cada etapa (o navegador
-      // mostra a versão antiga até o cache expirar). `selfDestroying`
-      // publica um SW que só desinstala e limpa o cache de quem já
-      // tinha instalado a versão anterior. Reativar (registerType:
-      // 'autoUpdate') perto do fim do projeto, quando o app estabilizar.
-      selfDestroying: true,
+      // Etapa "Polimento final": app estabilizado, reativa o Service
+      // Worker de verdade (funciona offline, fica instalável com ícone
+      // próprio). `autoUpdate` + skipWaiting/clientsClaim faz a versão
+      // nova assumir sozinha assim que publicada, sem o usuário precisar
+      // desinstalar nada (era esse risco de "versão presa" que mantinha
+      // o modo selfDestroying antes).
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['favicon.svg', 'icons/apple-touch-icon.png'],
       manifest: {
         name: 'Caderno de Sanfona',
         short_name: 'Sanfona',
@@ -41,7 +40,7 @@ export default defineConfig({
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
           {
-            src: 'icons/icon-512.png',
+            src: 'icons/icon-maskable-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
@@ -49,7 +48,26 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,mp3}'],
+        // Os áudios do Batuque (.wav) ficam de fora do cache de instalação
+        // (são muitos megabytes ao todo) — em vez disso, cada som grava no
+        // cache sozinho depois de tocado uma vez (runtimeCaching abaixo),
+        // então o app instala rápido e os ritmos já usados funcionam
+        // offline nas próximas vezes.
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.destination === 'audio',
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'batuque-audio',
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 180 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
       },
     }),
   ],
