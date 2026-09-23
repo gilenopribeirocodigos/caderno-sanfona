@@ -13,8 +13,15 @@ interface ChordPreviewPopupProps {
   onClose: () => void
 }
 
-/** Versão enxuta do baixo — só os 1-2 botões usados por ESSE acorde (não o
- * mapa inteiro do Stradella), do jeito que cabe numa consulta rápida. */
+/** Quantos botões vizinhos mostrar acima/abaixo do botão certo, em cada
+ * fileira — dá pra ver a posição dele no meio dos outros, sem mostrar o
+ * mapa inteiro do Stradella (que tem 20 por fileira). */
+const NEIGHBOR_WINDOW = 2
+const COLUMN_SHIFT = 4
+
+/** Versão enxuta do baixo, mas em contexto: mostra o botão certo junto com
+ * alguns vizinhos (acima/abaixo, na mesma fileira), como no instrumento de
+ * verdade, pra dar pra achar a posição — não só os botões soltos. */
 function MiniBassPreview({
   chord,
   accordionType,
@@ -39,19 +46,37 @@ function MiniBassPreview({
   if (items.length === 0) return null
 
   return (
-    <div className="flex gap-3">
-      {items.map(([rowIndex, h]) => {
+    <div className="flex gap-2.5">
+      {items.map(([rowIndex, h], colPos) => {
         const rowName = rows[rowIndex]
-        const label = chordLabelForRow(columns[h.col], rowName)
+        const start = Math.max(0, h.col - NEIGHBOR_WINDOW)
+        const end = Math.min(columns.length - 1, h.col + NEIGHBOR_WINDOW)
+        const windowCols: number[] = []
+        for (let i = start; i <= end; i++) windowCols.push(i)
         return (
-          <div key={rowIndex} className="flex flex-col items-center gap-1">
+          <div
+            key={rowIndex}
+            className="flex flex-col items-center gap-1"
+            style={{ paddingTop: colPos * COLUMN_SHIFT }}
+          >
             <span className="text-[9px] uppercase text-slate-400">{rowName}</span>
-            <span
-              className="flex h-10 w-10 items-center justify-center rounded-full border-2 text-xs font-bold"
-              style={{ borderColor: color.hex, color: color.hex, backgroundColor: color.hexSoft }}
-            >
-              {formatChordForDisplay(label, notation)}
-            </span>
+            <div className="flex flex-col gap-1">
+              {windowCols.map((colIndex) => {
+                const label = chordLabelForRow(columns[colIndex], rowName)
+                const isTarget = colIndex === h.col
+                return (
+                  <span
+                    key={colIndex}
+                    className={`flex h-7 w-7 items-center justify-center rounded-full border text-[9px] font-bold ${
+                      isTarget ? '' : 'border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-500'
+                    }`}
+                    style={isTarget ? { borderColor: color.hex, color: color.hex, backgroundColor: color.hexSoft, borderWidth: 2 } : undefined}
+                  >
+                    {formatChordForDisplay(label, notation)}
+                  </span>
+                )
+              })}
+            </div>
           </div>
         )
       })}
@@ -63,7 +88,7 @@ function MiniBassPreview({
  * apertar — teclado e os botões certos do baixo — sem editar nada. */
 export default function ChordPreviewPopup({ chord, x, y, accordionType, notation, onClose }: ChordPreviewPopupProps) {
   const color = colorMapForChords([chord]).get(chord)!
-  const width = 220
+  const width = 260
 
   return (
     <>
