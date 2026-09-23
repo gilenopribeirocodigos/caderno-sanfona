@@ -16,6 +16,12 @@ de Janeiro. Comprado e enviado pelo usuário; uso dentro deste app pessoal.
 - `block-grave.wav` — "Brazilian Block Low"
 - `block-agudo.wav` — "Brazilian Block High"
 - `ganza.wav` — "Brazilian Ganza (1-shot)"
+- `triangulo-loop-baiao-100.wav` — "Brazilian Baiao, Triangles (m1) 100bpm" (loop real, "modo groove real")
+- `triangulo-loop-baiao-120.wav` — "Brazilian Baiao, Triangle (m1) 120bpm" (idem)
+
+O pacote também trouxe loops reais de zabumba (6 variações), agogô e
+ganzá nos mesmos 100/120 BPM — ainda não integrados; ver "modo groove
+real" no triângulo como exemplo de como plugar os outros depois.
 
 O pacote comprado trouxe mais variações (outro microfone — m2 — e outras
 durações de anel do triângulo; versões "Côco" do bacalhau). Não estão

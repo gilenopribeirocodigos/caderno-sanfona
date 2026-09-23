@@ -12,6 +12,8 @@ import ganzaUrl from '@/assets/sounds/ganza.wav'
 import kickUrl from '@/assets/sounds/kick.wav'
 import snareUrl from '@/assets/sounds/snare.wav'
 import hihatUrl from '@/assets/sounds/hihat.wav'
+import trianguloLoopBaiao100Url from '@/assets/sounds/triangulo-loop-baiao-100.wav'
+import trianguloLoopBaiao120Url from '@/assets/sounds/triangulo-loop-baiao-120.wav'
 
 // O triângulo e a zabumba têm dois (ou mais) toques fisicamente diferentes
 // no instrumento de verdade — cada um vira uma "voz" própria aqui, com seu
@@ -427,6 +429,42 @@ export function rhythmForLabel(label: string | undefined): Rhythm {
   return found ?? RHYTHMS[0]
 }
 
+// "Groove real": em vez de eu programar cada nota, toca o loop gravado de
+// verdade pelo percussionista, repetindo sem costura. Só existe para quem
+// já tem loop comprado (hoje: triângulo no baião) — o BPM fica preso ao
+// andamento em que o loop foi gravado (não dá pra esticar sem perder
+// qualidade), então a escolha aqui é entre os andamentos disponíveis, não
+// um ajuste livre.
+export interface LoopOption {
+  id: string
+  label: string
+  bpm: number
+  url: string
+}
+
+const LOOP_OPTIONS: Partial<Record<string, Partial<Record<InstrumentGroup, LoopOption[]>>>> = {
+  baiao: {
+    triangulo: [
+      {
+        id: 'loop100',
+        label: '100 BPM',
+        bpm: 100,
+        url: trianguloLoopBaiao100Url,
+      },
+      {
+        id: 'loop120',
+        label: '120 BPM',
+        bpm: 120,
+        url: trianguloLoopBaiao120Url,
+      },
+    ],
+  },
+}
+
+export function loopOptionsFor(rhythmId: string, group: InstrumentGroup): LoopOption[] {
+  return LOOP_OPTIONS[rhythmId]?.[group] ?? []
+}
+
 const SAMPLE_URLS: Record<BatuqueInstrument, string> = {
   trianguloFechado: trianguloFechadoUrl,
   trianguloAberto: trianguloAbertoUrl,
@@ -483,8 +521,11 @@ interface GroupClock {
 export class BatuqueEngine {
   private ctx: AudioContext | null = null
   private buffers: Partial<Record<BatuqueInstrument, AudioBuffer>> = {}
+  private loopBufferCache = new Map<string, AudioBuffer>()
   private groupGains: Partial<Record<InstrumentGroup, GainNode>> = {}
   private groupClocks: Partial<Record<InstrumentGroup, GroupClock>> = {}
+  private loopSources: Partial<Record<InstrumentGroup, AudioBufferSourceNode>> = {}
+  private loopUrls: Partial<Record<InstrumentGroup, string>> = {}
   private timerId: ReturnType<typeof setInterval> | null = null
   private rhythm: Rhythm = RHYTHMS[0]
   private selection: VariationSelection = defaultSelection(RHYTHMS[0])
@@ -501,6 +542,7 @@ export class BatuqueEngine {
     selection: VariationSelection,
     enabledGroups: Set<InstrumentGroup>,
     groupSettings: Record<InstrumentGroup, GroupSettings>,
+    loopUrls: Partial<Record<InstrumentGroup, string>>,
     onStep?: (group: InstrumentGroup, step: number) => void,
   ): Promise<void> {
     this.stop()
@@ -508,6 +550,7 @@ export class BatuqueEngine {
     this.selection = selection
     this.enabledGroups = enabledGroups
     this.groupSettings = groupSettings
+    this.loopUrls = loopUrls
     this.onStep = onStep
 
     if (!this.ctx) this.ctx = new AudioContext()
@@ -538,9 +581,25 @@ export class BatuqueEngine {
   }
 
   setEnabledGroups(groups: Set<InstrumentGroup>): void {
+    const previous = this.enabledGroups
     this.enabledGroups = groups
     if (this.timerId !== null) {
+      for (const group of previous) {
+        if (!groups.has(group)) this.teardownGroup(group)
+      }
       for (const group of groups) this.ensureGroupRunning(group)
+    }
+  }
+
+  /** Liga/desliga o "groove real" pra um instrumento — url null volta pro
+   * modo programado (padrão de batida escolhido). Reinicia esse
+   * instrumento na hora, se já estiver tocando. */
+  setLoopUrl(group: InstrumentGroup, url: string | null): void {
+    if (url) this.loopUrls[group] = url
+    else delete this.loopUrls[group]
+    if (this.timerId !== null && this.enabledGroups.has(group)) {
+      this.teardownGroup(group)
+      this.ensureGroupRunning(group)
     }
   }
 
@@ -549,18 +608,65 @@ export class BatuqueEngine {
       clearInterval(this.timerId)
       this.timerId = null
     }
-    for (const gain of Object.values(this.groupGains)) gain?.disconnect()
-    this.groupGains = {}
-    this.groupClocks = {}
+    for (const group of new Set([
+      ...(Object.keys(this.groupGains) as InstrumentGroup[]),
+      ...(Object.keys(this.loopSources) as InstrumentGroup[]),
+    ])) {
+      this.teardownGroup(group)
+    }
+  }
+
+  private teardownGroup(group: InstrumentGroup): void {
+    const loopSource = this.loopSources[group]
+    if (loopSource) {
+      loopSource.stop()
+      loopSource.disconnect()
+      delete this.loopSources[group]
+    }
+    delete this.groupClocks[group]
+    const gain = this.groupGains[group]
+    if (gain) {
+      gain.disconnect()
+      delete this.groupGains[group]
+    }
   }
 
   private ensureGroupRunning(group: InstrumentGroup): void {
-    if (!this.ctx || this.groupClocks[group]) return
+    if (!this.ctx || this.groupClocks[group] || this.loopSources[group]) return
     const gain = this.ctx.createGain()
     gain.gain.value = this.groupSettings[group].volume
     gain.connect(this.ctx.destination)
     this.groupGains[group] = gain
-    this.groupClocks[group] = { nextStepTime: this.ctx.currentTime + 0.05, currentStep: 0 }
+
+    const loopUrl = this.loopUrls[group]
+    if (loopUrl) {
+      this.startLoopSource(group, loopUrl, gain)
+    } else {
+      this.groupClocks[group] = { nextStepTime: this.ctx.currentTime + 0.05, currentStep: 0 }
+    }
+  }
+
+  private async startLoopSource(group: InstrumentGroup, url: string, gain: GainNode): Promise<void> {
+    const buffer = await this.loadLoopBuffer(url)
+    // O grupo pode ter sido desligado/reconfigurado enquanto o áudio
+    // carregava — não inicia um loop "fantasma" nesse caso.
+    if (!this.ctx || this.groupGains[group] !== gain) return
+    const source = this.ctx.createBufferSource()
+    source.buffer = buffer
+    source.loop = true
+    source.connect(gain)
+    source.start()
+    this.loopSources[group] = source
+  }
+
+  private async loadLoopBuffer(url: string): Promise<AudioBuffer> {
+    const cached = this.loopBufferCache.get(url)
+    if (cached) return cached
+    const res = await fetch(url)
+    const arrayBuffer = await res.arrayBuffer()
+    const buffer = await this.ctx!.decodeAudioData(arrayBuffer)
+    this.loopBufferCache.set(url, buffer)
+    return buffer
   }
 
   private async loadBuffers(): Promise<void> {
