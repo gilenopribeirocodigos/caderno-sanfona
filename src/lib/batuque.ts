@@ -967,13 +967,38 @@ interface GroupClock {
   currentStep: number
 }
 
-// As amostras (compradas) foram gravadas num nível relativamente baixo.
-// Em vez de deixar cada grupo tocar só no volume "cru" do arquivo, todo
-// mundo passa por esse ganho geral + compressor (igual um limitador de
-// masterização) antes da saída — aumenta o volume percebido sem estourar
-// quando vários instrumentos tocam ao mesmo tempo.
-const MASTER_GAIN = 1.8
-const COMPRESSOR_SETTINGS = { threshold: -12, knee: 20, ratio: 8, attack: 0.003, release: 0.25 }
+// As amostras (compradas) foram gravadas num nível relativamente baixo, e
+// alguns instrumentos vieram mais baixos que outros. Duas correções:
+// 1) normaliza cada arquivo pro mesmo pico de volume assim que carrega
+//    (deixa todos os instrumentos soando parecido em força, não só o
+//    conjunto todo mais alto); 2) um limitador mais apertado na saída,
+//    que permite manter tudo perto do máximo sem estourar quando vários
+//    instrumentos tocam juntos.
+const TARGET_PEAK = 0.9
+const MAX_NORMALIZE_GAIN = 6
+const MASTER_GAIN = 1.3
+const COMPRESSOR_SETTINGS = { threshold: -6, knee: 6, ratio: 20, attack: 0.001, release: 0.15 }
+
+/** Sobe (nunca abaixa) o volume de um áudio recém-carregado até ficar
+ * perto do máximo (item "todo instrumento no mesmo nível") — sem isso,
+ * um som gravado mais baixo continuava baixo mesmo com o limitador geral. */
+function normalizeBufferInPlace(buffer: AudioBuffer): void {
+  let peak = 0
+  for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
+    const data = buffer.getChannelData(ch)
+    for (let i = 0; i < data.length; i++) {
+      const abs = Math.abs(data[i])
+      if (abs > peak) peak = abs
+    }
+  }
+  if (peak <= 0) return
+  const gain = Math.min(MAX_NORMALIZE_GAIN, TARGET_PEAK / peak)
+  if (gain <= 1.01) return
+  for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
+    const data = buffer.getChannelData(ch)
+    for (let i = 0; i < data.length; i++) data[i] *= gain
+  }
+}
 
 export class BatuqueEngine {
   private ctx: AudioContext | null = null
@@ -1141,6 +1166,7 @@ export class BatuqueEngine {
     const res = await fetch(url)
     const arrayBuffer = await res.arrayBuffer()
     const buffer = await this.ctx!.decodeAudioData(arrayBuffer)
+    normalizeBufferInPlace(buffer)
     this.loopBufferCache.set(url, buffer)
     return buffer
   }
@@ -1153,7 +1179,9 @@ export class BatuqueEngine {
         if (this.buffers[instrument]) return
         const res = await fetch(url)
         const arrayBuffer = await res.arrayBuffer()
-        this.buffers[instrument] = await this.ctx!.decodeAudioData(arrayBuffer)
+        const buffer = await this.ctx!.decodeAudioData(arrayBuffer)
+        normalizeBufferInPlace(buffer)
+        this.buffers[instrument] = buffer
       }),
     )
   }
