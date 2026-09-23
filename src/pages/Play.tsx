@@ -84,6 +84,7 @@ export default function Play() {
   const [showVisual, setShowVisual] = useState(false)
   const [showBatuque, setShowBatuque] = useState(false)
   const [showLesson, setShowLesson] = useState(false)
+  const [showMoreControls, setShowMoreControls] = useState(false)
   const [activeChord, setActiveChord] = useState<string | undefined>()
   const [previewChord, setPreviewChord] = useState<{ chord: string; x: number; y: number } | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -133,11 +134,18 @@ export default function Play() {
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null
+      if (target?.matches('input, select, textarea, [contenteditable="true"]')) return
       // O Modo Aula usa essas mesmas teclas pro trecho da música atual,
       // não pra trocar de música — deixa o atalho dele assumir.
       if (showLesson) return
-      if (e.key === 'ArrowRight' || e.key === 'PageDown') goTo(index + 1)
-      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') goTo(index - 1)
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+        e.preventDefault()
+        goTo(index + 1)
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault()
+        goTo(index - 1)
+      }
       else if (e.key === ' ') {
         e.preventDefault()
         toggleAutoScroll()
@@ -263,7 +271,7 @@ export default function Play() {
   }
 
   return (
-    <div className="relative flex h-full flex-col bg-surface-alt">
+    <div className="relative flex h-full min-h-0 flex-col bg-surface-alt">
       {!controlsVisible && !showLesson && (
         <button
           aria-label="Mostrar controles"
@@ -275,16 +283,46 @@ export default function Play() {
       )}
 
       {controlsVisible && !showLesson && (
-        <div className="safe-top flex items-center justify-between gap-2 bg-surface px-3 py-2 text-sm">
-          <div>
-            <p className="font-semibold">{song.title}</p>
+        <div className="safe-top relative flex shrink-0 items-center justify-between gap-2 bg-surface px-3 py-2 text-sm">
+          <div className="min-w-0">
+            <p className="truncate font-semibold">{song.title}</p>
             <p className="text-xs text-slate-500">
               Tom {song.preferredKey}
               {notebookId && ` · ${index + 1} / ${queue.length}`}
               {notebook && ` · ${notebook.name}`}
             </p>
           </div>
-          <div className="flex flex-wrap justify-end gap-1">
+          <div className="flex shrink-0 items-center gap-1 md:hidden">
+            <button
+              className="tap-target rounded-md border border-slate-300 px-2 text-xs dark:border-slate-700"
+              onClick={() => {
+                setShowLesson(true)
+                setShowVisual(false)
+                setShowBatuque(false)
+                setShowMoreControls(false)
+                setPreviewChord(null)
+              }}
+            >
+              🎓 Aula
+            </button>
+            <button
+              className={`tap-target rounded-md border px-2 text-xs ${
+                showBatuque ? 'border-slate-900 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border-slate-300 dark:border-slate-700'
+              }`}
+              onClick={() => setShowBatuque((v) => !v)}
+            >
+              🥁 Batuque
+            </button>
+            <button
+              className="tap-target rounded-md border border-slate-300 px-2 text-xs dark:border-slate-700"
+              aria-expanded={showMoreControls}
+              aria-controls="mobile-play-controls"
+              onClick={() => setShowMoreControls((v) => !v)}
+            >
+              Mais
+            </button>
+          </div>
+          <div className="hidden flex-wrap justify-end gap-1 md:flex">
             <button className="tap-target rounded-md border border-slate-300 px-2 py-1 text-xs dark:border-slate-700" onClick={() => adjustFont(-2)}>
               A-
             </button>
@@ -333,6 +371,28 @@ export default function Play() {
               Ocultar
             </button>
           </div>
+          {showMoreControls && (
+            <div id="mobile-play-controls" className="absolute right-2 top-full z-40 w-60 rounded-b-xl border border-slate-300 bg-surface p-2 shadow-xl dark:border-slate-700 md:hidden">
+              <div className="mb-2 flex gap-1">
+                <button className="tap-target flex-1 rounded-md border border-slate-300 dark:border-slate-700" onClick={() => adjustFont(-2)}>A-</button>
+                <button className="tap-target flex-1 rounded-md border border-slate-300 dark:border-slate-700" onClick={() => adjustFont(2)}>A+</button>
+                <button className="tap-target flex-1 rounded-md border border-slate-300 text-xs dark:border-slate-700" onClick={fitToScreen}>Ajustar</button>
+              </div>
+              <button className="tap-target mb-1 w-full rounded-md border border-slate-300 text-left px-3 text-xs dark:border-slate-700" onClick={() => { toggleFullscreen(); setShowMoreControls(false) }}>{isFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}</button>
+              <button className="tap-target mb-1 w-full rounded-md border border-slate-300 text-left px-3 text-xs dark:border-slate-700" onClick={() => { setShowVisual((v) => !v); setShowMoreControls(false) }}>{showVisual ? 'Ocultar sanfona visual' : 'Sanfona visual'}</button>
+              <button className="tap-target mb-2 w-full rounded-md border border-slate-300 text-left px-3 text-xs dark:border-slate-700" onClick={() => { setControlsVisible(false); setShowMoreControls(false) }}>Ocultar controles</button>
+              <label className="mb-1 block text-xs text-slate-500">Velocidade da rolagem
+                <select className="tap-target mt-1 w-full rounded-md border border-slate-300 bg-surface px-2 dark:border-slate-700" value={speedLevel} onChange={(e) => setSpeedLevel(Number(e.target.value))}>
+                  {SPEED_PRESETS.map((s, i) => <option key={s.label} value={i}>{s.label}</option>)}
+                </select>
+              </label>
+              <label className="block text-xs text-slate-500">Início da rolagem
+                <select className="tap-target mt-1 w-full rounded-md border border-slate-300 bg-surface px-2 dark:border-slate-700" value={startDelay} onChange={(e) => setStartDelay(Number(e.target.value))}>
+                  {START_DELAYS.map((d) => <option key={d} value={d}>{d === 0 ? 'Início imediato' : `Após ${d}s`}</option>)}
+                </select>
+              </label>
+            </div>
+          )}
         </div>
       )}
 
@@ -342,10 +402,12 @@ export default function Play() {
           notation={settings.notation}
           accordionType={settings.accordionType}
           onExit={() => setShowLesson(false)}
+          onNextSong={notebookId && index < queue.length - 1 ? () => goTo(index + 1) : undefined}
+          onPreviousSong={notebookId && index > 0 ? () => goTo(index - 1) : undefined}
         />
       ) : (
         <>
-          <div ref={containerRef} className="flex-1 overflow-y-auto p-4">
+          <div ref={containerRef} className="min-h-0 flex-1 overflow-y-auto p-4">
             <ChordSheet
               lines={song.chordData.lines ?? []}
               notation={settings.notation}
@@ -392,7 +454,19 @@ export default function Play() {
       )}
 
       {controlsVisible && !showLesson && (
-        <div className="safe-bottom flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-surface px-3 py-2 text-xs dark:border-slate-800">
+        <div className="safe-bottom flex shrink-0 items-center justify-between gap-2 border-t border-slate-200 bg-surface px-3 py-1.5 text-xs dark:border-slate-800 md:hidden">
+          {notebookId && <div className="flex items-center gap-1">
+            <button className="tap-target rounded-md border border-slate-300 px-2 disabled:opacity-30 dark:border-slate-700" disabled={index === 0} onClick={() => goTo(index - 1)}>‹ Anterior</button>
+            <button className="tap-target rounded-md border border-slate-300 px-2 disabled:opacity-30 dark:border-slate-700" disabled={index === queue.length - 1} onClick={() => goTo(index + 1)}>Próxima ›</button>
+          </div>}
+          <button className={`tap-target rounded-md border px-3 font-medium ${scrolling ? 'border-red-400 text-red-500' : 'border-slate-300 dark:border-slate-700'}`} onClick={toggleAutoScroll}>
+            {scrolling ? '⏸ Parar' : '▶ Rolar letra'}
+          </button>
+        </div>
+      )}
+
+      {controlsVisible && !showLesson && (
+        <div className="safe-bottom hidden shrink-0 flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-surface px-3 py-2 text-xs dark:border-slate-800 md:flex">
           <div className="flex items-center gap-1">
             <button
               className="tap-target rounded-md border border-slate-300 px-2 py-1 disabled:opacity-30 dark:border-slate-700"
