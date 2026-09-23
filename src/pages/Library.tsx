@@ -95,10 +95,10 @@ export default function Library() {
   return (
     <div className="mx-auto max-w-2xl p-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Biblioteca</h2>
+        <h2 className="text-xl font-bold tracking-tight">Biblioteca</h2>
         {formMode.kind === 'closed' && (
           <button
-            className="tap-target rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white dark:bg-slate-100 dark:text-slate-900"
+            className="tap-target rounded-lg bg-[var(--color-brand)] px-3 py-1.5 text-sm font-semibold text-white shadow-sm"
             onClick={() => { setCreateError(null); setFormMode({ kind: 'create' }) }}
           >
             + Nova música
@@ -122,7 +122,7 @@ export default function Library() {
           />
         </div>
       )}
-      <div className="mt-4 flex flex-col gap-2 rounded-lg bg-surface p-3">
+      <div className="mt-4 flex flex-col gap-2 rounded-xl border border-stone-200 bg-surface p-3 shadow-sm dark:border-slate-700">
         <input
           className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
           placeholder="Buscar por nome ou artista..."
@@ -189,10 +189,10 @@ export default function Library() {
 
       <ul className="mt-4 flex flex-col gap-2">
         {visibleSongs.map((song) => (
-          <li key={song.id} className="rounded-lg bg-surface p-3">
+          <li key={song.id} className="song-card rounded-xl border border-stone-200 bg-surface p-3 shadow-sm transition-[border-color,box-shadow] dark:border-slate-700">
             <div className="flex min-w-0 items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-base font-semibold leading-snug">{song.title}</p>
+                <p className="line-clamp-2 text-base font-bold leading-snug tracking-tight">{song.title}</p>
                 <p className="mt-1 truncate text-xs text-slate-500" title={[song.artist, `Tom ${song.preferredKey}`, song.rhythm, song.difficulty].filter(Boolean).join(' · ')}>
                   {song.artist ? `${song.artist} · ` : ''}Tom {song.preferredKey}
                   {song.rhythm ? ` · ${song.rhythm}` : ''}
@@ -213,7 +213,7 @@ export default function Library() {
             <div className="mt-3 flex items-center gap-2">
               <Link
                 to={`/tocar?song=${song.id}`}
-                className="tap-target flex min-h-11 flex-1 items-center justify-center gap-2 rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white dark:bg-slate-100 dark:text-slate-900"
+                className="tap-target flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-semibold text-white shadow-sm"
               >
                 ▶ <span>Tocar</span>
               </Link>
