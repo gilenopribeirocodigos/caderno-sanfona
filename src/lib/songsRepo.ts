@@ -1,5 +1,5 @@
 import { db } from './db'
-import type { ChordData, Song } from '@/types'
+import type { ChordData, Song, SongVersion } from '@/types'
 import { buildChordData, stripChords, transposeChordProSource } from '@/utils/chordpro'
 import { semitonesBetweenKeys } from '@/utils/chords'
 import { queueSyncChange } from './syncQueue'
@@ -133,4 +133,30 @@ export async function registerPractice(id: string): Promise<void> {
     updatedAt: new Date().toISOString(),
   })
   queueSyncChange('songs', id)
+}
+
+export async function restoreSongVersion(songId: string, versionId: string): Promise<void> {
+  const [song, version] = await Promise.all([db.songs.get(songId), db.songVersions.get(versionId)])
+  if (!song || !version || version.songId !== songId) throw new Error('Esta versão não está mais disponível.')
+  const now = new Date().toISOString()
+  const currentCopy: SongVersion = {
+    id: newId(),
+    songId,
+    name: `Cópia antes de restaurar · ${new Date(now).toLocaleString('pt-BR')}`,
+    key: song.preferredKey,
+    lyrics: song.lyrics,
+    chordData: song.chordData,
+    createdAt: now,
+  }
+  await db.transaction('rw', [db.songs, db.songVersions], async () => {
+    await db.songVersions.add(currentCopy)
+    await db.songs.update(songId, {
+      preferredKey: version.key,
+      lyrics: version.lyrics,
+      chordData: version.chordData,
+      updatedAt: now,
+    })
+  })
+  queueSyncChange('songs', songId)
+  queueSyncChange('songVersions', currentCopy.id)
 }
