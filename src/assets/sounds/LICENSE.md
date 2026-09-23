@@ -1,6 +1,6 @@
 # Sons do Metrônomo/Batuque
 
-## Comprados pelo usuário — "BPL Vol. 02 (Baião and Côco)", brazilianmusician (Gumroad)
+## Comprados pelo usuário — "BPL Vol. 02 (Baião and Côco)" e "Vol. 04 (Xote and Rasta Pé)", brazilianmusician (Gumroad)
 
 Gravações reais de percussionista profissional (Firmino), feitas no Rio
 de Janeiro. Comprado e enviado pelo usuário; uso dentro deste app pessoal.
@@ -36,6 +36,11 @@ de cara quais arquivos de instrumentos diferentes tocam no mesmo andamento.
 Loops do ritmo **Côco** (arquivos `*-loop-coco-*.wav`), mesmo pacote —
 Côco é um ritmo nordestino diferente de baião/xote, virou uma opção
 própria no seletor de ritmo em vez de ser misturado nos outros dois.
+
+Loops do ritmo **Xote** (arquivos `*-loop-xote-*.wav`), do Vol. 04 — os
+primeiros loops de Xote de verdade; até aqui o Xote só tinha padrões
+programados por mim. Andamentos: 70 e 90 BPM (mais lentos que os outros
+ritmos, condizente com o Xote ser mais cadenciado).
 
 ## CC0 (domínio público) — bigsoundbank.com, autor Joseph Sardin / freewavesamples.com
 

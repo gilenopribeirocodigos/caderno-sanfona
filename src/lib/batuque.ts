@@ -54,6 +54,30 @@ import blockLoopCoco100Url from '@/assets/sounds/block-loop-coco-100.wav'
 import blockLoopCoco120Url from '@/assets/sounds/block-loop-coco-120.wav'
 import ganzaLoopCoco100Url from '@/assets/sounds/ganza-loop-coco-100.wav'
 import ganzaLoopCoco120Url from '@/assets/sounds/ganza-loop-coco-120.wav'
+import trianguloLoopXote70M1Url from '@/assets/sounds/triangulo-loop-xote-70-m1.wav'
+import trianguloLoopXote70M2Url from '@/assets/sounds/triangulo-loop-xote-70-m2.wav'
+import trianguloLoopXote90M1Url from '@/assets/sounds/triangulo-loop-xote-90-m1.wav'
+import trianguloLoopXote90M2Url from '@/assets/sounds/triangulo-loop-xote-90-m2.wav'
+import zabumbaLoopXote70_01bMUrl from '@/assets/sounds/zabumba-loop-xote-70-01-bM.wav'
+import zabumbaLoopXote70_01tMUrl from '@/assets/sounds/zabumba-loop-xote-70-01-tM.wav'
+import zabumbaLoopXote70_02bMUrl from '@/assets/sounds/zabumba-loop-xote-70-02-bM.wav'
+import zabumbaLoopXote70_02tMUrl from '@/assets/sounds/zabumba-loop-xote-70-02-tM.wav'
+import zabumbaLoopXote70_03bMUrl from '@/assets/sounds/zabumba-loop-xote-70-03-bM.wav'
+import zabumbaLoopXote70_03tMUrl from '@/assets/sounds/zabumba-loop-xote-70-03-tM.wav'
+import zabumbaLoopXote90_02bMUrl from '@/assets/sounds/zabumba-loop-xote-90-02-bM.wav'
+import zabumbaLoopXote90_02tMUrl from '@/assets/sounds/zabumba-loop-xote-90-02-tM.wav'
+import zabumbaLoopXote90_04bMUrl from '@/assets/sounds/zabumba-loop-xote-90-04-bM.wav'
+import zabumbaLoopXote90_04tMUrl from '@/assets/sounds/zabumba-loop-xote-90-04-tM.wav'
+import zabumbaLoopXote90_05bMUrl from '@/assets/sounds/zabumba-loop-xote-90-05-bM.wav'
+import zabumbaLoopXote90_05tMUrl from '@/assets/sounds/zabumba-loop-xote-90-05-tM.wav'
+import zabumbaLoopXote90_06bMUrl from '@/assets/sounds/zabumba-loop-xote-90-06-bM.wav'
+import zabumbaLoopXote90_06tMUrl from '@/assets/sounds/zabumba-loop-xote-90-06-tM.wav'
+import blockLoopXote70_01Url from '@/assets/sounds/block-loop-xote-70-01.wav'
+import blockLoopXote70_02Url from '@/assets/sounds/block-loop-xote-70-02.wav'
+import blockLoopXote90_02Url from '@/assets/sounds/block-loop-xote-90-02.wav'
+import blockLoopXote90_03Url from '@/assets/sounds/block-loop-xote-90-03.wav'
+import ganzaLoopXote70Url from '@/assets/sounds/ganza-loop-xote-70.wav'
+import ganzaLoopXote90Url from '@/assets/sounds/ganza-loop-xote-90.wav'
 
 // O triângulo e a zabumba têm dois (ou mais) toques fisicamente diferentes
 // no instrumento de verdade — cada um vira uma "voz" própria aqui, com seu
@@ -678,6 +702,40 @@ const LOOP_OPTIONS: Partial<Record<string, Partial<Record<InstrumentGroup, LoopO
     ganza: [
       { id: 'g100-1', label: 'Ganza 100-1', bpm: 100, url: ganzaLoopCoco100Url },
       { id: 'g120-1', label: 'Ganza 120-1', bpm: 120, url: ganzaLoopCoco120Url },
+    ],
+  },
+  xote: {
+    triangulo: [
+      { id: 't70-1', label: 'Triangulo 70-1', bpm: 70, url: trianguloLoopXote70M1Url },
+      { id: 't70-2', label: 'Triangulo 70-2', bpm: 70, url: trianguloLoopXote70M2Url },
+      { id: 't90-1', label: 'Triangulo 90-1', bpm: 90, url: trianguloLoopXote90M1Url },
+      { id: 't90-2', label: 'Triangulo 90-2', bpm: 90, url: trianguloLoopXote90M2Url },
+    ],
+    zabumba: [
+      { id: 'z70-1', label: 'Zabumba 70-1', bpm: 70, url: zabumbaLoopXote70_01bMUrl },
+      { id: 'z70-2', label: 'Zabumba 70-2', bpm: 70, url: zabumbaLoopXote70_01tMUrl },
+      { id: 'z70-3', label: 'Zabumba 70-3', bpm: 70, url: zabumbaLoopXote70_02bMUrl },
+      { id: 'z70-4', label: 'Zabumba 70-4', bpm: 70, url: zabumbaLoopXote70_02tMUrl },
+      { id: 'z70-5', label: 'Zabumba 70-5', bpm: 70, url: zabumbaLoopXote70_03bMUrl },
+      { id: 'z70-6', label: 'Zabumba 70-6', bpm: 70, url: zabumbaLoopXote70_03tMUrl },
+      { id: 'z90-1', label: 'Zabumba 90-1', bpm: 90, url: zabumbaLoopXote90_02bMUrl },
+      { id: 'z90-2', label: 'Zabumba 90-2', bpm: 90, url: zabumbaLoopXote90_02tMUrl },
+      { id: 'z90-3', label: 'Zabumba 90-3', bpm: 90, url: zabumbaLoopXote90_04bMUrl },
+      { id: 'z90-4', label: 'Zabumba 90-4', bpm: 90, url: zabumbaLoopXote90_04tMUrl },
+      { id: 'z90-5', label: 'Zabumba 90-5', bpm: 90, url: zabumbaLoopXote90_05bMUrl },
+      { id: 'z90-6', label: 'Zabumba 90-6', bpm: 90, url: zabumbaLoopXote90_05tMUrl },
+      { id: 'z90-7', label: 'Zabumba 90-7', bpm: 90, url: zabumbaLoopXote90_06bMUrl },
+      { id: 'z90-8', label: 'Zabumba 90-8', bpm: 90, url: zabumbaLoopXote90_06tMUrl },
+    ],
+    block: [
+      { id: 'bl70-1', label: 'Block 70-1', bpm: 70, url: blockLoopXote70_01Url },
+      { id: 'bl70-2', label: 'Block 70-2', bpm: 70, url: blockLoopXote70_02Url },
+      { id: 'bl90-1', label: 'Block 90-1', bpm: 90, url: blockLoopXote90_02Url },
+      { id: 'bl90-2', label: 'Block 90-2', bpm: 90, url: blockLoopXote90_03Url },
+    ],
+    ganza: [
+      { id: 'g70-1', label: 'Ganza 70-1', bpm: 70, url: ganzaLoopXote70Url },
+      { id: 'g90-1', label: 'Ganza 90-1', bpm: 90, url: ganzaLoopXote90Url },
     ],
   },
 }
