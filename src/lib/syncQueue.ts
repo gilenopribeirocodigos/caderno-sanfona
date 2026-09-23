@@ -5,6 +5,7 @@ export type SyncTable =
   | 'songVersions'
   | 'practiceHistory'
   | 'settings'
+  | 'syncDeletions'
 
 export interface PendingChange {
   table: SyncTable

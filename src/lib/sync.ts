@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient'
 import { db, LOCAL_USER_ID } from './db'
 import { consolidateDuplicateSongs } from './deduplicateSongs'
+import { deleteCloudDeleted, exchangeDeletionMarkers, publishLocalDeletions, purgeLocalDeleted } from './syncDeletions'
 import {
   getPendingChanges,
   pendingKey,
@@ -161,30 +162,6 @@ function settingsFromRemote(r: any): AppSettings {
 let inFlightSync: Promise<void> | null = null
 const SYNC_TIMEOUT_MS = 25_000
 const SYNC_ERROR_KEY = 'lastSyncError'
-const DUPLICATE_TOMBSTONES_KEY = 'mergedDuplicateSongIds'
-
-function mergedDuplicateIds(): string[] {
-  try {
-    const value: unknown = JSON.parse(localStorage.getItem(DUPLICATE_TOMBSTONES_KEY) ?? '[]')
-    return Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string') : []
-  } catch { return [] }
-}
-
-function rememberMergedDuplicates(ids: string[]): void {
-  if (ids.length) localStorage.setItem(DUPLICATE_TOMBSTONES_KEY, JSON.stringify([...new Set([...mergedDuplicateIds(), ...ids])]))
-}
-
-async function deleteMergedDuplicatesFromCloud(userId: string): Promise<void> {
-  if (!supabase) return
-  for (const id of mergedDuplicateIds()) {
-    for (const table of ['notebook_songs', 'practice_history', 'song_versions'] as const) {
-      const { error } = await supabase.from(table).delete().eq('song_id', id).eq('user_id', userId)
-      if (error) throw error
-    }
-    const { error } = await supabase.from('songs').delete().eq('id', id).eq('user_id', userId)
-    if (error) throw error
-  }
-}
 
 let backgroundSyncTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -210,6 +187,7 @@ async function pushPendingChanges(userId: string): Promise<void> {
   if (pending.length === 0 || !supabase) return
 
   const order: Record<SyncTable, number> = {
+    syncDeletions: -1,
     songs: 0,
     notebooks: 1,
     notebookSongs: 2,
@@ -222,6 +200,13 @@ async function pushPendingChanges(userId: string): Promise<void> {
     let error: { message: string } | null = null
 
     switch (change.table) {
+      case 'syncDeletions': {
+        const value = await db.syncDeletions.get(change.id)
+        if (value) ({ error } = await supabase.from('sync_deletions').upsert({
+          user_id: userId, entity_type: value.table, record_id: value.recordId, deleted_at: value.deletedAt,
+        }))
+        break
+      }
       case 'songs': {
         const value = await db.songs.get(change.id)
         if (value) ({ error } = await supabase.from('songs').upsert(songToRemote(value, userId)))
@@ -261,7 +246,9 @@ async function pushPendingChanges(userId: string): Promise<void> {
 
 export function syncNow(userId: string): Promise<void> {
   if (inFlightSync) return inFlightSync
-  inFlightSync = preservePendingSongConflicts(userId)
+  let failed = false
+  inFlightSync = exchangeDeletionMarkers(userId)
+    .then(() => preservePendingSongConflicts(userId))
     .then(() => pushPendingChanges(userId))
     .then(() => runSync(userId))
     .then(() => {
@@ -270,9 +257,13 @@ export function syncNow(userId: string): Promise<void> {
       localStorage.removeItem(SYNC_ERROR_KEY)
       window.dispatchEvent(new CustomEvent('caderno-sync-success', { detail: now }))
     })
+    .catch((error: unknown) => {
+      failed = true
+      throw error
+    })
     .finally(() => {
       inFlightSync = null
-      if (getPendingChanges().length > 0) scheduleBackgroundSync(0)
+      if (getPendingChanges().length > 0) scheduleBackgroundSync(failed ? 15_000 : 0)
     })
   return inFlightSync
 }
@@ -354,10 +345,6 @@ async function runSync(userId: string): Promise<void> {
 async function performSync(userId: string): Promise<void> {
   if (!supabase) throw new Error('Nuvem não configurada')
 
-  // IDs já reunidos continuam bloqueados, inclusive se outro aparelho
-  // com uma versão antiga do app reenviar a cópia depois.
-  await deleteMergedDuplicatesFromCloud(userId)
-
   // 1) Traz primeiro o estado atual da nuvem (o que veio de outros
   // aparelhos) e funde localmente. Isso roda logo ao abrir o app — antes
   // de a pessoa mexer em qualquer coisa — de propósito: fazer essa parte
@@ -394,13 +381,15 @@ async function performSync(userId: string): Promise<void> {
   let preservedConflicts = 0
   await db.transaction(
     'rw',
-    [db.songs, db.notebooks, db.notebookSongs, db.songVersions, db.practiceHistory],
+    [db.songs, db.notebooks, db.notebookSongs, db.songVersions, db.practiceHistory, db.syncDeletions],
     async () => {
+      const deleted = new Set((await db.syncDeletions.toArray()).map((marker) => marker.id))
       if (remoteSongs.data) {
         const pending = new Set(getPendingChanges().map(pendingKey))
         const localSongs = new Map((await db.songs.toArray()).map((song) => [song.id, song]))
         const conflicts: Song[] = []
         const incoming = remoteSongs.data.map(songFromRemote).filter((remote) => {
+            if (deleted.has(`songs:${remote.id}`)) return false
             if (pending.has(`songs:${remote.id}`)) return false
             const local = localSongs.get(remote.id)
             if (!local) return true
@@ -425,11 +414,12 @@ async function performSync(userId: string): Promise<void> {
         }
         if (incoming.length > 0) await db.songs.bulkPut(incoming)
       }
-      if (remoteNotebooks.data) await db.notebooks.bulkPut(remoteNotebooks.data.map(notebookFromRemote))
+      if (remoteNotebooks.data) await db.notebooks.bulkPut(remoteNotebooks.data.map(notebookFromRemote).filter((item) => !deleted.has(`notebooks:${item.id}`)))
       if (remoteNotebookSongs.data)
-        await db.notebookSongs.bulkPut(remoteNotebookSongs.data.map(notebookSongFromRemote))
-      if (remoteVersions.data) await db.songVersions.bulkPut(remoteVersions.data.map(songVersionFromRemote))
-      if (remotePractice.data) await db.practiceHistory.bulkPut(remotePractice.data.map(practiceFromRemote))
+        await db.notebookSongs.bulkPut(remoteNotebookSongs.data.map(notebookSongFromRemote).filter((item) =>
+          !deleted.has(`notebook_songs:${item.id}`) && !deleted.has(`songs:${item.songId}`) && !deleted.has(`notebooks:${item.notebookId}`)))
+      if (remoteVersions.data) await db.songVersions.bulkPut(remoteVersions.data.map(songVersionFromRemote).filter((item) => !deleted.has(`songs:${item.songId}`)))
+      if (remotePractice.data) await db.practiceHistory.bulkPut(remotePractice.data.map(practiceFromRemote).filter((item) => !deleted.has(`songs:${item.songId}`)))
     },
   )
   if (preservedConflicts) {
@@ -443,8 +433,9 @@ async function performSync(userId: string): Promise<void> {
 
   // Registros criados separadamente com a mesma letra têm IDs diferentes.
   // A sincronização por ID não os reconhece como a mesma música.
-  const duplicateIds = await consolidateDuplicateSongs()
-  rememberMergedDuplicates(duplicateIds)
+  await consolidateDuplicateSongs()
+  await publishLocalDeletions(userId)
+  await purgeLocalDeleted()
 
   // 2) Só agora lê o estado local (já com o que veio da nuvem, mais
   // qualquer edição feita nesse meio tempo) e envia pra nuvem — assim uma
@@ -491,7 +482,8 @@ async function performSync(userId: string): Promise<void> {
 
   // Só remove as cópias da nuvem depois de enviar a música preservada,
   // suas versões e as referências dos cadernos e do histórico de prática.
-  await deleteMergedDuplicatesFromCloud(userId)
+  await publishLocalDeletions(userId)
+  await deleteCloudDeleted(userId)
 }
 
 function songContent(song: Song): string {
@@ -507,17 +499,3 @@ function songContent(song: Song): string {
 // volta (ainda existia na nuvem). Estas funções são chamadas direto na
 // hora de excluir (ver songsRepo/notebooksRepo), então a nuvem já fica
 // correta antes mesmo da próxima sincronização completa.
-export async function deleteRemoteSong(id: string): Promise<void> {
-  if (!supabase) return
-  await supabase.from('songs').delete().eq('id', id)
-}
-
-export async function deleteRemoteNotebook(id: string): Promise<void> {
-  if (!supabase) return
-  await supabase.from('notebooks').delete().eq('id', id)
-}
-
-export async function deleteRemoteNotebookSong(id: string): Promise<void> {
-  if (!supabase) return
-  await supabase.from('notebook_songs').delete().eq('id', id)
-}
