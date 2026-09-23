@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db'
 import { addSongToNotebook, moveSongInNotebook, removeSongFromNotebook } from '@/lib/notebooksRepo'
+import { useSettings } from '@/lib/useSettings'
+import { downloadNotebookChordPro, downloadNotebookText, printSongs } from '@/utils/export'
 import type { NotebookSong } from '@/types'
 
 export default function NotebookDetail() {
@@ -17,10 +19,15 @@ export default function NotebookDetail() {
     [notebookId],
   )
   const allSongs = useLiveQuery(() => db.songs.toArray(), [])
+  const settings = useSettings()
   const [showAdd, setShowAdd] = useState(false)
   const [search, setSearch] = useState('')
 
   const songsById = useMemo(() => new Map((allSongs ?? []).map((s) => [s.id, s])), [allSongs])
+  const notebookSongs = useMemo(
+    () => (entries ?? []).map((e) => songsById.get(e.songId)).filter((s): s is NonNullable<typeof s> => Boolean(s)),
+    [entries, songsById],
+  )
 
   const addableSongs = useMemo(() => {
     const alreadyIn = new Set((entries ?? []).map((e) => e.songId))
@@ -44,12 +51,39 @@ export default function NotebookDetail() {
       <div className="mt-1 flex items-center justify-between">
         <h2 className="text-xl font-semibold">{notebook.name}</h2>
         {(entries?.length ?? 0) > 0 && (
-          <Link
-            to={`/tocar?notebook=${notebookId}&index=0`}
-            className="tap-target rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white dark:bg-slate-100 dark:text-slate-900"
-          >
-            ▶ Iniciar repertório
-          </Link>
+          <div className="flex items-center gap-2">
+            <details className="tap-target relative inline-block text-sm">
+              <summary className="cursor-pointer list-none rounded-md border border-slate-300 px-3 py-1.5 dark:border-slate-700">
+                Baixar caderno
+              </summary>
+              <div className="absolute right-0 z-20 mt-1 flex w-48 flex-col gap-1 rounded-md border border-slate-200 bg-surface p-2 text-xs shadow-lg dark:border-slate-700">
+                <button
+                  className="rounded px-2 py-1.5 text-left hover:bg-surface-alt"
+                  onClick={() => downloadNotebookText(notebook.name, notebookSongs, settings.notation)}
+                >
+                  Texto (.txt)
+                </button>
+                <button
+                  className="rounded px-2 py-1.5 text-left hover:bg-surface-alt"
+                  onClick={() => downloadNotebookChordPro(notebook.name, notebookSongs)}
+                >
+                  ChordPro (.cho)
+                </button>
+                <button
+                  className="rounded px-2 py-1.5 text-left hover:bg-surface-alt"
+                  onClick={() => printSongs(notebookSongs, settings.notation, notebook.name)}
+                >
+                  Imprimir / PDF
+                </button>
+              </div>
+            </details>
+            <Link
+              to={`/tocar?notebook=${notebookId}&index=0`}
+              className="tap-target rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white dark:bg-slate-100 dark:text-slate-900"
+            >
+              ▶ Iniciar repertório
+            </Link>
+          </div>
         )}
       </div>
 

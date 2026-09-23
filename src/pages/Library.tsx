@@ -3,7 +3,10 @@ import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db'
 import { createSong, deleteSong, parseTagsInput, toggleFavorite } from '@/lib/songsRepo'
+import { useSettings } from '@/lib/useSettings'
+import { downloadSongChordPro, downloadSongText, printSongs } from '@/utils/export'
 import SongForm, { emptySongForm, type SongFormValues } from '@/components/SongForm'
+import type { ChordNotation, Song } from '@/types'
 
 type SortMode = 'alfabetica' | 'artista' | 'tom' | 'mais-tocadas' | 'recentes' | 'nao-treinadas'
 
@@ -12,6 +15,7 @@ type FormMode = { kind: 'closed' } | { kind: 'create' }
 export default function Library() {
   const songs = useLiveQuery(() => db.songs.toArray(), [])
   const [formMode, setFormMode] = useState<FormMode>({ kind: 'closed' })
+  const settings = useSettings()
 
   const [search, setSearch] = useState('')
   const [keyFilter, setKeyFilter] = useState('')
@@ -208,6 +212,7 @@ export default function Library() {
                 >
                   Editar
                 </Link>
+                <DownloadMenu song={song} notation={settings.notation} />
                 <button
                   aria-label="Excluir"
                   className="tap-target text-xs text-red-500 underline"
@@ -233,5 +238,35 @@ export default function Library() {
         </p>
       )}
     </div>
+  )
+}
+
+/** Baixar/imprimir uma música (item "Exportar/Backup") — menu simples com
+ * <details>, sem precisar de estado próprio pra abrir/fechar. */
+function DownloadMenu({ song, notation }: { song: Song; notation: ChordNotation }) {
+  return (
+    <details className="tap-target relative inline-block text-xs">
+      <summary className="cursor-pointer list-none text-slate-500 underline">Baixar</summary>
+      <div className="absolute right-0 z-20 mt-1 flex w-40 flex-col gap-1 rounded-md border border-slate-200 bg-surface p-2 shadow-lg dark:border-slate-700">
+        <button
+          className="rounded px-2 py-1.5 text-left hover:bg-surface-alt"
+          onClick={() => downloadSongText(song, notation)}
+        >
+          Texto (.txt)
+        </button>
+        <button
+          className="rounded px-2 py-1.5 text-left hover:bg-surface-alt"
+          onClick={() => downloadSongChordPro(song)}
+        >
+          ChordPro (.cho)
+        </button>
+        <button
+          className="rounded px-2 py-1.5 text-left hover:bg-surface-alt"
+          onClick={() => printSongs([song], notation, song.title)}
+        >
+          Imprimir / PDF
+        </button>
+      </div>
+    </details>
   )
 }
