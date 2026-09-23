@@ -28,6 +28,10 @@ import zabumbaLoop100_05bMUrl from '@/assets/sounds/zabumba-loop-baiao-100-05-bM
 import zabumbaLoop100_05tMUrl from '@/assets/sounds/zabumba-loop-baiao-100-05-tM.wav'
 import zabumbaLoop100_06bMUrl from '@/assets/sounds/zabumba-loop-baiao-100-06-bM.wav'
 import zabumbaLoop100_06tMUrl from '@/assets/sounds/zabumba-loop-baiao-100-06-tM.wav'
+import agogoLoopBaiao100Url from '@/assets/sounds/agogo-loop-baiao-100.wav'
+import agogoLoopBaiao120Url from '@/assets/sounds/agogo-loop-baiao-120.wav'
+import ganzaLoopBaiao100Url from '@/assets/sounds/ganza-loop-baiao-100.wav'
+import ganzaLoopBaiao120Url from '@/assets/sounds/ganza-loop-baiao-120.wav'
 
 // O triângulo e a zabumba têm dois (ou mais) toques fisicamente diferentes
 // no instrumento de verdade — cada um vira uma "voz" própria aqui, com seu
@@ -481,6 +485,14 @@ const LOOP_OPTIONS: Partial<Record<string, Partial<Record<InstrumentGroup, LoopO
       { id: 'zloop10', label: 'Zabumba 10', bpm: 100, url: zabumbaLoop100_05tMUrl },
       { id: 'zloop11', label: 'Zabumba 11', bpm: 100, url: zabumbaLoop100_06bMUrl },
       { id: 'zloop12', label: 'Zabumba 12', bpm: 100, url: zabumbaLoop100_06tMUrl },
+    ],
+    agogo: [
+      { id: 'aloop100', label: '100 BPM', bpm: 100, url: agogoLoopBaiao100Url },
+      { id: 'aloop120', label: '120 BPM', bpm: 120, url: agogoLoopBaiao120Url },
+    ],
+    ganza: [
+      { id: 'gloop100', label: '100 BPM', bpm: 100, url: ganzaLoopBaiao100Url },
+      { id: 'gloop120', label: '120 BPM', bpm: 120, url: ganzaLoopBaiao120Url },
     ],
   },
 }

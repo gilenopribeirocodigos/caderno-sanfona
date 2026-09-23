@@ -16,19 +16,20 @@ de Janeiro. Comprado e enviado pelo usuário; uso dentro deste app pessoal.
 - `block-grave.wav` — "Brazilian Block Low"
 - `block-agudo.wav` — "Brazilian Block High"
 - `ganza.wav` — "Brazilian Ganza (1-shot)"
-- `triangulo-loop-baiao-100.wav` — "Brazilian Baiao, Triangles (m1) 100bpm" (loop real, "modo groove real")
-- `triangulo-loop-baiao-120.wav` — "Brazilian Baiao, Triangle (m1) 120bpm" (idem)
+Loops reais ("modo groove real" — toca a gravação inteira do percussionista,
+em vez de notas programadas por mim; BPM fica preso ao andamento gravado):
 
-O pacote também trouxe loops reais de zabumba (6 variações), agogô e
-ganzá nos mesmos 100/120 BPM — ainda não integrados; ver "modo groove
-real" no triângulo como exemplo de como plugar os outros depois.
+- `triangulo-loop-baiao-100-m1.wav` / `-m2.wav` — "Brazilian Baiao, Triangles/Triangle 100bpm" (mic 1 / mic 2)
+- `triangulo-loop-baiao-120-m1.wav` / `-m2.wav` — idem, 120bpm
+- `zabumba-loop-baiao-120-01-bM.wav` ... `zabumba-loop-baiao-120-03-tM.wav` — 6 variações x 2 microfones, 120 BPM ("Zabumba 1" a "6" no app)
+- `zabumba-loop-baiao-100-04-bM.wav` ... `zabumba-loop-baiao-100-06-tM.wav` — mais 6 variações x 2 microfones, 100 BPM ("Zabumba 7" a "12")
+- `agogo-loop-baiao-100.wav` / `agogo-loop-baiao-120.wav`
+- `ganza-loop-baiao-100.wav` / `ganza-loop-baiao-120.wav`
 
-O pacote comprado trouxe mais variações (outro microfone — m2 — e outras
-durações de anel do triângulo; versões "Côco" do bacalhau). Não estão
-aqui porque são a mesma pancada captada de outro jeito, não um som
-diferente — usar as duas ao mesmo tempo duplicaria a mesma batida em vez
-de somar variedade. Ficam guardadas fora do repositório; se um dia
-quisermos mais variações, é só pedir de novo ao usuário.
+Diferente das amostras avulsas acima, aqui os dois microfones (m1/m2,
+bM/tM) ficam disponíveis os DOIS como opções separadas no app — a pedido
+explícito do usuário, para poder escolher/comparar, em vez de eu
+pré-selecionar um.
 
 ## CC0 (domínio público) — bigsoundbank.com, autor Joseph Sardin / freewavesamples.com
 
