@@ -4,19 +4,19 @@
 
 :root {
   --color-surface: #ffffff;
-  --color-surface-alt: #f1f5f9;
+  --color-surface-alt: #f5f3f1;
   color-scheme: light;
 
   /* Identidade visual: tons de sanfona (verniz vinho + latão dourado). */
-  --color-brand: #7f1d3d;
-  --color-brand-dark: #4a0f24;
-  --color-brand-light: #b6305c;
-  --color-gold: #c9a227;
+  --color-brand: #842440;
+  --color-brand-dark: #421627;
+  --color-brand-light: #aa405c;
+  --color-gold: #c49a50;
 }
 
 :root.dark {
-  --color-surface: #0f172a;
-  --color-surface-alt: #1e293b;
+  --color-surface: #171f30;
+  --color-surface-alt: #202b3d;
   color-scheme: dark;
 }
 
@@ -44,6 +44,23 @@ body {
   min-width: 44px;
 }
 
+:where(button, a, input, select, summary):focus-visible {
+  outline: 3px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+/* O acabamento responde ao toque sem acrescentar animações contínuas. */
+:where(button, a, summary) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+  .song-card:hover {
+    border-color: color-mix(in srgb, var(--color-brand) 35%, transparent);
+    box-shadow: 0 8px 24px rgb(25 18 28 / 9%);
+  }
+}
+
 /* "Respiração" do fole da sanfona ilustrada (tela de login) */
 @keyframes accordion-breathe {
   0%,
@@ -61,6 +78,11 @@ body {
 }
 .accordion-breathe-slow {
   animation-duration: 6s;
+}
+@media (max-width: 767px) {
+  .accordion-breathe-slow {
+    animation: none;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .accordion-breathe {
