@@ -304,32 +304,52 @@ export const RHYTHMS: Rhythm[] = [
       bateria: [
         {
           id: 'b1',
-          label: 'Padrão',
-          source: 'aproximação própria, adaptação bumbo=zabumba/caixa=bacalhau/chimbal=triângulo (sons CC0, sem correspondente comprado)',
+          label: 'Leve',
+          source: 'aproximação própria: bateria discreta para estudo, com bumbo no desenho da zabumba e chimbal espaçado',
           hits: {
             kick: [true, false, false, false, true, false, false, false],
             snare: [false, false, false, false, false, false, false, true],
-            hihat: [true, true, true, true, true, true, true, true],
-          },
-        },
-        {
-          id: 'b2',
-          label: 'Com abertura',
-          source: 'aproximação própria',
-          hits: {
-            kick: [true, false, false, false, true, false, false, false],
-            snare: [false, false, false, true, false, false, true, false],
             hihat: [true, false, true, false, true, false, true, false],
           },
         },
         {
+          id: 'b2',
+          label: 'Tradicional',
+          source: 'aproximação própria: bumbo como zabumba, caixa como bacalhau e chimbal conduzindo semicolcheias',
+          hits: {
+            kick: [true, false, false, false, true, false, false, false],
+            snare: [false, false, true, false, false, true, false, true],
+            hihat: [true, true, true, true, true, true, true, true],
+          },
+        },
+        {
           id: 'b3',
-          label: 'Minimalista',
+          label: 'Cheio',
           source: 'aproximação própria',
           hits: {
             kick: [true, false, false, false, true, false, false, false],
+            snare: [false, false, true, true, false, true, true, true],
+            hihat: [true, true, true, true, true, true, true, true],
+          },
+        },
+        {
+          id: 'b4',
+          label: 'Virada curta',
+          source: 'aproximação própria: virada de passagem em um compasso',
+          hits: {
+            kick: [true, false, false, false, true, false, false, true],
+            snare: [false, false, true, false, false, true, true, true],
+            hihat: [true, true, true, true, true, true, true, false],
+          },
+        },
+        {
+          id: 'b5',
+          label: 'Final',
+          source: 'aproximação própria: encerramento seco para terminar a música',
+          hits: {
+            kick: [true, false, false, false, true, false, false, false],
             snare: [false, false, false, false, false, false, true, false],
-            hihat: [true, false, false, false, true, false, false, false],
+            hihat: [true, false, false, false, false, false, false, false],
           },
         },
       ],
@@ -473,8 +493,8 @@ export const RHYTHMS: Rhythm[] = [
       bateria: [
         {
           id: 'b1',
-          label: 'Padrão',
-          source: 'aproximação própria, adaptação bumbo=zabumba/caixa=bacalhau/chimbal=triângulo (sons CC0, sem correspondente comprado)',
+          label: 'Leve',
+          source: 'aproximação própria: xote cadenciado, com chimbal em colcheias e caixa no segundo tempo',
           hits: {
             kick: [true, false, false, false, true, false, true, false],
             snare: [false, false, false, false, false, false, true, false],
@@ -483,22 +503,42 @@ export const RHYTHMS: Rhythm[] = [
         },
         {
           id: 'b2',
-          label: 'Com chimbau cheio',
+          label: 'Tradicional',
           source: 'aproximação própria',
           hits: {
-            kick: [true, false, false, false, true, false, true, false],
+            kick: [true, false, true, false, true, false, false, false],
             snare: [false, false, false, false, false, false, true, false],
-            hihat: [true, true, true, true, true, true, true, true],
+            hihat: [true, false, true, false, true, false, true, false],
           },
         },
         {
           id: 'b3',
-          label: 'Minimalista',
+          label: 'Cheio',
           source: 'aproximação própria',
+          hits: {
+            kick: [true, false, true, false, true, false, true, false],
+            snare: [false, false, false, true, false, false, true, false],
+            hihat: [true, true, true, true, true, true, true, true],
+          },
+        },
+        {
+          id: 'b4',
+          label: 'Virada curta',
+          source: 'aproximação própria: virada suave de xote',
+          hits: {
+            kick: [true, false, false, false, true, false, false, true],
+            snare: [false, false, false, true, false, true, true, true],
+            hihat: [true, false, true, false, true, true, true, false],
+          },
+        },
+        {
+          id: 'b5',
+          label: 'Final',
+          source: 'aproximação própria: final cadenciado',
           hits: {
             kick: [true, false, false, false, true, false, false, false],
             snare: [false, false, false, false, false, false, true, false],
-            hihat: [true, false, false, false, true, false, false, false],
+            hihat: [true, false, false, false, false, false, false, false],
           },
         },
       ],
@@ -614,8 +654,8 @@ export const RHYTHMS: Rhythm[] = [
       bateria: [
         {
           id: 'b1',
-          label: 'Padrão',
-          source: 'aproximação própria, adaptação bumbo=zabumba/caixa=bacalhau/chimbal=triângulo (sons CC0, sem correspondente comprado)',
+          label: 'Leve',
+          source: 'aproximação própria: coco mais seco, com caixa respondendo no fim do compasso',
           hits: {
             kick: [true, false, false, false, false, false, false, false],
             snare: [false, false, false, false, false, false, false, true],
@@ -624,12 +664,42 @@ export const RHYTHMS: Rhythm[] = [
         },
         {
           id: 'b2',
-          label: 'Com abertura',
+          label: 'Tradicional',
           source: 'aproximação própria',
           hits: {
             kick: [true, false, false, false, true, false, false, false],
             snare: [false, false, false, true, false, false, true, false],
             hihat: [true, false, true, false, true, false, true, false],
+          },
+        },
+        {
+          id: 'b3',
+          label: 'Cheio',
+          source: 'aproximação própria: coco percussivo com caixa mais presente',
+          hits: {
+            kick: [true, false, false, true, true, false, false, false],
+            snare: [false, false, true, true, false, true, true, true],
+            hihat: [true, true, true, true, true, true, true, true],
+          },
+        },
+        {
+          id: 'b4',
+          label: 'Virada curta',
+          source: 'aproximação própria: chamada rápida para passagem',
+          hits: {
+            kick: [true, false, false, false, true, false, true, false],
+            snare: [false, true, true, false, false, true, true, true],
+            hihat: [true, true, false, true, true, true, false, false],
+          },
+        },
+        {
+          id: 'b5',
+          label: 'Final',
+          source: 'aproximação própria: final seco',
+          hits: {
+            kick: [true, false, false, false, true, false, false, false],
+            snare: [false, false, false, false, false, false, true, false],
+            hihat: [true, false, false, false, false, false, false, false],
           },
         },
       ],
@@ -740,8 +810,8 @@ export const RHYTHMS: Rhythm[] = [
       bateria: [
         {
           id: 'b1',
-          label: 'Padrão',
-          source: 'aproximação própria, adaptação bumbo=zabumba/caixa=bacalhau/chimbal=triângulo (sons CC0, sem correspondente comprado)',
+          label: 'Leve',
+          source: 'aproximação própria: arrasta-pé rápido, baseado no desenho do xote',
           hits: {
             kick: [true, false, false, false, true, false, true, false],
             snare: [false, false, false, false, false, false, true, false],
@@ -750,12 +820,42 @@ export const RHYTHMS: Rhythm[] = [
         },
         {
           id: 'b2',
-          label: 'Minimalista',
+          label: 'Tradicional',
           source: 'aproximação própria',
+          hits: {
+            kick: [true, false, true, false, true, false, true, false],
+            snare: [false, false, false, false, false, false, true, false],
+            hihat: [true, false, true, false, true, false, true, false],
+          },
+        },
+        {
+          id: 'b3',
+          label: 'Cheio',
+          source: 'aproximação própria: mais energia para andamento rápido',
+          hits: {
+            kick: [true, false, true, false, true, false, true, false],
+            snare: [false, false, true, false, false, true, true, false],
+            hihat: [true, true, true, true, true, true, true, true],
+          },
+        },
+        {
+          id: 'b4',
+          label: 'Virada curta',
+          source: 'aproximação própria: virada rápida de arrasta-pé',
+          hits: {
+            kick: [true, false, false, true, true, false, false, true],
+            snare: [false, false, true, true, false, true, true, true],
+            hihat: [true, true, true, false, true, true, true, false],
+          },
+        },
+        {
+          id: 'b5',
+          label: 'Final',
+          source: 'aproximação própria: parada simples no tempo forte',
           hits: {
             kick: [true, false, false, false, true, false, false, false],
             snare: [false, false, false, false, false, false, true, false],
-            hihat: [true, false, false, false, true, false, false, false],
+            hihat: [true, false, false, false, false, false, false, false],
           },
         },
       ],
@@ -779,6 +879,23 @@ export interface LoopOption {
   label: string
   bpm: number
   url: string
+}
+
+export type ZabumbaLoopPreset = 'celular' | 'natural' | 'caixa'
+
+export const ZABUMBA_LOOP_PRESETS: { id: ZabumbaLoopPreset; label: string }[] = [
+  { id: 'celular', label: 'Celular' },
+  { id: 'natural', label: 'Natural' },
+  { id: 'caixa', label: 'Caixa/Fone' },
+]
+
+const ZABUMBA_LOOP_PRESET_PARAMS: Record<
+  ZabumbaLoopPreset,
+  { highpass: number; bodyGain: number; presenceGain: number; lowpass: number; makeup: number }
+> = {
+  celular: { highpass: 60, bodyGain: 2.6, presenceGain: 2.2, lowpass: 6800, makeup: 1.08 },
+  natural: { highpass: 42, bodyGain: 0.8, presenceGain: 0.6, lowpass: 9200, makeup: 1 },
+  caixa: { highpass: 45, bodyGain: 3.4, presenceGain: 1.2, lowpass: 8200, makeup: 1.04 },
 }
 
 function friendlyLoopOption(option: LoopOption, group: InstrumentGroup): LoopOption {
@@ -1046,6 +1163,7 @@ export class BatuqueEngine {
   private loopSources: Partial<Record<InstrumentGroup, AudioBufferSourceNode>> = {}
   private loopChains: Partial<Record<InstrumentGroup, AudioNode[]>> = {}
   private loopUrls: Partial<Record<InstrumentGroup, string>> = {}
+  private zabumbaLoopPreset: ZabumbaLoopPreset = 'celular'
   private timerId: ReturnType<typeof setInterval> | null = null
   private rhythm: Rhythm = RHYTHMS[0]
   private selection: VariationSelection = defaultSelection(RHYTHMS[0])
@@ -1091,6 +1209,14 @@ export class BatuqueEngine {
     this.groupSettings[group].volume = volume
     const gain = this.groupGains[group]
     if (gain) gain.gain.value = volume
+  }
+
+  setZabumbaLoopPreset(preset: ZabumbaLoopPreset): void {
+    this.zabumbaLoopPreset = preset
+    if (this.timerId !== null && this.enabledGroups.has('zabumba') && this.loopUrls.zabumba) {
+      this.teardownGroup('zabumba')
+      this.ensureGroupRunning('zabumba')
+    }
   }
 
   setRhythm(rhythm: Rhythm): void {
@@ -1213,30 +1339,31 @@ export class BatuqueEngine {
       return
     }
 
+    const preset = ZABUMBA_LOOP_PRESET_PARAMS[this.zabumbaLoopPreset]
     const highpass = this.ctx.createBiquadFilter()
     highpass.type = 'highpass'
-    highpass.frequency.value = 60
+    highpass.frequency.value = preset.highpass
     highpass.Q.value = 0.65
 
     const body = this.ctx.createBiquadFilter()
     body.type = 'peaking'
     body.frequency.value = 185
     body.Q.value = 0.85
-    body.gain.value = 2.6
+    body.gain.value = preset.bodyGain
 
     const presence = this.ctx.createBiquadFilter()
     presence.type = 'peaking'
     presence.frequency.value = 1650
     presence.Q.value = 1.05
-    presence.gain.value = 2.2
+    presence.gain.value = preset.presenceGain
 
     const airControl = this.ctx.createBiquadFilter()
     airControl.type = 'lowpass'
-    airControl.frequency.value = 6800
+    airControl.frequency.value = preset.lowpass
     airControl.Q.value = 0.5
 
     const makeup = this.ctx.createGain()
-    makeup.gain.value = 1.08
+    makeup.gain.value = preset.makeup
 
     source.connect(highpass)
     highpass.connect(body)
@@ -1301,9 +1428,17 @@ export class BatuqueEngine {
         const buffer = this.buffers[instrument]
         if (!buffer || !this.ctx) continue
         const source = this.ctx.createBufferSource()
+        const hitGain = this.ctx.createGain()
+        const accent = step === 0 ? 1.08 : step === this.rhythm.stepsPerBar / 2 ? 1.04 : 1
+        const variationVolume = 0.94 + Math.random() * 0.1
+        const jitterMs = group === 'bateria' ? 0.006 : 0.004
+        const scheduledTime = Math.max(this.ctx.currentTime, time + (Math.random() * 2 - 1) * jitterMs)
         source.buffer = buffer
-        source.connect(gain)
-        source.start(time)
+        source.playbackRate.value = 1 + (Math.random() * 2 - 1) * 0.008
+        hitGain.gain.value = accent * variationVolume
+        source.connect(hitGain)
+        hitGain.connect(gain)
+        source.start(scheduledTime)
       }
     }
     if (this.onStep && this.ctx) {
