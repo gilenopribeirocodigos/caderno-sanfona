@@ -7,9 +7,11 @@ import {
   loopOptionsFor,
   RHYTHMS,
   rhythmForLabel,
+  ZABUMBA_LOOP_PRESETS,
   type GroupSettings,
   type InstrumentGroup,
   type VariationSelection,
+  type ZabumbaLoopPreset,
 } from '@/lib/batuque'
 
 interface BatuqueControlProps {
@@ -36,6 +38,7 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
   const [beats, setBeats] = useState<Partial<Record<InstrumentGroup, number>>>({})
   const [showSources, setShowSources] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [zabumbaLoopPreset, setZabumbaLoopPreset] = useState<ZabumbaLoopPreset>('celular')
   const engineRef = useRef<BatuqueEngine>()
 
   if (!engineRef.current) engineRef.current = new BatuqueEngine()
@@ -68,6 +71,10 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
     engineRef.current?.setEnabledGroups(groups)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groups])
+
+  useEffect(() => {
+    engineRef.current?.setZabumbaLoopPreset(zabumbaLoopPreset)
+  }, [zabumbaLoopPreset])
 
   function changeRhythm(id: string) {
     setRhythmId(id)
@@ -143,6 +150,29 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
     if (option) engineRef.current?.setLoopUrl(id, option.url)
   }
 
+
+
+  function applyBatuquePreset(preset: 'estudo' | 'tradicional' | 'banda' | 'virada' | 'final') {
+    const nextSelection = defaultSelection(rhythm)
+    if (preset === 'estudo') {
+      setGroups(new Set(['triangulo', 'zabumba']))
+      setLoopChoice({})
+      setSelection(nextSelection)
+      return
+    }
+    if (preset === 'tradicional') {
+      setGroups(new Set(['triangulo', 'zabumba', 'ganza']))
+      setLoopChoice({})
+      setSelection(nextSelection)
+      return
+    }
+    setGroups(new Set(['triangulo', 'zabumba', 'agogo', 'block', 'ganza', 'bateria']))
+    if (rhythm.variations.bateria.some((v) => v.id === 'b3')) nextSelection.bateria = 'b3'
+    if (preset === 'virada' && rhythm.variations.bateria.some((v) => v.id === 'b4')) nextSelection.bateria = 'b4'
+    if (preset === 'final' && rhythm.variations.bateria.some((v) => v.id === 'b5')) nextSelection.bateria = 'b5'
+    setSelection(nextSelection)
+  }
+
   const currentVariation = (id: InstrumentGroup) => rhythm.variations[id].find((v) => v.id === selection[id])
   const activeBpms = INSTRUMENT_GROUPS
     .filter((g) => groups.has(g.id) && !loopChoice[g.id])
@@ -190,6 +220,13 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
             <button className="tap-target rounded-md border border-slate-300 px-3 dark:border-slate-700" onClick={() => setShowSettings(false)}>Fechar</button>
           </div>
           <div className="min-h-0 overflow-y-auto p-3">
+          <div className="mb-2 flex flex-wrap gap-2">
+            <button className="tap-target rounded-md border border-slate-300 px-2 py-1 text-slate-500 dark:border-slate-700 dark:text-slate-400" onClick={() => applyBatuquePreset('estudo')}>Estudo</button>
+            <button className="tap-target rounded-md border border-slate-300 px-2 py-1 text-slate-500 dark:border-slate-700 dark:text-slate-400" onClick={() => applyBatuquePreset('tradicional')}>Tradicional</button>
+            <button className="tap-target rounded-md border border-slate-300 px-2 py-1 text-slate-500 dark:border-slate-700 dark:text-slate-400" onClick={() => applyBatuquePreset('banda')}>Banda</button>
+            <button className="tap-target rounded-md border border-amber-500 px-2 py-1 text-amber-600 dark:text-amber-400" onClick={() => applyBatuquePreset('virada')}>Virada</button>
+            <button className="tap-target rounded-md border border-red-400 px-2 py-1 text-red-500" onClick={() => applyBatuquePreset('final')}>Final</button>
+          </div>
           <button
             className="tap-target mb-2 rounded-md border border-slate-300 px-2 py-1 text-slate-500 dark:border-slate-700 dark:text-slate-400"
             onClick={() => setShowSources((v) => !v)}
@@ -304,7 +341,7 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
                 </div>
               )}
               {usingLoop && (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <input
                     type="range"
                     min={0}
@@ -316,6 +353,21 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
                     className="w-16 disabled:opacity-40"
                     aria-label={`Volume do ${g.label}`}
                   />
+                  {g.id === 'zabumba' && (
+                    <select
+                      className="tap-target rounded-md border border-slate-300 px-1 py-1 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800"
+                      disabled={!groups.has(g.id)}
+                      value={zabumbaLoopPreset}
+                      onChange={(e) => setZabumbaLoopPreset(e.target.value as ZabumbaLoopPreset)}
+                      aria-label="Som da zabumba"
+                    >
+                      {ZABUMBA_LOOP_PRESETS.map((preset) => (
+                        <option key={preset.id} value={preset.id}>
+                          Som {preset.label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   <span className="text-[10px] text-slate-400">
                     loop gravado — BPM preso ao andamento escolhido acima
                   </span>
