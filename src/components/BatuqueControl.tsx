@@ -38,7 +38,7 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
   const [beats, setBeats] = useState<Partial<Record<InstrumentGroup, number>>>({})
   const [showSources, setShowSources] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
-  const [zabumbaLoopPreset, setZabumbaLoopPreset] = useState<ZabumbaLoopPreset>('celular')
+  const [zabumbaLoopPreset, setZabumbaLoopPreset] = useState<ZabumbaLoopPreset>('natural')
   const engineRef = useRef<BatuqueEngine>()
 
   if (!engineRef.current) engineRef.current = new BatuqueEngine()
@@ -303,7 +303,7 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
                   <input
                     type="range"
                     min={0}
-                    max={g.id === 'zabumba' ? 1.25 : 1}
+                    max={g.id === 'zabumba' ? 1.5 : 1}
                     step={0.05}
                     value={groupSettings[g.id].volume}
                     disabled={!groups.has(g.id)}
@@ -318,7 +318,7 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
                   <input
                     type="range"
                     min={0}
-                    max={g.id === 'zabumba' ? 1.25 : 1}
+                    max={g.id === 'zabumba' ? 1.5 : 1}
                     step={0.05}
                     value={groupSettings[g.id].volume}
                     disabled={!groups.has(g.id)}
