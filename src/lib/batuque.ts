@@ -893,9 +893,9 @@ const ZABUMBA_LOOP_PRESET_PARAMS: Record<
   ZabumbaLoopPreset,
   { highpass: number; bodyGain: number; presenceGain: number; lowpass: number; makeup: number }
 > = {
-  celular: { highpass: 60, bodyGain: 2.6, presenceGain: 2.2, lowpass: 6800, makeup: 1.08 },
-  natural: { highpass: 42, bodyGain: 0.8, presenceGain: 0.6, lowpass: 9200, makeup: 1 },
-  caixa: { highpass: 45, bodyGain: 3.4, presenceGain: 1.2, lowpass: 8200, makeup: 1.04 },
+  celular: { highpass: 58, bodyGain: 3.2, presenceGain: 2.5, lowpass: 6800, makeup: 1.18 },
+  natural: { highpass: 42, bodyGain: 1.1, presenceGain: 0.8, lowpass: 9200, makeup: 1.08 },
+  caixa: { highpass: 45, bodyGain: 3.8, presenceGain: 1.5, lowpass: 8200, makeup: 1.12 },
 }
 
 function friendlyLoopOption(option: LoopOption, group: InstrumentGroup): LoopOption {
@@ -1070,9 +1070,16 @@ export interface GroupSettings {
   volume: number
 }
 
+const DEFAULT_GROUP_VOLUME = 0.8
+const DEFAULT_ZABUMBA_VOLUME = 1
+const ZABUMBA_PROGRAMMED_HIT_BOOST = 1.16
+
 export function defaultGroupSettings(rhythm: Rhythm): Record<InstrumentGroup, GroupSettings> {
   return Object.fromEntries(
-    INSTRUMENT_GROUPS.map((g) => [g.id, { bpm: rhythm.defaultBpm, volume: 0.8 }]),
+    INSTRUMENT_GROUPS.map((g) => [
+      g.id,
+      { bpm: rhythm.defaultBpm, volume: g.id === 'zabumba' ? DEFAULT_ZABUMBA_VOLUME : DEFAULT_GROUP_VOLUME },
+    ]),
   ) as Record<InstrumentGroup, GroupSettings>
 }
 
@@ -1435,7 +1442,8 @@ export class BatuqueEngine {
         const scheduledTime = Math.max(this.ctx.currentTime, time + (Math.random() * 2 - 1) * jitterMs)
         source.buffer = buffer
         source.playbackRate.value = 1 + (Math.random() * 2 - 1) * 0.008
-        hitGain.gain.value = accent * variationVolume
+        const groupHitBoost = group === 'zabumba' ? ZABUMBA_PROGRAMMED_HIT_BOOST : 1
+        hitGain.gain.value = accent * variationVolume * groupHitBoost
         source.connect(hitGain)
         hitGain.connect(gain)
         source.start(scheduledTime)
