@@ -111,6 +111,15 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
     engineRef.current?.setGroupVolume(id, volume)
   }
 
+  function closestLoopOption(id: InstrumentGroup, options: ReturnType<typeof loopOptionsFor>) {
+    const currentBpm = groupSettings[id].bpm
+    return options.reduce((best, option) => {
+      const bestDistance = Math.abs(best.bpm - currentBpm)
+      const optionDistance = Math.abs(option.bpm - currentBpm)
+      return optionDistance < bestDistance ? option : best
+    }, options[0])
+  }
+
   function toggleLoopMode(id: InstrumentGroup) {
     const options = loopOptionsFor(rhythmId, id)
     if (options.length === 0) return
@@ -120,8 +129,9 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
         delete next[id]
         engineRef.current?.setLoopUrl(id, null)
       } else {
-        next[id] = options[0].id
-        engineRef.current?.setLoopUrl(id, options[0].url)
+        const option = closestLoopOption(id, options)
+        next[id] = option.id
+        engineRef.current?.setLoopUrl(id, option.url)
       }
       return next
     })

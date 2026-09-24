@@ -781,6 +781,15 @@ export interface LoopOption {
   url: string
 }
 
+function friendlyLoopOption(option: LoopOption, group: InstrumentGroup): LoopOption {
+  if (group !== 'zabumba') return option
+  const numericId = option.id.match(/-(\d+)$/)?.[1]
+  const optionNumber = numericId ? Number(numericId) : 1
+  const tone = optionNumber % 2 === 1 ? 'Corpo' : 'Ataque'
+  const take = Math.ceil(optionNumber / 2)
+  return { ...option, label: `Zabumba ${option.bpm} ${tone} ${take}` }
+}
+
 // Convenção de nome: "<Instrumento> <BPM>-<N>" — o BPM fica explícito no
 // próprio rótulo (a pedido), então dois arquivos de instrumentos
 // diferentes com o mesmo BPM na frente do nome tocam juntos no tempo
@@ -911,7 +920,7 @@ const LOOP_OPTIONS: Partial<Record<string, Partial<Record<InstrumentGroup, LoopO
 }
 
 export function loopOptionsFor(rhythmId: string, group: InstrumentGroup): LoopOption[] {
-  return LOOP_OPTIONS[rhythmId]?.[group] ?? []
+  return (LOOP_OPTIONS[rhythmId]?.[group] ?? []).map((option) => friendlyLoopOption(option, group))
 }
 
 const SAMPLE_URLS: Record<BatuqueInstrument, string> = {
@@ -1035,6 +1044,7 @@ export class BatuqueEngine {
   private groupGains: Partial<Record<InstrumentGroup, GainNode>> = {}
   private groupClocks: Partial<Record<InstrumentGroup, GroupClock>> = {}
   private loopSources: Partial<Record<InstrumentGroup, AudioBufferSourceNode>> = {}
+  private loopChains: Partial<Record<InstrumentGroup, AudioNode[]>> = {}
   private loopUrls: Partial<Record<InstrumentGroup, string>> = {}
   private timerId: ReturnType<typeof setInterval> | null = null
   private rhythm: Rhythm = RHYTHMS[0]
@@ -1134,6 +1144,11 @@ export class BatuqueEngine {
       loopSource.disconnect()
       delete this.loopSources[group]
     }
+    const loopChain = this.loopChains[group]
+    if (loopChain) {
+      for (const node of loopChain) node.disconnect()
+      delete this.loopChains[group]
+    }
     delete this.groupClocks[group]
     const gain = this.groupGains[group]
     if (gain) {
@@ -1187,9 +1202,49 @@ export class BatuqueEngine {
     const source = this.ctx.createBufferSource()
     source.buffer = buffer
     source.loop = true
-    source.connect(gain)
+    this.connectLoopSource(group, source, gain)
     source.start()
     this.loopSources[group] = source
+  }
+
+  private connectLoopSource(group: InstrumentGroup, source: AudioBufferSourceNode, gain: GainNode): void {
+    if (!this.ctx || group !== 'zabumba') {
+      source.connect(gain)
+      return
+    }
+
+    const highpass = this.ctx.createBiquadFilter()
+    highpass.type = 'highpass'
+    highpass.frequency.value = 60
+    highpass.Q.value = 0.65
+
+    const body = this.ctx.createBiquadFilter()
+    body.type = 'peaking'
+    body.frequency.value = 185
+    body.Q.value = 0.85
+    body.gain.value = 2.6
+
+    const presence = this.ctx.createBiquadFilter()
+    presence.type = 'peaking'
+    presence.frequency.value = 1650
+    presence.Q.value = 1.05
+    presence.gain.value = 2.2
+
+    const airControl = this.ctx.createBiquadFilter()
+    airControl.type = 'lowpass'
+    airControl.frequency.value = 6800
+    airControl.Q.value = 0.5
+
+    const makeup = this.ctx.createGain()
+    makeup.gain.value = 1.08
+
+    source.connect(highpass)
+    highpass.connect(body)
+    body.connect(presence)
+    presence.connect(airControl)
+    airControl.connect(makeup)
+    makeup.connect(gain)
+    this.loopChains[group] = [highpass, body, presence, airControl, makeup]
   }
 
   private async loadLoopBuffer(url: string): Promise<AudioBuffer> {
