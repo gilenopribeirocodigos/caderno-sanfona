@@ -152,27 +152,6 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
 
 
 
-  function applyBatuquePreset(preset: 'estudo' | 'tradicional' | 'banda' | 'virada' | 'final') {
-    const nextSelection = defaultSelection(rhythm)
-    if (preset === 'estudo') {
-      setGroups(new Set(['triangulo', 'zabumba']))
-      setLoopChoice({})
-      setSelection(nextSelection)
-      return
-    }
-    if (preset === 'tradicional') {
-      setGroups(new Set(['triangulo', 'zabumba', 'ganza']))
-      setLoopChoice({})
-      setSelection(nextSelection)
-      return
-    }
-    setGroups(new Set(['triangulo', 'zabumba', 'agogo', 'block', 'ganza', 'bateria']))
-    if (rhythm.variations.bateria.some((v) => v.id === 'b3')) nextSelection.bateria = 'b3'
-    if (preset === 'virada' && rhythm.variations.bateria.some((v) => v.id === 'b4')) nextSelection.bateria = 'b4'
-    if (preset === 'final' && rhythm.variations.bateria.some((v) => v.id === 'b5')) nextSelection.bateria = 'b5'
-    setSelection(nextSelection)
-  }
-
   const currentVariation = (id: InstrumentGroup) => rhythm.variations[id].find((v) => v.id === selection[id])
   const activeBpms = INSTRUMENT_GROUPS
     .filter((g) => groups.has(g.id) && !loopChoice[g.id])
@@ -220,13 +199,7 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
             <button className="tap-target rounded-md border border-slate-300 px-3 dark:border-slate-700" onClick={() => setShowSettings(false)}>Fechar</button>
           </div>
           <div className="min-h-0 overflow-y-auto p-3">
-          <div className="mb-2 flex flex-wrap gap-2">
-            <button className="tap-target rounded-md border border-slate-300 px-2 py-1 text-slate-500 dark:border-slate-700 dark:text-slate-400" onClick={() => applyBatuquePreset('estudo')}>Estudo</button>
-            <button className="tap-target rounded-md border border-slate-300 px-2 py-1 text-slate-500 dark:border-slate-700 dark:text-slate-400" onClick={() => applyBatuquePreset('tradicional')}>Tradicional</button>
-            <button className="tap-target rounded-md border border-slate-300 px-2 py-1 text-slate-500 dark:border-slate-700 dark:text-slate-400" onClick={() => applyBatuquePreset('banda')}>Banda</button>
-            <button className="tap-target rounded-md border border-amber-500 px-2 py-1 text-amber-600 dark:text-amber-400" onClick={() => applyBatuquePreset('virada')}>Virada</button>
-            <button className="tap-target rounded-md border border-red-400 px-2 py-1 text-red-500" onClick={() => applyBatuquePreset('final')}>Final</button>
-          </div>
+
           <button
             className="tap-target mb-2 rounded-md border border-slate-300 px-2 py-1 text-slate-500 dark:border-slate-700 dark:text-slate-400"
             onClick={() => setShowSources((v) => !v)}
