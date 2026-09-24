@@ -46,10 +46,19 @@ export default function ChordKeyboards({
         const isPreview = realChords ? !realChords.includes(chord) : false
         return (
           <div key={chord} className="relative">
-            <button
-              type="button"
-              disabled={!canClick}
+            {/* Não é mais um <button> aqui: o teclado dentro dele (VerticalKeyboard)
+                tem seus próprios botões de inversão, e um <button disabled> bloqueia
+                clique em tudo que tem dentro — inclusive nos botões-filhos. */}
+            <div
+              role={canClick ? 'button' : undefined}
+              tabIndex={canClick ? 0 : undefined}
               onClick={() => canClick && onSelectChord!(chord)}
+              onKeyDown={(e) => {
+                if (canClick && (e.key === 'Enter' || e.key === ' ')) {
+                  e.preventDefault()
+                  onSelectChord!(chord)
+                }
+              }}
               title={canClick ? `Tocar acorde ${formatChordForDisplay(chord, notation)}` : undefined}
               className={`rounded-lg border-2 p-1.5 text-left ${
                 isPreview ? 'border-dashed' : ''
@@ -62,7 +71,7 @@ export default function ChordKeyboards({
                 {isPreview && <span className="ml-1 font-normal text-slate-400">(prévia)</span>}
               </p>
               <VerticalKeyboard chord={chord} color={color} notation={notation} />
-            </button>
+            </div>
             {isPreview && onDismissPreview && (
               <button
                 type="button"

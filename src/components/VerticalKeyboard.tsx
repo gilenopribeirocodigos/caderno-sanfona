@@ -48,7 +48,10 @@ export default function VerticalKeyboard({ chord, color, notation }: VerticalKey
             <button
               key={i}
               type="button"
-              onClick={() => setInversion(i)}
+              onClick={(e) => {
+                e.stopPropagation()
+                setInversion(i)
+              }}
               className={`rounded px-1 py-0.5 text-[8px] font-semibold leading-none ${
                 inversion === i ? 'text-white' : 'border border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400'
               }`}
