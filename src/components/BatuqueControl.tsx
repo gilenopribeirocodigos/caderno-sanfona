@@ -303,7 +303,7 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
                   <input
                     type="range"
                     min={0}
-                    max={1}
+                    max={g.id === 'zabumba' ? 1.25 : 1}
                     step={0.05}
                     value={groupSettings[g.id].volume}
                     disabled={!groups.has(g.id)}
@@ -318,7 +318,7 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
                   <input
                     type="range"
                     min={0}
-                    max={1}
+                    max={g.id === 'zabumba' ? 1.25 : 1}
                     step={0.05}
                     value={groupSettings[g.id].volume}
                     disabled={!groups.has(g.id)}
