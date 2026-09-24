@@ -146,7 +146,7 @@ function VersionTag({ className = '' }: { className?: string }) {
   })
   return (
     <p className={`text-[10px] text-slate-400 ${className}`}>
-      versão {__APP_VERSION__} · {formatted}
+      versão {__APP_VERSION__} · {formatted} · por Gileno Ribeiro
     </p>
   )
 }
