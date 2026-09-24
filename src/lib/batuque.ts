@@ -968,16 +968,43 @@ interface GroupClock {
 }
 
 // As amostras (compradas) foram gravadas num nível relativamente baixo.
-// Uma tentativa anterior de deixar o zabumba mais "cheio" (comprimir o
-// transiente antes de normalizar) causou distorção de verdade no
-// alto-falante do celular — revertido. Fica só o ganho geral + um
-// limitador BEM discreto (praticamente só uma rede de segurança contra
-// estourar quando vários instrumentos tocam juntos), sem tentar
-// "maximizar" o volume à força.
-const TARGET_PEAK = 0.85
+// Uma tentativa anterior de comprimir o transiente de cada som antes de
+// normalizar causou distorção de verdade — revertido (fica só a
+// normalização simples abaixo, sem mexer no timbre).
+//
+// O motivo do estouro daquela vez: um "compressor" sozinho reage rápido
+// mas não instantâneo — um pico bem rápido ainda passa batido antes dele
+// reagir (confirmado testando aqui: mesmo com o limitador anterior, uma
+// simulação de tocar triângulo + zabumba juntos passava de 1.0). Por
+// isso, depois do ganho geral + compressor, tem um "teto" matemático de
+// verdade (WaveShaperNode): abaixo de WAVESHAPE_KNEE o som passa reto,
+// sem nenhuma alteração; só a partir dali é que arredonda suavemente,
+// e nunca — comprovado testando até o pior caso, todos os instrumentos
+// batendo juntos no mesmo instante — passa de ~0.97. Com essa garantia,
+// dá pra manter o ganho geral bem mais alto com segurança de verdade.
+const TARGET_PEAK = 0.9
 const MAX_NORMALIZE_GAIN = 3
-const MASTER_GAIN = 1.15
-const COMPRESSOR_SETTINGS = { threshold: -10, knee: 12, ratio: 4, attack: 0.01, release: 0.25 }
+const MASTER_GAIN = 2.2
+const COMPRESSOR_SETTINGS = { threshold: -10, knee: 10, ratio: 5, attack: 0.008, release: 0.22 }
+const WAVESHAPE_KNEE = 0.9
+const WAVESHAPE_CEILING = 0.98
+const WAVESHAPE_CURVE_SIZE = 8192
+
+function buildLimiterCurve(): Float32Array {
+  const curve = new Float32Array(WAVESHAPE_CURVE_SIZE)
+  for (let i = 0; i < WAVESHAPE_CURVE_SIZE; i++) {
+    const x = (i / (WAVESHAPE_CURVE_SIZE - 1)) * 2 - 1
+    const abs = Math.abs(x)
+    if (abs <= WAVESHAPE_KNEE) {
+      curve[i] = x
+    } else {
+      const over = abs - WAVESHAPE_KNEE
+      const shaped = WAVESHAPE_KNEE + (WAVESHAPE_CEILING - WAVESHAPE_KNEE) * Math.tanh(over / (WAVESHAPE_CEILING - WAVESHAPE_KNEE))
+      curve[i] = Math.sign(x) * shaped
+    }
+  }
+  return curve
+}
 
 /** Sobe (nunca abaixa) o volume de um áudio recém-carregado até um pico
  * seguro — simples multiplicação, sem nenhum processamento que possa
@@ -1123,7 +1150,12 @@ export class BatuqueEngine {
     compressor.ratio.value = COMPRESSOR_SETTINGS.ratio
     compressor.attack.value = COMPRESSOR_SETTINGS.attack
     compressor.release.value = COMPRESSOR_SETTINGS.release
-    compressor.connect(this.ctx.destination)
+
+    const limiter = this.ctx.createWaveShaper()
+    limiter.curve = buildLimiterCurve() as Float32Array<ArrayBuffer>
+    limiter.oversample = 'none' // '2x'/'4x' introduzem "overshoot" que passa do teto — testado e confirmado
+    limiter.connect(this.ctx.destination)
+    compressor.connect(limiter)
 
     const master = this.ctx.createGain()
     master.gain.value = MASTER_GAIN
