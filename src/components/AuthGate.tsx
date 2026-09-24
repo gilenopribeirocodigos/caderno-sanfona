@@ -189,7 +189,7 @@ function LoginScreen() {
           )}
         </div>
 
-        <p className="mt-5 text-[10px] text-white/40">versão {__APP_VERSION__}</p>
+        <p className="mt-5 text-[10px] text-white/40">versão {__APP_VERSION__} · por Gileno Ribeiro</p>
       </div>
     </div>
   )
