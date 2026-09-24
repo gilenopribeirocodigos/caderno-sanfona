@@ -893,9 +893,9 @@ const ZABUMBA_LOOP_PRESET_PARAMS: Record<
   ZabumbaLoopPreset,
   { highpass: number; bodyGain: number; presenceGain: number; lowpass: number; makeup: number }
 > = {
-  celular: { highpass: 58, bodyGain: 3.2, presenceGain: 2.5, lowpass: 6800, makeup: 1.18 },
-  natural: { highpass: 42, bodyGain: 1.1, presenceGain: 0.8, lowpass: 9200, makeup: 1.08 },
-  caixa: { highpass: 45, bodyGain: 3.8, presenceGain: 1.5, lowpass: 8200, makeup: 1.12 },
+  celular: { highpass: 28, bodyGain: 0.25, presenceGain: 0.35, lowpass: 14000, makeup: 1.28 },
+  natural: { highpass: 20, bodyGain: 0, presenceGain: 0, lowpass: 18000, makeup: 1.35 },
+  caixa: { highpass: 25, bodyGain: 0.35, presenceGain: 0.2, lowpass: 16000, makeup: 1.32 },
 }
 
 function friendlyLoopOption(option: LoopOption, group: InstrumentGroup): LoopOption {
@@ -1071,8 +1071,8 @@ export interface GroupSettings {
 }
 
 const DEFAULT_GROUP_VOLUME = 0.8
-const DEFAULT_ZABUMBA_VOLUME = 1
-const ZABUMBA_PROGRAMMED_HIT_BOOST = 1.16
+const DEFAULT_ZABUMBA_VOLUME = 1.15
+const ZABUMBA_PROGRAMMED_HIT_BOOST = 1
 
 export function defaultGroupSettings(rhythm: Rhythm): Record<InstrumentGroup, GroupSettings> {
   return Object.fromEntries(
@@ -1170,7 +1170,7 @@ export class BatuqueEngine {
   private loopSources: Partial<Record<InstrumentGroup, AudioBufferSourceNode>> = {}
   private loopChains: Partial<Record<InstrumentGroup, AudioNode[]>> = {}
   private loopUrls: Partial<Record<InstrumentGroup, string>> = {}
-  private zabumbaLoopPreset: ZabumbaLoopPreset = 'celular'
+  private zabumbaLoopPreset: ZabumbaLoopPreset = 'natural'
   private timerId: ReturnType<typeof setInterval> | null = null
   private rhythm: Rhythm = RHYTHMS[0]
   private selection: VariationSelection = defaultSelection(RHYTHMS[0])
