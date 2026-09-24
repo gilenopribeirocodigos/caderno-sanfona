@@ -61,6 +61,49 @@ function closestVoicing(chord: string | undefined): Map<string, number> {
   return result
 }
 
+/**
+ * Monta a posição fechada do acorde começando por uma nota específica no
+ * grave (fundamental = a própria nota, 1ª inversão = a terça, 2ª = a
+ * quinta, 3ª = a sétima) — cada nota seguinte fica na ocorrência mais
+ * aguda disponível que ainda seja mais grave que a anterior, empilhando
+ * sem pular oitava (é assim que inversão de acorde funciona no teclado).
+ */
+function voicingForInversion(chord: string | undefined, inversion: number): Map<string, number> {
+  const notes = Array.from(new Set(notesInChord(chord ?? '')))
+  const result = new Map<string, number>()
+  if (notes.length === 0) return result
+
+  const start = ((inversion % notes.length) + notes.length) % notes.length
+  const rotated = [...notes.slice(start), ...notes.slice(0, start)]
+
+  let previousIndex: number | null = null
+  for (const note of rotated) {
+    const occurrences = TWO_OCTAVE_KEYS.filter((k) => k.note === note).map((k) => k.chromaticIndex)
+    if (occurrences.length === 0) continue
+    let chosen: number
+    if (previousIndex === null) {
+      // Primeira nota (o baixo da posição): pega uma ocorrência grave,
+      // deixando espaço acima pra empilhar as próximas.
+      chosen = Math.max(...occurrences)
+    } else {
+      // Próxima nota: a mais aguda possível que ainda fique acima da
+      // anterior (chromaticIndex menor = mais agudo).
+      const above = occurrences.filter((idx) => idx < previousIndex!)
+      chosen = above.length > 0 ? Math.max(...above) : Math.min(...occurrences)
+    }
+    result.set(note, chosen)
+    previousIndex = chosen
+  }
+
+  return result
+}
+
+/** Quantas inversões existem pra um acorde — uma por nota (fundamental +
+ * uma por cada nota extra acima da terça: 1ª, 2ª, 3ª...). */
+export function inversionCountForChord(chord: string | undefined): number {
+  return new Set(notesInChord(chord ?? '')).size
+}
+
 export interface KeyboardLayout {
   /** Teclas brancas visíveis, já na ordem de cima pra baixo. */
   whiteKeys: KeyboardKey[]
@@ -77,8 +120,8 @@ export interface KeyboardLayout {
  * pequena margem de contexto), em vez de sempre as 2 oitavas inteiras —
  * mantém o desenho pequeno mesmo aproximando as notas.
  */
-export function keyboardLayoutForChord(chord: string | undefined, margin = 1): KeyboardLayout {
-  const active = closestVoicing(chord)
+export function keyboardLayoutForChord(chord: string | undefined, margin = 1, inversion?: number): KeyboardLayout {
+  const active = inversion === undefined ? closestVoicing(chord) : voicingForInversion(chord, inversion)
   if (active.size === 0) {
     return { whiteKeys: TWO_OCTAVE_KEYS.filter((k) => k.isWhite).slice(0, 7), blackKeys: [], active }
   }
