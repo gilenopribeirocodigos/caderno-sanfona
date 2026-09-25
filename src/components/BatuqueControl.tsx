@@ -146,6 +146,12 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
 
 
 
+  function syncBatuque() {
+    engineRef.current?.syncActiveGroups()
+    setBeats({})
+  }
+
+
   const currentVariation = (id: InstrumentGroup) => rhythm.variations[id].find((v) => v.id === selection[id])
   const activeBpms = INSTRUMENT_GROUPS
     .filter((g) => groups.has(g.id) && !loopChoice[g.id])
@@ -158,7 +164,7 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
 
   return (
     <div className="shrink-0 border-t border-slate-200 bg-surface px-3 py-2 text-xs dark:border-slate-800">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           className={`tap-target shrink-0 rounded-md border px-2 py-1 font-medium ${
             playing ? 'border-red-400 text-red-500' : 'border-slate-300 dark:border-slate-700'
@@ -183,6 +189,15 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
 
         <button className="tap-target shrink-0 rounded-md border border-slate-300 px-2 py-1 dark:border-slate-700" onClick={() => setShowSettings(true)} aria-label={`Ajustes do batuque, ${tempoLabel}`}>
           {tempoLabel}<span className="hidden sm:inline"> · Ajustes</span><span aria-hidden="true" className="sm:hidden"> ⚙</span>
+        </button>
+
+        <button
+          className="tap-target shrink-0 rounded-md border border-slate-300 px-2 py-1 disabled:opacity-40 dark:border-slate-700"
+          disabled={!playing || groups.size < 2}
+          onClick={syncBatuque}
+          title="Realinha somente os instrumentos que já estão ligados"
+        >
+          <span className="sm:hidden">Sinc</span><span className="hidden sm:inline">Sincronizar</span>
         </button>
       </div>
 
@@ -276,7 +291,7 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
               </div>
 
               {!usingLoop && (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <div className="flex items-center gap-1">
                     <button
                       className="tap-target rounded-md border border-slate-300 px-2 py-0.5 dark:border-slate-700"
