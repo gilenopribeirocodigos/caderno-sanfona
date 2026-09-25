@@ -1154,6 +1154,7 @@ export class BatuqueEngine {
   private loopSources: Partial<Record<InstrumentGroup, AudioBufferSourceNode>> = {}
   private loopChains: Partial<Record<InstrumentGroup, AudioNode[]>> = {}
   private loopUrls: Partial<Record<InstrumentGroup, string>> = {}
+  private masterStartTime: number | null = null
   private timerId: ReturnType<typeof setInterval> | null = null
   private rhythm: Rhythm = RHYTHMS[0]
   private selection: VariationSelection = defaultSelection(RHYTHMS[0])
@@ -1185,6 +1186,7 @@ export class BatuqueEngine {
     if (this.ctx.state === 'suspended') await this.ctx.resume()
     this.ensureMasterChain()
     await this.loadBuffers()
+    this.masterStartTime = this.ctx.currentTime + 0.06
 
     for (const group of enabledGroups) this.ensureGroupRunning(group)
 
@@ -1193,12 +1195,28 @@ export class BatuqueEngine {
 
   setGroupBpm(group: InstrumentGroup, bpm: number): void {
     this.groupSettings[group].bpm = bpm
+    if (this.timerId !== null && this.groupClocks[group]) {
+      this.groupClocks[group] = this.createAlignedClock(group)
+    }
   }
 
   setGroupVolume(group: InstrumentGroup, volume: number): void {
     this.groupSettings[group].volume = volume
     const gain = this.groupGains[group]
     if (gain) gain.gain.value = volume
+  }
+
+
+  syncActiveGroups(): void {
+    if (!this.ctx || this.timerId === null) return
+    const activeGroups = new Set(this.enabledGroups)
+    this.masterStartTime = this.ctx.currentTime + 0.06
+    for (const group of activeGroups) {
+      if (this.groupGains[group] || this.loopSources[group] || this.groupClocks[group]) {
+        this.teardownGroup(group)
+        this.ensureGroupRunning(group)
+      }
+    }
   }
 
 
@@ -1244,6 +1262,7 @@ export class BatuqueEngine {
     ])) {
       this.teardownGroup(group)
     }
+    this.masterStartTime = null
   }
 
   private teardownGroup(group: InstrumentGroup): void {
@@ -1299,7 +1318,7 @@ export class BatuqueEngine {
     if (loopUrl) {
       this.startLoopSource(group, loopUrl, gain)
     } else {
-      this.groupClocks[group] = { nextStepTime: this.ctx.currentTime + 0.05, currentStep: 0 }
+      this.groupClocks[group] = this.createAlignedClock(group)
     }
   }
 
@@ -1312,12 +1331,42 @@ export class BatuqueEngine {
     source.buffer = buffer
     source.loop = true
     this.connectLoopSource(group, source, gain)
-    source.start()
+    const startTime = this.nextAlignedStartTime(group)
+    const offset = this.loopOffsetAt(startTime, buffer.duration)
+    source.start(startTime, offset)
     this.loopSources[group] = source
   }
 
   private connectLoopSource(_group: InstrumentGroup, source: AudioBufferSourceNode, gain: GainNode): void {
     source.connect(gain)
+  }
+
+  private nextAlignedStartTime(group: InstrumentGroup): number {
+    if (!this.ctx) return 0
+    const origin = this.masterStartTime ?? this.ctx.currentTime + 0.05
+    const grid = this.stepDurationSeconds(group)
+    if (this.ctx.currentTime < origin) return origin
+    const stepsElapsed = Math.ceil((this.ctx.currentTime - origin + 0.015) / grid)
+    return origin + stepsElapsed * grid
+  }
+
+  private loopOffsetAt(startTime: number, duration: number): number {
+    const origin = this.masterStartTime ?? startTime
+    if (duration <= 0) return 0
+    const elapsed = Math.max(0, startTime - origin)
+    return elapsed % duration
+  }
+
+  private createAlignedClock(group: InstrumentGroup): GroupClock {
+    const stepDuration = this.stepDurationSeconds(group)
+    const origin = this.masterStartTime ?? (this.ctx?.currentTime ?? 0) + 0.05
+    const now = this.ctx?.currentTime ?? origin
+    if (now < origin) return { nextStepTime: origin, currentStep: 0 }
+    const nextStepIndex = Math.ceil((now - origin + 0.015) / stepDuration)
+    return {
+      nextStepTime: origin + nextStepIndex * stepDuration,
+      currentStep: nextStepIndex % this.rhythm.stepsPerBar,
+    }
   }
 
   private async loadLoopBuffer(url: string): Promise<AudioBuffer> {
