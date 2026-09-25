@@ -96,6 +96,35 @@ import zabumbaLoopRastape160_02bMUrl from '@/assets/sounds/zabumba-loop-rastape-
 import zabumbaLoopRastape160_02tMUrl from '@/assets/sounds/zabumba-loop-rastape-160-02-tM.wav'
 import zabumbaLoopRastape160_04bMUrl from '@/assets/sounds/zabumba-loop-rastape-160-04-bM.wav'
 import zabumbaLoopRastape160_04tMUrl from '@/assets/sounds/zabumba-loop-rastape-160-04-tM.wav'
+import bateriaLoopBaiao1_70Url from '@/assets/sounds/bateria-loop-baiao-baiao1-70.wav'
+import bateriaLoopBaiao1_80Url from '@/assets/sounds/bateria-loop-baiao-baiao1-80.wav'
+import bateriaLoopBaiao1_90Url from '@/assets/sounds/bateria-loop-baiao-baiao1-90.wav'
+import bateriaLoopBaiao2_70Url from '@/assets/sounds/bateria-loop-baiao-baiao2-70.wav'
+import bateriaLoopBaiao2_80Url from '@/assets/sounds/bateria-loop-baiao-baiao2-80.wav'
+import bateriaLoopBaiao2_90Url from '@/assets/sounds/bateria-loop-baiao-baiao2-90.wav'
+import bateriaLoopBaiao2_100Url from '@/assets/sounds/bateria-loop-baiao-baiao2-100.wav'
+import bateriaLoopForro70Url from '@/assets/sounds/bateria-loop-baiao-forro-70.wav'
+import bateriaLoopForro80Url from '@/assets/sounds/bateria-loop-baiao-forro-80.wav'
+import bateriaLoopForro90Url from '@/assets/sounds/bateria-loop-baiao-forro-90.wav'
+import bateriaLoopForro100Url from '@/assets/sounds/bateria-loop-baiao-forro-100.wav'
+import bateriaLoopForroRomantico70Url from '@/assets/sounds/bateria-loop-baiao-forroromantico-70.wav'
+import bateriaLoopForroRomantico80Url from '@/assets/sounds/bateria-loop-baiao-forroromantico-80.wav'
+import bateriaLoopForroRomantico90Url from '@/assets/sounds/bateria-loop-baiao-forroromantico-90.wav'
+import bateriaLoopForroRomantico100Url from '@/assets/sounds/bateria-loop-baiao-forroromantico-100.wav'
+import bateriaLoopForroRomantico110Url from '@/assets/sounds/bateria-loop-baiao-forroromantico-110.wav'
+import bateriaLoopXote1_70Url from '@/assets/sounds/bateria-loop-xote-xote1-70.wav'
+import bateriaLoopXote1_80Url from '@/assets/sounds/bateria-loop-xote-xote1-80.wav'
+import bateriaLoopXote1_90Url from '@/assets/sounds/bateria-loop-xote-xote1-90.wav'
+import bateriaLoopXote1_100Url from '@/assets/sounds/bateria-loop-xote-xote1-100.wav'
+import bateriaLoopXote2_70Url from '@/assets/sounds/bateria-loop-xote-xote2-70.wav'
+import bateriaLoopXote2_80Url from '@/assets/sounds/bateria-loop-xote-xote2-80.wav'
+import bateriaLoopXote2_100Url from '@/assets/sounds/bateria-loop-xote-xote2-100.wav'
+import bateriaLoopXote3_70Url from '@/assets/sounds/bateria-loop-xote-xote3-70.wav'
+import bateriaLoopXote3_80Url from '@/assets/sounds/bateria-loop-xote-xote3-80.wav'
+import bateriaLoopXote3_90Url from '@/assets/sounds/bateria-loop-xote-xote3-90.wav'
+import bateriaLoopXote3_100Url from '@/assets/sounds/bateria-loop-xote-xote3-100.wav'
+import bateriaLoopRastapeUrl from '@/assets/sounds/bateria-loop-rastape-rastape-150.wav'
+import bateriaLoopRastapeVersoUrl from '@/assets/sounds/bateria-loop-rastape-rastapeverso-150.wav'
 
 // O triângulo e a zabumba têm dois (ou mais) toques fisicamente diferentes
 // no instrumento de verdade — cada um vira uma "voz" própria aqui, com seu
@@ -925,6 +954,27 @@ const LOOP_OPTIONS: Partial<Record<string, Partial<Record<InstrumentGroup, LoopO
       { id: 'g100-1', label: 'Ganza 100-1', bpm: 100, url: ganzaLoopBaiao100Url },
       { id: 'g120-1', label: 'Ganza 120-1', bpm: 120, url: ganzaLoopBaiao120Url },
     ],
+    // Bateria + percussão completa, gravação real cedida pelo usuário. Forró
+    // e Forró Romântico entram aqui também (não têm ritmo próprio no app
+    // ainda) — ficam guardados como variações extras da bateria do baião.
+    bateria: [
+      { id: 'bt-baiao1-70', label: 'Baião 1 · 70', bpm: 70, url: bateriaLoopBaiao1_70Url },
+      { id: 'bt-baiao1-80', label: 'Baião 1 · 80', bpm: 80, url: bateriaLoopBaiao1_80Url },
+      { id: 'bt-baiao1-90', label: 'Baião 1 · 90', bpm: 90, url: bateriaLoopBaiao1_90Url },
+      { id: 'bt-baiao2-70', label: 'Baião 2 · 70', bpm: 70, url: bateriaLoopBaiao2_70Url },
+      { id: 'bt-baiao2-80', label: 'Baião 2 · 80', bpm: 80, url: bateriaLoopBaiao2_80Url },
+      { id: 'bt-baiao2-90', label: 'Baião 2 · 90', bpm: 90, url: bateriaLoopBaiao2_90Url },
+      { id: 'bt-baiao2-100', label: 'Baião 2 · 100', bpm: 100, url: bateriaLoopBaiao2_100Url },
+      { id: 'bt-forro-70', label: 'Forró · 70', bpm: 70, url: bateriaLoopForro70Url },
+      { id: 'bt-forro-80', label: 'Forró · 80', bpm: 80, url: bateriaLoopForro80Url },
+      { id: 'bt-forro-90', label: 'Forró · 90', bpm: 90, url: bateriaLoopForro90Url },
+      { id: 'bt-forro-100', label: 'Forró · 100', bpm: 100, url: bateriaLoopForro100Url },
+      { id: 'bt-forroromantico-70', label: 'Forró Romântico · 70', bpm: 70, url: bateriaLoopForroRomantico70Url },
+      { id: 'bt-forroromantico-80', label: 'Forró Romântico · 80', bpm: 80, url: bateriaLoopForroRomantico80Url },
+      { id: 'bt-forroromantico-90', label: 'Forró Romântico · 90', bpm: 90, url: bateriaLoopForroRomantico90Url },
+      { id: 'bt-forroromantico-100', label: 'Forró Romântico · 100', bpm: 100, url: bateriaLoopForroRomantico100Url },
+      { id: 'bt-forroromantico-110', label: 'Forró Romântico · 110', bpm: 110, url: bateriaLoopForroRomantico110Url },
+    ],
   },
   coco: {
     triangulo: [
@@ -991,6 +1041,19 @@ const LOOP_OPTIONS: Partial<Record<string, Partial<Record<InstrumentGroup, LoopO
       { id: 'g70-1', label: 'Ganza 70-1', bpm: 70, url: ganzaLoopXote70Url },
       { id: 'g90-1', label: 'Ganza 90-1', bpm: 90, url: ganzaLoopXote90Url },
     ],
+    bateria: [
+      { id: 'bt-xote1-70', label: 'Xote 1 · 70', bpm: 70, url: bateriaLoopXote1_70Url },
+      { id: 'bt-xote1-80', label: 'Xote 1 · 80', bpm: 80, url: bateriaLoopXote1_80Url },
+      { id: 'bt-xote1-90', label: 'Xote 1 · 90', bpm: 90, url: bateriaLoopXote1_90Url },
+      { id: 'bt-xote1-100', label: 'Xote 1 · 100', bpm: 100, url: bateriaLoopXote1_100Url },
+      { id: 'bt-xote2-70', label: 'Xote 2 · 70', bpm: 70, url: bateriaLoopXote2_70Url },
+      { id: 'bt-xote2-80', label: 'Xote 2 · 80', bpm: 80, url: bateriaLoopXote2_80Url },
+      { id: 'bt-xote2-100', label: 'Xote 2 · 100', bpm: 100, url: bateriaLoopXote2_100Url },
+      { id: 'bt-xote3-70', label: 'Xote 3 · 70', bpm: 70, url: bateriaLoopXote3_70Url },
+      { id: 'bt-xote3-80', label: 'Xote 3 · 80', bpm: 80, url: bateriaLoopXote3_80Url },
+      { id: 'bt-xote3-90', label: 'Xote 3 · 90', bpm: 90, url: bateriaLoopXote3_90Url },
+      { id: 'bt-xote3-100', label: 'Xote 3 · 100', bpm: 100, url: bateriaLoopXote3_100Url },
+    ],
   },
   rastape: {
     triangulo: [
@@ -1016,6 +1079,10 @@ const LOOP_OPTIONS: Partial<Record<string, Partial<Record<InstrumentGroup, LoopO
     agogo: [
       { id: 'a140-1', label: 'Agogo 140-1', bpm: 140, url: agogoLoopRastape140Url },
       { id: 'a160-1', label: 'Agogo 160-1', bpm: 160, url: agogoLoopRastape160Url },
+    ],
+    bateria: [
+      { id: 'bt-rastape-150', label: 'Arrasta-pé · 150', bpm: 150, url: bateriaLoopRastapeUrl },
+      { id: 'bt-rastapeverso-150', label: 'Arrasta-pé (verso) · 150', bpm: 150, url: bateriaLoopRastapeVersoUrl },
     ],
   },
 }
