@@ -34,7 +34,6 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
   const [groups, setGroups] = useState<Set<InstrumentGroup>>(new Set(['triangulo', 'zabumba']))
   const [playing, setPlaying] = useState(false)
   const [beats, setBeats] = useState<Partial<Record<InstrumentGroup, number>>>({})
-  const [showSources, setShowSources] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const engineRef = useRef<BatuqueEngine>()
 
@@ -152,7 +151,6 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
   }
 
 
-  const currentVariation = (id: InstrumentGroup) => rhythm.variations[id].find((v) => v.id === selection[id])
   const activeBpms = INSTRUMENT_GROUPS
     .filter((g) => groups.has(g.id) && !loopChoice[g.id])
     .map((g) => groupSettings[g.id].bpm)
@@ -209,13 +207,6 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
           </div>
           <div className="min-h-0 overflow-y-auto p-3">
 
-          <button
-            className="tap-target mb-2 rounded-md border border-slate-300 px-2 py-1 text-slate-500 dark:border-slate-700 dark:text-slate-400"
-            onClick={() => setShowSources((v) => !v)}
-            title="Mostra de onde veio cada variação, pra você conferir a fonte"
-          >
-            {showSources ? 'Ocultar fontes' : 'De onde veio?'}
-          </button>
       {/* Cada instrumento liga/desliga por conta própria, com sua própria
           variação de batida, BPM e volume — totalmente independentes um
           do outro (a pedido: sim, isso significa que eles podem sair de
@@ -339,16 +330,6 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
                     loop gravado — BPM preso ao andamento escolhido acima
                   </span>
                 </div>
-              )}
-
-              {showSources && !usingLoop && (
-                <p className="text-[10px] italic text-slate-400">{currentVariation(g.id)?.source}</p>
-              )}
-              {showSources && usingLoop && (
-                <p className="text-[10px] italic text-slate-400">
-                  Loop real comprado — "BPL Vol. 02 (Baião and Côco)" (brazilianmusician/Gumroad), percussionista
-                  Firmino.
-                </p>
               )}
             </div>
           )
