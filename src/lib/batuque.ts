@@ -881,22 +881,6 @@ export interface LoopOption {
   url: string
 }
 
-export type ZabumbaLoopPreset = 'celular' | 'natural' | 'caixa'
-
-export const ZABUMBA_LOOP_PRESETS: { id: ZabumbaLoopPreset; label: string }[] = [
-  { id: 'celular', label: 'Celular' },
-  { id: 'natural', label: 'Natural' },
-  { id: 'caixa', label: 'Caixa/Fone' },
-]
-
-const ZABUMBA_LOOP_PRESET_PARAMS: Record<
-  ZabumbaLoopPreset,
-  { highpass: number; bodyGain: number; presenceGain: number; lowpass: number; makeup: number }
-> = {
-  celular: { highpass: 28, bodyGain: 0.25, presenceGain: 0.35, lowpass: 14000, makeup: 1.28 },
-  natural: { highpass: 20, bodyGain: 0, presenceGain: 0, lowpass: 18000, makeup: 1.35 },
-  caixa: { highpass: 25, bodyGain: 0.35, presenceGain: 0.2, lowpass: 16000, makeup: 1.32 },
-}
 
 function friendlyLoopOption(option: LoopOption, group: InstrumentGroup): LoopOption {
   if (group !== 'zabumba') return option
@@ -1170,7 +1154,6 @@ export class BatuqueEngine {
   private loopSources: Partial<Record<InstrumentGroup, AudioBufferSourceNode>> = {}
   private loopChains: Partial<Record<InstrumentGroup, AudioNode[]>> = {}
   private loopUrls: Partial<Record<InstrumentGroup, string>> = {}
-  private zabumbaLoopPreset: ZabumbaLoopPreset = 'natural'
   private timerId: ReturnType<typeof setInterval> | null = null
   private rhythm: Rhythm = RHYTHMS[0]
   private selection: VariationSelection = defaultSelection(RHYTHMS[0])
@@ -1218,13 +1201,6 @@ export class BatuqueEngine {
     if (gain) gain.gain.value = volume
   }
 
-  setZabumbaLoopPreset(preset: ZabumbaLoopPreset): void {
-    this.zabumbaLoopPreset = preset
-    if (this.timerId !== null && this.enabledGroups.has('zabumba') && this.loopUrls.zabumba) {
-      this.teardownGroup('zabumba')
-      this.ensureGroupRunning('zabumba')
-    }
-  }
 
   setRhythm(rhythm: Rhythm): void {
     this.rhythm = rhythm
@@ -1340,45 +1316,8 @@ export class BatuqueEngine {
     this.loopSources[group] = source
   }
 
-  private connectLoopSource(group: InstrumentGroup, source: AudioBufferSourceNode, gain: GainNode): void {
-    if (!this.ctx || group !== 'zabumba') {
-      source.connect(gain)
-      return
-    }
-
-    const preset = ZABUMBA_LOOP_PRESET_PARAMS[this.zabumbaLoopPreset]
-    const highpass = this.ctx.createBiquadFilter()
-    highpass.type = 'highpass'
-    highpass.frequency.value = preset.highpass
-    highpass.Q.value = 0.65
-
-    const body = this.ctx.createBiquadFilter()
-    body.type = 'peaking'
-    body.frequency.value = 185
-    body.Q.value = 0.85
-    body.gain.value = preset.bodyGain
-
-    const presence = this.ctx.createBiquadFilter()
-    presence.type = 'peaking'
-    presence.frequency.value = 1650
-    presence.Q.value = 1.05
-    presence.gain.value = preset.presenceGain
-
-    const airControl = this.ctx.createBiquadFilter()
-    airControl.type = 'lowpass'
-    airControl.frequency.value = preset.lowpass
-    airControl.Q.value = 0.5
-
-    const makeup = this.ctx.createGain()
-    makeup.gain.value = preset.makeup
-
-    source.connect(highpass)
-    highpass.connect(body)
-    body.connect(presence)
-    presence.connect(airControl)
-    airControl.connect(makeup)
-    makeup.connect(gain)
-    this.loopChains[group] = [highpass, body, presence, airControl, makeup]
+  private connectLoopSource(_group: InstrumentGroup, source: AudioBufferSourceNode, gain: GainNode): void {
+    source.connect(gain)
   }
 
   private async loadLoopBuffer(url: string): Promise<AudioBuffer> {

@@ -7,11 +7,9 @@ import {
   loopOptionsFor,
   RHYTHMS,
   rhythmForLabel,
-  ZABUMBA_LOOP_PRESETS,
   type GroupSettings,
   type InstrumentGroup,
   type VariationSelection,
-  type ZabumbaLoopPreset,
 } from '@/lib/batuque'
 
 interface BatuqueControlProps {
@@ -38,7 +36,6 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
   const [beats, setBeats] = useState<Partial<Record<InstrumentGroup, number>>>({})
   const [showSources, setShowSources] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
-  const [zabumbaLoopPreset, setZabumbaLoopPreset] = useState<ZabumbaLoopPreset>('natural')
   const engineRef = useRef<BatuqueEngine>()
 
   if (!engineRef.current) engineRef.current = new BatuqueEngine()
@@ -72,9 +69,6 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groups])
 
-  useEffect(() => {
-    engineRef.current?.setZabumbaLoopPreset(zabumbaLoopPreset)
-  }, [zabumbaLoopPreset])
 
   function changeRhythm(id: string) {
     setRhythmId(id)
@@ -326,21 +320,6 @@ export default function BatuqueControl({ songRhythm, songBpm }: BatuqueControlPr
                     className="w-16 disabled:opacity-40"
                     aria-label={`Volume do ${g.label}`}
                   />
-                  {g.id === 'zabumba' && (
-                    <select
-                      className="tap-target rounded-md border border-slate-300 px-1 py-1 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800"
-                      disabled={!groups.has(g.id)}
-                      value={zabumbaLoopPreset}
-                      onChange={(e) => setZabumbaLoopPreset(e.target.value as ZabumbaLoopPreset)}
-                      aria-label="Som da zabumba"
-                    >
-                      {ZABUMBA_LOOP_PRESETS.map((preset) => (
-                        <option key={preset.id} value={preset.id}>
-                          Som {preset.label}
-                        </option>
-                      ))}
-                    </select>
-                  )}
                   <span className="text-[10px] text-slate-400">
                     loop gravado — BPM preso ao andamento escolhido acima
                   </span>
