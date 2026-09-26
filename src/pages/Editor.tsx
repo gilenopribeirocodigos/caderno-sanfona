@@ -143,26 +143,6 @@ function SongEditor({ songId }: { songId: string }) {
     commitLines(newLines)
   }
 
-  function handleWordTextChange(newText: string) {
-    if (!picker || !lines) return
-    const newLines = lines.map((line, li) => {
-      if (li !== picker.lineIndex) return line
-      const tokens = line.tokens.map((t, ti) => (ti === picker.tokenIndex ? { ...t, text: newText } : t))
-      return { ...line, tokens }
-    })
-    commitLines(newLines)
-  }
-
-  function handleWordDelete() {
-    if (!picker || !lines) return
-    const newLines = lines.map((line, li) => {
-      if (li !== picker.lineIndex) return line
-      return { ...line, tokens: line.tokens.filter((_, ti) => ti !== picker.tokenIndex) }
-    })
-    commitLines(newLines)
-    setPicker(null)
-  }
-
   /** MAIÚSCULAS ou Primeira Maiúscula em todas as palavras da letra (item 172). */
   function applyTextCase(mode: 'upper' | 'title') {
     if (!lines) return
@@ -392,9 +372,6 @@ function SongEditor({ songId }: { songId: string }) {
           onSelect={handleChordSelect}
           onRemove={activeToken?.chord ? handleChordRemove : undefined}
           onClose={() => setPicker(null)}
-          wordText={activeToken?.text}
-          onWordTextChange={handleWordTextChange}
-          onWordDelete={handleWordDelete}
         />
       )}
     </div>

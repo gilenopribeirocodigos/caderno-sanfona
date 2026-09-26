@@ -15,11 +15,6 @@ interface ChordPickerProps {
   onSelect: (chord: string) => void
   onRemove?: () => void
   onClose: () => void
-  /** Texto da palavra clicada — quando presente, mostra um campo pra
-   * corrigir ou apagar a palavra direto aqui, sem precisar do Modo texto. */
-  wordText?: string
-  onWordTextChange?: (text: string) => void
-  onWordDelete?: () => void
 }
 
 /**
@@ -36,9 +31,6 @@ export default function ChordPicker({
   onSelect,
   onRemove,
   onClose,
-  wordText,
-  onWordTextChange,
-  onWordDelete,
 }: ChordPickerProps) {
   const [showAll, setShowAll] = useState(false)
   const quickChords = quickPaletteForKey(currentKey)
@@ -55,27 +47,6 @@ export default function ChordPicker({
             Fechar
           </button>
         </div>
-
-        {onWordTextChange && (
-          <div className="mb-3 flex items-center gap-2">
-            <input
-              type="text"
-              className="tap-target min-w-0 flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-              value={wordText ?? ''}
-              placeholder="Palavra"
-              aria-label="Editar palavra"
-              onChange={(e) => onWordTextChange(e.target.value)}
-            />
-            {onWordDelete && (
-              <button
-                className="tap-target shrink-0 rounded-md border border-red-300 px-3 py-2 text-sm text-red-500"
-                onClick={onWordDelete}
-              >
-                Apagar palavra
-              </button>
-            )}
-          </div>
-        )}
 
         {!showAll ? (
           <>
