@@ -143,6 +143,38 @@ function SongEditor({ songId }: { songId: string }) {
     commitLines(newLines)
   }
 
+  function handleWordTextChange(newText: string) {
+    if (!picker || !lines) return
+    const newLines = lines.map((line, li) => {
+      if (li !== picker.lineIndex) return line
+      const tokens = line.tokens.map((t, ti) => (ti === picker.tokenIndex ? { ...t, text: newText } : t))
+      return { ...line, tokens }
+    })
+    commitLines(newLines)
+  }
+
+  function handleWordDelete() {
+    if (!picker || !lines) return
+    const newLines = lines.map((line, li) => {
+      if (li !== picker.lineIndex) return line
+      return { ...line, tokens: line.tokens.filter((_, ti) => ti !== picker.tokenIndex) }
+    })
+    commitLines(newLines)
+    setPicker(null)
+  }
+
+  /** MAIÚSCULAS ou Primeira Maiúscula em todas as palavras da letra (item 172). */
+  function applyTextCase(mode: 'upper' | 'title') {
+    if (!lines) return
+    const transform = (text: string) =>
+      mode === 'upper' ? text.toUpperCase() : text.charAt(0).toUpperCase() + text.slice(1).toLowerCase()
+    const newLines = lines.map((line) => ({
+      ...line,
+      tokens: line.tokens.map((t) => ({ ...t, text: transform(t.text) })),
+    }))
+    commitLines(newLines)
+  }
+
   function addSection() {
     const name = window.prompt('Nome da seção (ex: Refrão, Verso, Ponte):')
     if (!name || !lines) return
@@ -291,7 +323,7 @@ function SongEditor({ songId }: { songId: string }) {
                 )}
               </div>
 
-              <div className="mt-3 flex gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 <button
                   className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
                   onClick={addSection}
@@ -303,6 +335,20 @@ function SongEditor({ songId }: { songId: string }) {
                   onClick={openRawMode}
                 >
                   Modo texto (ChordPro)
+                </button>
+                <button
+                  className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
+                  onClick={() => applyTextCase('upper')}
+                  title="Deixa todas as palavras da letra em maiúsculas"
+                >
+                  MAIÚSCULAS
+                </button>
+                <button
+                  className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
+                  onClick={() => applyTextCase('title')}
+                  title="Deixa só a primeira letra de cada palavra maiúscula"
+                >
+                  Primeira Maiúscula
                 </button>
               </div>
             </>
@@ -346,6 +392,9 @@ function SongEditor({ songId }: { songId: string }) {
           onSelect={handleChordSelect}
           onRemove={activeToken?.chord ? handleChordRemove : undefined}
           onClose={() => setPicker(null)}
+          wordText={activeToken?.text}
+          onWordTextChange={handleWordTextChange}
+          onWordDelete={handleWordDelete}
         />
       )}
     </div>
