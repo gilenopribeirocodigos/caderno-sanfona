@@ -187,6 +187,8 @@ function SongEditor({ songId }: { songId: string }) {
       difficulty: values.difficulty || undefined,
       tags: parseTagsInput(values.tagsText),
       notes: values.notes,
+      videoUrl: values.videoUrl,
+      karaokeUrl: values.karaokeUrl,
     })
     setDadosSaved(true)
     setTimeout(() => setDadosSaved(false), 1500)

@@ -34,6 +34,8 @@ export interface SongDetailsInput {
   difficulty?: Song['difficulty']
   tags: string[]
   notes?: string
+  videoUrl?: string
+  karaokeUrl?: string
 }
 
 export interface CreateSongInput extends SongDetailsInput {
@@ -81,6 +83,8 @@ export async function updateSongDetails(id: string, input: SongDetailsInput): Pr
     difficulty: input.difficulty,
     tags: input.tags,
     notes: input.notes?.trim() || undefined,
+    videoUrl: input.videoUrl?.trim() || undefined,
+    karaokeUrl: input.karaokeUrl?.trim() || undefined,
   })
 }
 

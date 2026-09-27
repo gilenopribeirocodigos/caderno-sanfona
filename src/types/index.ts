@@ -43,6 +43,10 @@ export interface Song {
   timeSignature?: string
   difficulty?: 'facil' | 'medio' | 'dificil'
   notes?: string
+  /** Link do YouTube com a música (item 173: botão "Mídia" no Tocar). */
+  videoUrl?: string
+  /** Link do YouTube com uma versão karaokê da mesma música (opcional). */
+  karaokeUrl?: string
   tags: string[]
   favorite: boolean
   lastPracticedAt?: string

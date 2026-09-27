@@ -10,6 +10,8 @@ export interface SongFormValues {
   difficulty: Song['difficulty'] | ''
   tagsText: string
   notes: string
+  videoUrl: string
+  karaokeUrl: string
 }
 
 const RHYTHMS = ['Baião', 'Forró', 'Xote', 'Xaxado', 'Arrasta-pé', 'Vaneira', 'Outro']
@@ -23,6 +25,8 @@ export function emptySongForm(): SongFormValues {
     difficulty: '',
     tagsText: '',
     notes: '',
+    videoUrl: '',
+    karaokeUrl: '',
   }
 }
 
@@ -35,6 +39,8 @@ export function songToFormValues(song: Song): SongFormValues {
     difficulty: song.difficulty ?? '',
     tagsText: song.tags.join(', '),
     notes: song.notes ?? '',
+    videoUrl: song.videoUrl ?? '',
+    karaokeUrl: song.karaokeUrl ?? '',
   }
 }
 
@@ -125,6 +131,25 @@ export default function SongForm({ initial, submitLabel, onCancel, onSubmit }: S
         value={values.notes}
         onChange={(e) => set('notes', e.target.value)}
       />
+
+      <div className="flex flex-col gap-2 rounded-md border border-[var(--color-gold)] bg-[color-mix(in_srgb,var(--color-gold)_8%,transparent)] p-3">
+        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">🎬 Mídia</span>
+        <input
+          className={inputClass}
+          placeholder="Link do vídeo (YouTube)"
+          value={values.videoUrl}
+          onChange={(e) => set('videoUrl', e.target.value)}
+        />
+        <input
+          className={inputClass}
+          placeholder="Link do karaokê (opcional)"
+          value={values.karaokeUrl}
+          onChange={(e) => set('karaokeUrl', e.target.value)}
+        />
+        <p className="text-xs text-slate-500">
+          Cole o link do YouTube da música (e, se tiver, de uma versão karaokê). Na tela Tocar aparece um botão "Mídia" pra assistir junto com a letra.
+        </p>
+      </div>
       <div className="flex gap-2">
         <button
           type="submit"

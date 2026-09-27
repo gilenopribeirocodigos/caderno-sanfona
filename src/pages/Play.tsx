@@ -11,6 +11,7 @@ import AccordionVisualPanel from '@/components/AccordionVisualPanel'
 import BatuqueControl from '@/components/BatuqueControl'
 import ChordPreviewPopup from '@/components/ChordPreviewPopup'
 import LessonMode from '@/components/LessonMode'
+import MediaPanel from '@/components/MediaPanel'
 import type { NotebookSong } from '@/types'
 
 const SPEED_PRESETS = [
@@ -83,6 +84,7 @@ export default function Play() {
   const [controlsVisible, setControlsVisible] = useState(true)
   const [showVisual, setShowVisual] = useState(false)
   const [showBatuque, setShowBatuque] = useState(false)
+  const [showMedia, setShowMedia] = useState(false)
   const [showLesson, setShowLesson] = useState(false)
   const [showMoreControls, setShowMoreControls] = useState(false)
   const [activeChord, setActiveChord] = useState<string | undefined>()
@@ -96,6 +98,7 @@ export default function Play() {
     () => (song ? uniqueChordsInSong(song.chordData.lines ?? []) : []),
     [song],
   )
+  const hasMedia = Boolean(song?.videoUrl || song?.karaokeUrl)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const scrollInterval = useRef<ReturnType<typeof setInterval>>()
@@ -299,6 +302,7 @@ export default function Play() {
                 setShowLesson(true)
                 setShowVisual(false)
                 setShowBatuque(false)
+                setShowMedia(false)
                 setShowMoreControls(false)
                 setPreviewChord(null)
               }}
@@ -313,6 +317,16 @@ export default function Play() {
             >
               🥁 Batuque
             </button>
+            {hasMedia && (
+              <button
+                className={`tap-target rounded-md border px-2 text-xs ${
+                  showMedia ? 'border-[var(--color-gold)] bg-[var(--color-gold)] text-slate-900' : 'border-slate-300 dark:border-slate-700'
+                }`}
+                onClick={() => setShowMedia((v) => !v)}
+              >
+                🎬 Mídia
+              </button>
+            )}
             <button
               className="tap-target rounded-md border border-slate-300 px-2 text-xs dark:border-slate-700"
               aria-expanded={showMoreControls}
@@ -351,6 +365,16 @@ export default function Play() {
             >
               🥁 Batuque
             </button>
+            {hasMedia && (
+              <button
+                className={`tap-target rounded-md border px-2 py-1 text-xs ${
+                  showMedia ? 'border-[var(--color-gold)] bg-[var(--color-gold)] text-slate-900' : 'border-slate-300 dark:border-slate-700'
+                }`}
+                onClick={() => setShowMedia((v) => !v)}
+              >
+                🎬 Mídia
+              </button>
+            )}
             <button
               className="tap-target rounded-md border border-slate-300 px-2 py-1 text-xs dark:border-slate-700"
               title="Mostra a letra em pedaços grandes, um de cada vez — pra ensinar alguém devagar"
@@ -358,6 +382,7 @@ export default function Play() {
                 setShowLesson(true)
                 setShowVisual(false)
                 setShowBatuque(false)
+                setShowMedia(false)
                 setPreviewChord(null)
               }}
             >
@@ -407,6 +432,10 @@ export default function Play() {
         />
       ) : (
         <>
+          {showMedia && hasMedia && (
+            <MediaPanel videoUrl={song.videoUrl} karaokeUrl={song.karaokeUrl} onClose={() => setShowMedia(false)} />
+          )}
+
           <div ref={containerRef} className="min-h-0 flex-1 overflow-y-auto p-4">
             <ChordSheet
               lines={song.chordData.lines ?? []}
