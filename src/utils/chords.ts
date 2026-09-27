@@ -95,6 +95,13 @@ export function formatChordForDisplay(chord: string, notation: ChordNotation): s
   return result
 }
 
+/** Nome da nota na OUTRA notação (BR quando a tela está em internacional, e
+ * vice-versa) — usado como dica entre parênteses no teclado, pra quem só
+ * conhece uma das duas (item 174). */
+export function alternateNoteName(note: string, notation: ChordNotation): string {
+  return notation === 'international' ? (BRAZILIAN_NAMES[note] ?? note) : note
+}
+
 /** Converte um acorde digitado pelo usuário (BR ou internacional) para forma interna. */
 export function parseUserInputChord(input: string): string {
   const trimmed = input.trim()

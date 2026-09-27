@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ChordNotation } from '@/types'
-import { formatChordForDisplay } from '@/utils/chords'
+import { alternateNoteName, formatChordForDisplay } from '@/utils/chords'
 import type { ChordColor } from '@/utils/chordColors'
 import { inversionCountForChord, keyboardLayoutForChord } from '@/utils/keyboardVoicing'
 
@@ -81,6 +81,7 @@ export default function VerticalKeyboard({ chord, color, notation }: VerticalKey
               {isActive && <circle cx={WHITE_KEY_W - 13} cy={y + WHITE_KEY_H / 2} r={5.5} fill={color.hex} />}
               <text x={8} y={y + WHITE_KEY_H / 2} dominantBaseline="central" fontSize={11} fontWeight={isActive ? 700 : 400} fill="#334155">
                 {formatChordForDisplay(key.note, notation)}
+                <tspan fontSize={7} fontWeight={400} fill="#94a3b8"> ({alternateNoteName(key.note, notation)})</tspan>
               </text>
             </g>
           )
