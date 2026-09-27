@@ -1,5 +1,5 @@
 import type { AccordionType, ChordNotation } from '@/types'
-import { formatChordForDisplay } from '@/utils/chords'
+import { formatChordForDisplay, fullChordNamePt } from '@/utils/chords'
 import { colorMapForChords, type ChordColor } from '@/utils/chordColors'
 import { chordLabelForRow, columnsFor, getHighlightedButtons, rowsFor } from '@/utils/accordion'
 import VerticalKeyboard from './VerticalKeyboard'
@@ -89,10 +89,16 @@ interface ChordCardProps {
  * Modo Aula, sempre com o mesmo desenho compacto. */
 export default function ChordCard({ chord, accordionType, notation, color, size = 'sm' }: ChordCardProps) {
   const resolvedColor = color ?? colorMapForChords([chord]).get(chord)!
+  const fullName = fullChordNamePt(chord)
   return (
     <div className="flex flex-col gap-1">
       <span className={size === 'lg' ? 'text-xl font-bold' : 'text-base font-bold'} style={{ color: resolvedColor.hex }}>
         {formatChordForDisplay(chord, notation)}
+        {fullName && (
+          <span className={`ml-1.5 font-normal text-slate-400 ${size === 'lg' ? 'text-sm' : 'text-xs'}`}>
+            ({fullName})
+          </span>
+        )}
       </span>
       <div className="flex items-start gap-2">
         <div className={size === 'lg' ? undefined : 'scale-90 origin-top-left'}>

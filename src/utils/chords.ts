@@ -95,6 +95,32 @@ export function formatChordForDisplay(chord: string, notation: ChordNotation): s
   return result
 }
 
+// Nome por extenso, em português, de cada qualidade de acorde suportada —
+// usado no cartão "onde apertar" (item 175), pra quem não lê cifra saber
+// que "Dm" é "Ré menor", "C7" é "Dó com sétima", etc.
+const QUALITY_NAMES_PT: Record<string, string> = {
+  '': 'maior', m: 'menor', '7': 'com sétima', maj7: 'com sétima maior',
+  m7: 'menor com sétima', '9': 'com nona', dim: 'diminuto', aug: 'aumentado',
+  sus2: 'suspenso (2ª)', sus4: 'suspenso (4ª)', '6': 'com sexta', m6: 'menor com sexta',
+  add9: 'com nona adicionada', maj9: 'com nona maior', m9: 'menor com nona',
+}
+
+/** Nome completo do acorde por extenso, em português (ex: "Ré menor",
+ * "Dó com sétima") — undefined se a qualidade não for reconhecida. */
+export function fullChordNamePt(chord: string | undefined): string | undefined {
+  const parsed = parseChord(chord ?? '')
+  if (!parsed) return undefined
+  const qualityName = QUALITY_NAMES_PT[parsed.quality]
+  if (qualityName === undefined) return undefined
+  const rootName = BRAZILIAN_NAMES[parsed.root] ?? parsed.root
+  let result = `${rootName} ${qualityName}`
+  if (parsed.bass) {
+    const bassName = BRAZILIAN_NAMES[parsed.bass] ?? parsed.bass
+    result += ` com baixo em ${bassName}`
+  }
+  return result
+}
+
 /** Nome da nota na OUTRA notação (BR quando a tela está em internacional, e
  * vice-versa) — usado como dica entre parênteses no teclado, pra quem só
  * conhece uma das duas (item 174). */
