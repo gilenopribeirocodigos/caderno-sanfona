@@ -24,5 +24,10 @@ export function youtubeEmbedUrl(url: string | undefined): string | undefined {
   }
 
   if (!videoId) return undefined
-  return `https://www.youtube.com/embed/${videoId}`
+  // rel=0: restringe o vídeo sugerido pelo player (que o YouTube sempre
+  // mostra, não dá pra tirar de vez) só a vídeos do MESMO canal, em vez de
+  // qualquer vídeo aleatório de qualquer canal.
+  // modestbranding=1: reduz a marca do YouTube. playsinline=1: no celular,
+  // toca dentro da tela em vez de abrir automaticamente em tela cheia.
+  return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1`
 }
