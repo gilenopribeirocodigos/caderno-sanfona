@@ -71,6 +71,8 @@ export async function consolidateDuplicateSongs(): Promise<string[]> {
         keeper.tags = [...new Set([...keeper.tags, ...duplicate.tags])]
         keeper.lastPracticedAt = [keeper.lastPracticedAt, duplicate.lastPracticedAt].filter(Boolean).sort().at(-1)
         keeper.notes ||= duplicate.notes
+        keeper.videoUrl ||= duplicate.videoUrl
+        keeper.karaokeUrl ||= duplicate.karaokeUrl
         await db.syncDeletions.put({
           id: deletionId('songs', duplicate.id), table: 'songs', recordId: duplicate.id,
           deletedAt: new Date().toISOString(),

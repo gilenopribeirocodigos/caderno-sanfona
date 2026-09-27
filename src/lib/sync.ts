@@ -494,7 +494,7 @@ function songContent(song: Song): string {
   return JSON.stringify([
     song.title, song.artist, song.originalKey, song.preferredKey, song.lyrics,
     song.chordData, song.bpm, song.rhythm, song.timeSignature, song.difficulty,
-    song.notes, song.tags, song.favorite,
+    song.notes, song.videoUrl, song.karaokeUrl, song.tags, song.favorite,
   ])
 }
 
