@@ -21,6 +21,9 @@ const SPEED_PRESETS = [
   { label: 'Rápido', px: 1.8 },
 ]
 const START_DELAYS = [0, 3, 5, 10]
+// Quanto tempo segurando a tecla/pedal até virar "rolar" em vez de "trocar
+// de música" (item 177) — abaixo disso é toque rápido, acima é segurar.
+const PEDAL_HOLD_THRESHOLD_MS = 400
 
 export default function Play() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -104,6 +107,15 @@ export default function Play() {
   const scrollInterval = useRef<ReturnType<typeof setInterval>>()
   const scrollTimeout = useRef<ReturnType<typeof setTimeout>>()
 
+  // Pedal Bluetooth (ou seta do teclado) segurado = rola a letra enquanto
+  // durar o toque; solto rápido = troca de música (item 177). O "tempo de
+  // corte" decide qual dos dois foi: só começa a rolar se a tecla ainda
+  // estiver pressionada depois desse tanto de tempo.
+  const pedalKeyDown = useRef<string | null>(null)
+  const pedalHoldTimer = useRef<ReturnType<typeof setTimeout>>()
+  const pedalScrollInterval = useRef<ReturnType<typeof setInterval>>()
+  const pedalHoldActive = useRef(false)
+
   useEffect(() => {
     if (song) {
       setActiveChord(firstChord(song.chordData.chordProSource))
@@ -142,22 +154,70 @@ export default function Play() {
       // O Modo Aula usa essas mesmas teclas pro trecho da música atual,
       // não pra trocar de música — deixa o atalho dele assumir.
       if (showLesson) return
-      if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+
+      const isNext = e.key === 'ArrowRight' || e.key === 'PageDown'
+      const isPrev = e.key === 'ArrowLeft' || e.key === 'PageUp'
+
+      if (isNext || isPrev) {
         e.preventDefault()
-        goTo(index + 1)
-      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-        e.preventDefault()
-        goTo(index - 1)
+        // Repetição automática do teclado/SO enquanto segura — ignora, só a
+        // contagem de tempo abaixo decide quando virou "segurar".
+        if (e.repeat || pedalKeyDown.current === e.key) return
+        pedalKeyDown.current = e.key
+        pedalHoldActive.current = false
+        if (pedalHoldTimer.current) clearTimeout(pedalHoldTimer.current)
+        pedalHoldTimer.current = setTimeout(() => startPedalHoldScroll(isNext ? 1 : -1), PEDAL_HOLD_THRESHOLD_MS)
+        return
       }
-      else if (e.key === ' ') {
+
+      if (e.key === ' ') {
         e.preventDefault()
         toggleAutoScroll()
       }
     }
+
+    function onKeyUp(e: KeyboardEvent) {
+      const isNext = e.key === 'ArrowRight' || e.key === 'PageDown'
+      const isPrev = e.key === 'ArrowLeft' || e.key === 'PageUp'
+      if ((!isNext && !isPrev) || pedalKeyDown.current !== e.key) return
+      pedalKeyDown.current = null
+      if (pedalHoldTimer.current) clearTimeout(pedalHoldTimer.current)
+      if (pedalHoldActive.current) {
+        stopPedalHoldScroll()
+      } else {
+        // Soltou antes do limiar: foi um toque rápido, troca de música normal.
+        if (isNext) goTo(index + 1)
+        else goTo(index - 1)
+      }
+    }
+
     window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
+    window.addEventListener('keyup', onKeyUp)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('keyup', onKeyUp)
+      if (pedalHoldTimer.current) clearTimeout(pedalHoldTimer.current)
+      stopPedalHoldScroll()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, queue.length, scrolling, showLesson])
+  }, [index, queue.length, scrolling, showLesson, speedLevel])
+
+  /** Começa a rolar (pra cima ou pra baixo) enquanto o pedal/tecla estiver
+   * segurado — item 177. Independente do botão de rolagem automática. */
+  function startPedalHoldScroll(direction: 1 | -1) {
+    pedalHoldActive.current = true
+    stopAutoScroll()
+    pedalScrollInterval.current = setInterval(() => {
+      const el = containerRef.current
+      if (!el) return
+      el.scrollTop += direction * SPEED_PRESETS[speedLevel].px
+    }, 30)
+  }
+
+  function stopPedalHoldScroll() {
+    if (pedalScrollInterval.current) clearInterval(pedalScrollInterval.current)
+    pedalHoldActive.current = false
+  }
 
   function stopAutoScroll() {
     if (scrollInterval.current) clearInterval(scrollInterval.current)
