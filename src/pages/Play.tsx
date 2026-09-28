@@ -188,6 +188,14 @@ export default function Play() {
     else startAutoScroll()
   }
 
+  /** Volta ao topo e já reinicia a rolagem — pra repetir a música sem
+   * precisar tocar duas vezes na tela (item 176). */
+  function restartAutoScroll() {
+    stopAutoScroll()
+    if (containerRef.current) containerRef.current.scrollTop = 0
+    startAutoScroll()
+  }
+
   useEffect(() => stopAutoScroll, [currentSongId])
 
   function toggleFullscreen() {
@@ -491,6 +499,13 @@ export default function Play() {
           <button className={`tap-target rounded-md border px-3 font-medium ${scrolling ? 'border-red-400 text-red-500' : 'border-slate-300 dark:border-slate-700'}`} onClick={toggleAutoScroll}>
             {scrolling ? '⏸ Parar' : '▶ Rolar letra'}
           </button>
+          <button
+            className="tap-target rounded-md border border-slate-300 px-2 dark:border-slate-700"
+            onClick={restartAutoScroll}
+            title="Volta ao início e já começa a rolagem de novo"
+          >
+            🔁 Do início
+          </button>
         </div>
       )}
 
@@ -542,6 +557,13 @@ export default function Play() {
               onClick={toggleAutoScroll}
             >
               {scrolling ? '⏸ Parar rolagem' : '▶ Rolagem automática'}
+            </button>
+            <button
+              className="tap-target rounded-md border border-slate-300 px-2 py-1 dark:border-slate-700"
+              onClick={restartAutoScroll}
+              title="Volta ao início e já começa a rolagem de novo"
+            >
+              🔁 Do início
             </button>
           </div>
         </div>
