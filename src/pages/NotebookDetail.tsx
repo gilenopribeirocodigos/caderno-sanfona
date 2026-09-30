@@ -93,12 +93,12 @@ export default function NotebookDetail() {
           if (!song) return null
           return (
             <li key={entry.id} className="flex items-center justify-between rounded-lg bg-surface px-3 py-2">
-              <div>
+              <Link to={`/tocar?notebook=${notebookId}&index=${index}`} className="tap-target min-w-0 flex-1 py-1">
                 <span className="mr-2 text-xs text-slate-400">{index + 1}.</span>
                 <span className="font-medium">{song.title}</span>
                 <span className="ml-2 text-xs text-slate-500">Tom {song.preferredKey}</span>
-              </div>
-              <div className="flex items-center gap-1">
+              </Link>
+              <div className="flex shrink-0 items-center gap-1">
                 <button
                   aria-label="Mover para cima"
                   className="tap-target text-sm disabled:opacity-30"
