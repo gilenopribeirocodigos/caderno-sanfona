@@ -34,14 +34,17 @@ function SongPicker() {
   return (
     <div className="mx-auto max-w-2xl p-4">
       <h2 className="text-xl font-semibold">Editor</h2>
-      <p className="mt-2 text-sm text-slate-500">Escolha uma música para editar a cifra.</p>
+      <p className="mt-2 text-sm text-slate-500">
+        Escolha uma música para editar a cifra{songs && songs.length > 0 ? ` (${songs.length} música${songs.length > 1 ? 's' : ''})` : ''}.
+      </p>
       <ul className="mt-4 flex flex-col gap-2">
-        {songs?.map((s) => (
+        {songs?.map((s, i) => (
           <li key={s.id}>
             <Link
               to={`/editor/${s.id}`}
               className="tap-target block rounded-lg bg-surface px-3 py-2 hover:bg-surface-alt"
             >
+              <span className="mr-2 text-xs text-slate-400">{i + 1}.</span>
               <span className="font-medium">{s.title}</span>
               <span className="ml-2 text-xs text-slate-500">Tom {s.preferredKey}</span>
             </Link>
