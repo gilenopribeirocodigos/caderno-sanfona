@@ -107,6 +107,15 @@ export default function Play() {
   const containerRef = useRef<HTMLDivElement>(null)
   const scrollInterval = useRef<ReturnType<typeof setInterval>>()
   const scrollTimeout = useRef<ReturnType<typeof setTimeout>>()
+  // Os intervalos de rolagem abaixo leem sempre este ref (em vez do
+  // "speedLevel" direto) pra que clicar em "+"/"−" ENQUANTO a rolagem já
+  // está em andamento mude a velocidade na hora, sem precisar parar e
+  // começar de novo (senão o intervalo continuava preso na velocidade de
+  // quando foi criado).
+  const speedLevelRef = useRef(speedLevel)
+  useEffect(() => {
+    speedLevelRef.current = speedLevel
+  }, [speedLevel])
 
   // Pedal Bluetooth (ou seta do teclado) segurado = rola a letra enquanto
   // durar o toque; solto rápido = troca de música (item 177). O "tempo de
@@ -211,7 +220,7 @@ export default function Play() {
     pedalScrollInterval.current = setInterval(() => {
       const el = containerRef.current
       if (!el) return
-      el.scrollTop += direction * SPEED_PRESETS[speedLevel].px
+      el.scrollTop += direction * SPEED_PRESETS[speedLevelRef.current].px
     }, 30)
   }
 
@@ -229,11 +238,10 @@ export default function Play() {
   function startAutoScroll() {
     const begin = () => {
       setScrolling(true)
-      const px = SPEED_PRESETS[speedLevel].px
       scrollInterval.current = setInterval(() => {
         const el = containerRef.current
         if (!el) return
-        el.scrollTop += px
+        el.scrollTop += SPEED_PRESETS[speedLevelRef.current].px
         if (el.scrollTop + el.clientHeight >= el.scrollHeight - 2) stopAutoScroll()
       }, 30)
     }
