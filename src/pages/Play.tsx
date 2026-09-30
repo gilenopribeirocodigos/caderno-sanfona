@@ -495,9 +495,23 @@ export default function Play() {
               <button className="tap-target mb-1 w-full rounded-md border border-slate-300 text-left px-3 text-xs dark:border-slate-700" onClick={() => { setShowChords((v) => !v); setShowMoreControls(false) }}>{showChords ? 'Ocultar cifra (só letra)' : 'Mostrar cifra'}</button>
               <button className="tap-target mb-2 w-full rounded-md border border-slate-300 text-left px-3 text-xs dark:border-slate-700" onClick={() => { setControlsVisible(false); setShowMoreControls(false) }}>Ocultar controles</button>
               <label className="mb-1 block text-xs text-slate-500">Velocidade da rolagem
-                <select className="tap-target mt-1 w-full rounded-md border border-slate-300 bg-surface px-2 dark:border-slate-700" value={speedLevel} onChange={(e) => setSpeedLevel(Number(e.target.value))}>
-                  {SPEED_PRESETS.map((s, i) => <option key={s.label} value={i}>{s.label}</option>)}
-                </select>
+                <div className="mt-1 flex items-center gap-2">
+                  <button
+                    className="tap-target rounded-md border border-slate-300 px-3 py-1 text-sm font-bold disabled:opacity-30 dark:border-slate-700"
+                    disabled={speedLevel === 0}
+                    onClick={() => setSpeedLevel((v) => Math.max(0, v - 1))}
+                  >
+                    −
+                  </button>
+                  <span className="flex-1 text-center text-xs font-medium">{SPEED_PRESETS[speedLevel].label}</span>
+                  <button
+                    className="tap-target rounded-md border border-slate-300 px-3 py-1 text-sm font-bold disabled:opacity-30 dark:border-slate-700"
+                    disabled={speedLevel === SPEED_PRESETS.length - 1}
+                    onClick={() => setSpeedLevel((v) => Math.min(SPEED_PRESETS.length - 1, v + 1))}
+                  >
+                    +
+                  </button>
+                </div>
               </label>
               <label className="block text-xs text-slate-500">Início da rolagem
                 <select className="tap-target mt-1 w-full rounded-md border border-slate-300 bg-surface px-2 dark:border-slate-700" value={startDelay} onChange={(e) => setStartDelay(Number(e.target.value))}>
@@ -609,17 +623,25 @@ export default function Play() {
             </button>
           </div>
           <div className="flex items-center gap-1">
-            <select
-              className="tap-target rounded-md border border-slate-300 px-1 py-1 dark:border-slate-700 dark:bg-slate-800"
-              value={speedLevel}
-              onChange={(e) => setSpeedLevel(Number(e.target.value))}
-            >
-              {SPEED_PRESETS.map((s, i) => (
-                <option key={s.label} value={i}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center gap-1 rounded-md border border-slate-300 py-1 pl-1 pr-1 dark:border-slate-700">
+              <button
+                className="tap-target rounded px-2 font-bold disabled:opacity-30"
+                disabled={speedLevel === 0}
+                onClick={() => setSpeedLevel((v) => Math.max(0, v - 1))}
+                title="Diminuir velocidade da rolagem"
+              >
+                −
+              </button>
+              <span className="min-w-[70px] text-center font-medium">{SPEED_PRESETS[speedLevel].label}</span>
+              <button
+                className="tap-target rounded px-2 font-bold disabled:opacity-30"
+                disabled={speedLevel === SPEED_PRESETS.length - 1}
+                onClick={() => setSpeedLevel((v) => Math.min(SPEED_PRESETS.length - 1, v + 1))}
+                title="Aumentar velocidade da rolagem"
+              >
+                +
+              </button>
+            </div>
             <select
               className="tap-target rounded-md border border-slate-300 px-1 py-1 dark:border-slate-700 dark:bg-slate-800"
               value={startDelay}
