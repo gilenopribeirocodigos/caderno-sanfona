@@ -88,6 +88,7 @@ export default function Play() {
   const [showVisual, setShowVisual] = useState(false)
   const [showBatuque, setShowBatuque] = useState(false)
   const [showMedia, setShowMedia] = useState(false)
+  const [showChords, setShowChords] = useState(true)
   const [showLesson, setShowLesson] = useState(false)
   const [showMoreControls, setShowMoreControls] = useState(false)
   const [activeChord, setActiveChord] = useState<string | undefined>()
@@ -385,6 +386,15 @@ export default function Play() {
             >
               🥁 Batuque
             </button>
+            <button
+              className={`tap-target rounded-md border px-2 text-xs ${
+                !showChords ? 'border-slate-900 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border-slate-300 dark:border-slate-700'
+              }`}
+              title="Ocultar a cifra e ver só a letra"
+              onClick={() => setShowChords((v) => !v)}
+            >
+              {showChords ? '🎸 Cifra' : '📝 Só letra'}
+            </button>
             {hasMedia && (
               <button
                 className={`tap-target rounded-md border px-2 text-xs ${
@@ -433,6 +443,15 @@ export default function Play() {
             >
               🥁 Batuque
             </button>
+            <button
+              className={`tap-target rounded-md border px-2 py-1 text-xs ${
+                !showChords ? 'border-slate-900 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border-slate-300 dark:border-slate-700'
+              }`}
+              title="Ocultar a cifra e ver só a letra"
+              onClick={() => setShowChords((v) => !v)}
+            >
+              {showChords ? '🎸 Cifra' : '📝 Só letra'}
+            </button>
             {hasMedia && (
               <button
                 className={`tap-target rounded-md border px-2 py-1 text-xs ${
@@ -473,6 +492,7 @@ export default function Play() {
               </div>
               <button className="tap-target mb-1 w-full rounded-md border border-slate-300 text-left px-3 text-xs dark:border-slate-700" onClick={() => { toggleFullscreen(); setShowMoreControls(false) }}>{isFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}</button>
               <button className="tap-target mb-1 w-full rounded-md border border-slate-300 text-left px-3 text-xs dark:border-slate-700" onClick={() => { setShowVisual((v) => !v); setShowMoreControls(false) }}>{showVisual ? 'Ocultar sanfona visual' : 'Sanfona visual'}</button>
+              <button className="tap-target mb-1 w-full rounded-md border border-slate-300 text-left px-3 text-xs dark:border-slate-700" onClick={() => { setShowChords((v) => !v); setShowMoreControls(false) }}>{showChords ? 'Ocultar cifra (só letra)' : 'Mostrar cifra'}</button>
               <button className="tap-target mb-2 w-full rounded-md border border-slate-300 text-left px-3 text-xs dark:border-slate-700" onClick={() => { setControlsVisible(false); setShowMoreControls(false) }}>Ocultar controles</button>
               <label className="mb-1 block text-xs text-slate-500">Velocidade da rolagem
                 <select className="tap-target mt-1 w-full rounded-md border border-slate-300 bg-surface px-2 dark:border-slate-700" value={speedLevel} onChange={(e) => setSpeedLevel(Number(e.target.value))}>
@@ -516,6 +536,7 @@ export default function Play() {
               activeChord={showVisual ? activeChord : undefined}
               onChordTap={setActiveChord}
               onChordPreview={(chord, x, y) => setPreviewChord({ chord, x, y })}
+              showChords={showChords}
             />
           </div>
 

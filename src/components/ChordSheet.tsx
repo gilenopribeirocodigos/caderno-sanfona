@@ -16,6 +16,8 @@ interface ChordSheetProps {
   /** PROTÓTIPO: tocar num acorde mostra um preview rápido (teclado + baixo) pertinho do toque. */
   onChordPreview?: (chord: string, x: number, y: number) => void
   activeChord?: string
+  /** false = só a letra, sem a linha de cifra acima — mais compacto (item 179). */
+  showChords?: boolean
 }
 
 export interface WordRef {
@@ -36,6 +38,7 @@ export default function ChordSheet({
   onChordTap,
   onChordPreview,
   activeChord,
+  showChords = true,
 }: ChordSheetProps) {
   const [dragChord, setDragChord] = useState<string | null>(null)
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null)
@@ -94,7 +97,7 @@ export default function ChordSheet({
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className={`flex flex-col ${showChords ? 'gap-3' : 'gap-1'}`}>
       {dragChord && dragPos && (
         <div
           className="pointer-events-none fixed z-50 rounded bg-slate-900 px-2 py-1 text-sm font-bold text-white shadow-lg dark:bg-slate-100 dark:text-slate-900"
@@ -112,21 +115,21 @@ export default function ChordSheet({
           )
         }
         if (line.tokens.length === 0) {
-          return <div key={li} className="h-2" />
+          return <div key={li} className={showChords ? 'h-2' : 'h-1'} />
         }
         return (
           <div key={li} className="flex flex-wrap items-end gap-x-1 gap-y-1">
             {line.tokens.map((token, ti) => {
-              const clickable = Boolean(onWordClick || ((onChordTap || onChordPreview) && token.chord))
+              const clickable = showChords && Boolean(onWordClick || ((onChordTap || onChordPreview) && token.chord))
               const isDropTarget = dropTarget?.lineIndex === li && dropTarget?.tokenIndex === ti
               return (
                 <span
                   key={ti}
                   data-li={li}
                   data-ti={ti}
-                  onPointerDown={(e) => handlePointerDown(e, li, ti, token.chord)}
+                  onPointerDown={(e) => showChords && handlePointerDown(e, li, ti, token.chord)}
                   onClick={(e) => {
-                    if (dragState.current?.moved) return
+                    if (!showChords || dragState.current?.moved) return
                     if (onWordClick) onWordClick(li, ti)
                     else if (token.chord) {
                       onChordTap?.(token.chord)
@@ -137,6 +140,7 @@ export default function ChordSheet({
                     onWordClick ? 'rounded px-0.5 hover:bg-surface-alt' : ''
                   } ${isDropTarget ? 'bg-emerald-200 dark:bg-emerald-800' : ''}`}
                 >
+                  {showChords && (
                   <span
                     style={{ fontSize: chordSize }}
                     className={`font-bold leading-tight ${
@@ -147,6 +151,7 @@ export default function ChordSheet({
                   >
                     {token.chord ? formatChordForDisplay(token.chord, notation) : ' '}
                   </span>
+                  )}
                   <span style={{ fontSize }} className="leading-tight">
                     {token.text || ' '}
                   </span>
