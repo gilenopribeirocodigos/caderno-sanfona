@@ -34,17 +34,13 @@ export default function AppShell() {
     return () => document.removeEventListener('fullscreenchange', handler)
   }, [])
 
-  if (isFullscreen) {
-    return (
-      <div className="h-full bg-surface-alt">
-        <Outlet />
-      </div>
-    )
-  }
-
   return (
-    <div className="flex h-full flex-col md:flex-row">
-      <aside className="safe-top relative hidden shrink-0 overflow-hidden border-r border-stone-200 bg-surface px-3 py-4 dark:border-slate-700 md:flex md:w-56 md:flex-col md:gap-1">
+    <div className={isFullscreen ? 'h-full bg-surface-alt' : 'flex h-full flex-col md:flex-row'}>
+      <aside
+        className={`safe-top relative shrink-0 overflow-hidden border-r border-stone-200 bg-surface px-3 py-4 dark:border-slate-700 md:w-56 md:flex-col md:gap-1 ${
+          isFullscreen ? 'hidden' : 'hidden md:flex'
+        }`}
+      >
         {/* Marca d'água decorativa, presença sutil da sanfona dentro do app */}
         <AccordionArt className="pointer-events-none absolute -bottom-10 -left-16 h-64 w-auto -rotate-6 opacity-[0.05] dark:opacity-[0.08]" />
         <div className="relative mb-4 flex items-center gap-2 px-2">
@@ -73,18 +69,26 @@ export default function AppShell() {
         <VersionTag className="relative mt-auto px-2 pt-4" />
       </aside>
 
-      <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <TopBar />
+      <main className={isFullscreen ? 'flex h-full flex-col' : 'flex min-w-0 flex-1 flex-col overflow-hidden'}>
+        <div className={isFullscreen ? 'hidden' : ''}>
+          <TopBar />
+        </div>
         <div className="relative isolate flex-1 overflow-x-hidden overflow-y-auto bg-surface-alt">
           {/* Marca d'água estática: preserva a bateria e a fluidez no celular. */}
           <AccordionArt
-            className="pointer-events-none absolute -bottom-10 -right-14 -z-10 h-96 w-auto rotate-[8deg] opacity-[0.07] dark:opacity-[0.14]"
+            className={`pointer-events-none absolute -bottom-10 -right-14 -z-10 h-96 w-auto rotate-[8deg] opacity-[0.07] dark:opacity-[0.14] ${
+              isFullscreen ? 'hidden' : ''
+            }`}
           />
           <Outlet />
         </div>
       </main>
 
-      <nav className="safe-bottom flex shrink-0 flex-col border-t border-stone-200 bg-surface shadow-[0_-4px_20px_rgba(20,20,30,0.06)] dark:border-slate-700 md:hidden">
+      <nav
+        className={`safe-bottom flex shrink-0 flex-col border-t border-stone-200 bg-surface shadow-[0_-4px_20px_rgba(20,20,30,0.06)] dark:border-slate-700 md:hidden ${
+          isFullscreen ? 'hidden' : ''
+        }`}
+      >
         <div className="flex gap-1 px-1 pt-1">
           {NAV_ITEMS.map((item) => {
             const isActive = item.match.test(location.pathname)
