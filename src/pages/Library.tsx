@@ -6,9 +6,9 @@ import { createSong, deleteSong, DuplicateSongError, parseTagsInput, toggleFavor
 import { useSettings } from '@/lib/useSettings'
 import { downloadSongChordPro, downloadSongText, printSongs } from '@/utils/export'
 import SongForm, { emptySongForm, type SongFormValues } from '@/components/SongForm'
-import type { AccordionType, ChordNotation, Song } from '@/types'
+import type { AccordionType, ChordNotation, NotebookSong, Song } from '@/types'
 
-type SortMode = 'alfabetica' | 'artista' | 'tom' | 'mais-tocadas' | 'recentes' | 'nao-treinadas'
+type SortMode = 'alfabetica' | 'artista' | 'tom' | 'mais-tocadas' | 'recentes' | 'nao-treinadas' | 'caderno'
 
 type FormMode = { kind: 'closed' } | { kind: 'create' }
 
@@ -24,6 +24,18 @@ export default function Library() {
   const [difficultyFilter, setDifficultyFilter] = useState('')
   const [onlyFavorites, setOnlyFavorites] = useState(false)
   const [sortMode, setSortMode] = useState<SortMode>('alfabetica')
+  const [notebookSortId, setNotebookSortId] = useState('')
+
+  // Pra "Ordem de um caderno" (item 178): lista de cadernos pro segundo
+  // menu, e a posição de cada música dentro do caderno escolhido.
+  const notebooks = useLiveQuery(() => db.notebooks.orderBy('name').toArray(), [])
+  const notebookOrderEntries = useLiveQuery<NotebookSong[]>(
+    () =>
+      sortMode === 'caderno' && notebookSortId
+        ? db.notebookSongs.where('notebookId').equals(notebookSortId).sortBy('position')
+        : Promise.resolve([]),
+    [sortMode, notebookSortId],
+  )
 
   const keys = useMemo(
     () => Array.from(new Set((songs ?? []).map((s) => s.preferredKey))).sort(),
@@ -50,6 +62,12 @@ export default function Library() {
     if (onlyFavorites) list = list.filter((s) => s.favorite)
     if (sortMode === 'nao-treinadas') list = list.filter((s) => s.timesPlayed === 0)
 
+    if (sortMode === 'caderno') {
+      if (!notebookSortId || !notebookOrderEntries) return []
+      const position = new Map(notebookOrderEntries.map((e, i) => [e.songId, i]))
+      return list.filter((s) => position.has(s.id)).sort((a, b) => position.get(a.id)! - position.get(b.id)!)
+    }
+
     const sorted = [...list]
     switch (sortMode) {
       case 'artista':
@@ -70,7 +88,7 @@ export default function Library() {
         sorted.sort((a, b) => a.title.localeCompare(b.title))
     }
     return sorted
-  }, [songs, search, keyFilter, rhythmFilter, difficultyFilter, onlyFavorites, sortMode])
+  }, [songs, search, keyFilter, rhythmFilter, difficultyFilter, onlyFavorites, sortMode, notebookSortId, notebookOrderEntries])
 
   async function handleCreate(values: SongFormValues) {
     setCreateError(null)
@@ -175,7 +193,22 @@ export default function Library() {
             <option value="mais-tocadas">Mais tocadas</option>
             <option value="recentes">Recentes</option>
             <option value="nao-treinadas">Ainda não treinadas</option>
+            <option value="caderno">Ordem de um caderno</option>
           </select>
+          {sortMode === 'caderno' && (
+            <select
+              className="tap-target rounded-md border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
+              value={notebookSortId}
+              onChange={(e) => setNotebookSortId(e.target.value)}
+            >
+              <option value="">Escolha um caderno</option>
+              {notebooks?.map((nb) => (
+                <option key={nb.id} value={nb.id}>
+                  {nb.name}
+                </option>
+              ))}
+            </select>
+          )}
           <label className="tap-target flex items-center gap-1.5 rounded-md border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-700">
             <input
               type="checkbox"
@@ -229,7 +262,12 @@ export default function Library() {
           seu aparelho, mesmo offline.
         </p>
       )}
-      {(songs?.length ?? 0) > 0 && visibleSongs.length === 0 && (
+      {(songs?.length ?? 0) > 0 && sortMode === 'caderno' && !notebookSortId && (
+        <p className="mt-6 text-center text-sm text-slate-500">
+          Escolha um caderno acima pra ver as músicas dele, na ordem certa.
+        </p>
+      )}
+      {(songs?.length ?? 0) > 0 && !(sortMode === 'caderno' && !notebookSortId) && visibleSongs.length === 0 && (
         <p className="mt-6 text-center text-sm text-slate-500">
           Nenhuma música encontrada com esses filtros.
         </p>
