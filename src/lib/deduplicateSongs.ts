@@ -73,6 +73,7 @@ export async function consolidateDuplicateSongs(): Promise<string[]> {
         keeper.notes ||= duplicate.notes
         keeper.videoUrl ||= duplicate.videoUrl
         keeper.karaokeUrl ||= duplicate.karaokeUrl
+        keeper.chordVoicings = { ...duplicate.chordVoicings, ...keeper.chordVoicings }
         await db.syncDeletions.put({
           id: deletionId('songs', duplicate.id), table: 'songs', recordId: duplicate.id,
           deletedAt: new Date().toISOString(),

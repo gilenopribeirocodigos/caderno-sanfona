@@ -14,10 +14,32 @@ import {
 import { useSettings } from '@/lib/useSettings'
 import { parseChordPro, renderChordPro } from '@/utils/chordpro'
 import { COMMON_KEYS } from '@/utils/chords'
+import { splitSyllables } from '@/utils/syllables'
 import ChordSheet, { type WordRef } from '@/components/ChordSheet'
 import ChordPicker from '@/components/ChordPicker'
 import SongForm, { songToFormValues, type SongFormValues } from '@/components/SongForm'
-import type { LyricLine, Song } from '@/types'
+import type { LyricLine, LyricToken, Song } from '@/types'
+
+/** Acorde que está valendo pra sílaba `syllableIndex` dessa palavra agora
+ * (item 182) — olha `pieces` se já tiver sido customizada, senão trata a
+ * sílaba 0 como o `chord` de sempre (comportamento de palavra inteira). */
+function chordAtSyllable(token: LyricToken, syllableIndex: number): string | undefined {
+  if (token.pieces) return token.pieces[syllableIndex]?.chord
+  return syllableIndex === 0 ? token.chord : undefined
+}
+
+/** Define o acorde de uma sílaba específica da palavra, criando `pieces`
+ * (dividido pelas sílabas reais) só na primeira vez que alguém usa uma
+ * sílaba diferente da 0ª — palavras simples continuam usando só `chord`. */
+function setChordAtSyllable(token: LyricToken, syllableIndex: number, chord: string | undefined): LyricToken {
+  if (!token.pieces && syllableIndex === 0) {
+    return { text: token.text, chord }
+  }
+  const syllables = splitSyllables(token.text)
+  const pieces = token.pieces ?? syllables.map((s, i) => ({ text: s, chord: i === 0 ? token.chord : undefined }))
+  const newPieces = pieces.map((p, i) => (i === syllableIndex ? { ...p, chord } : p))
+  return { text: token.text, pieces: newPieces, chord: newPieces.find((p) => p.chord)?.chord }
+}
 
 type SaveState = 'saved' | 'saving' | 'idle'
 
@@ -71,7 +93,7 @@ function SongEditor({ songId }: { songId: string }) {
 
   const [lyricsDraft, setLyricsDraft] = useState('')
   const [lines, setLines] = useState<LyricLine[] | null>(null)
-  const [picker, setPicker] = useState<{ lineIndex: number; tokenIndex: number } | null>(null)
+  const [picker, setPicker] = useState<{ lineIndex: number; tokenIndex: number; syllableIndex: number } | null>(null)
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [rawMode, setRawMode] = useState(false)
   const [rawDraft, setRawDraft] = useState('')
@@ -108,14 +130,16 @@ function SongEditor({ songId }: { songId: string }) {
   }
 
   function handleWordClick(lineIndex: number, tokenIndex: number) {
-    setPicker({ lineIndex, tokenIndex })
+    setPicker({ lineIndex, tokenIndex, syllableIndex: 0 })
   }
 
   function handleChordSelect(chord: string) {
     if (!picker || !lines) return
     const newLines = lines.map((line, li) => {
       if (li !== picker.lineIndex) return line
-      const tokens = line.tokens.map((t, ti) => (ti === picker.tokenIndex ? { ...t, chord } : t))
+      const tokens = line.tokens.map((t, ti) =>
+        ti === picker.tokenIndex ? setChordAtSyllable(t, picker.syllableIndex, chord) : t,
+      )
       return { ...line, tokens }
     })
     commitLines(newLines)
@@ -126,7 +150,9 @@ function SongEditor({ songId }: { songId: string }) {
     if (!picker || !lines) return
     const newLines = lines.map((line, li) => {
       if (li !== picker.lineIndex) return line
-      const tokens = line.tokens.map((t, ti) => (ti === picker.tokenIndex ? { text: t.text } : t))
+      const tokens = line.tokens.map((t, ti) =>
+        ti === picker.tokenIndex ? setChordAtSyllable(t, picker.syllableIndex, undefined) : t,
+      )
       return { ...line, tokens }
     })
     commitLines(newLines)
@@ -140,6 +166,9 @@ function SongEditor({ songId }: { songId: string }) {
     const newLines = lines.map((line) => ({ ...line, tokens: line.tokens.map((t) => ({ ...t })) }))
     const fromToken = newLines[from.lineIndex].tokens[from.tokenIndex]
     const toToken = newLines[to.lineIndex].tokens[to.tokenIndex]
+    // Palavra com acorde em sílaba específica (item 182) não participa do
+    // arrastar — trocaria só o acorde "principal" sem refletir na tela.
+    if (fromToken.pieces || toToken.pieces) return
     const fromChord = fromToken.chord
     fromToken.chord = toToken.chord
     toToken.chord = fromChord
@@ -368,14 +397,17 @@ function SongEditor({ songId }: { songId: string }) {
         </>
       )}
 
-      {picker && (
+      {picker && activeToken && (
         <ChordPicker
-          title={`Acorde em "${activeToken?.text || '(instrumental)'}"`}
+          title={`Acorde em "${activeToken.text || '(instrumental)'}"`}
           currentKey={song.preferredKey}
           notation={settings.notation}
-          currentChord={activeToken?.chord}
+          currentChord={chordAtSyllable(activeToken, picker.syllableIndex)}
+          syllables={splitSyllables(activeToken.text)}
+          activeSyllable={picker.syllableIndex}
+          onSyllableChange={(syllableIndex) => setPicker({ ...picker, syllableIndex })}
           onSelect={handleChordSelect}
-          onRemove={activeToken?.chord ? handleChordRemove : undefined}
+          onRemove={chordAtSyllable(activeToken, picker.syllableIndex) ? handleChordRemove : undefined}
           onClose={() => setPicker(null)}
         />
       )}

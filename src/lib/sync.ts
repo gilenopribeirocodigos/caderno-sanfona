@@ -44,6 +44,7 @@ function songToRemote(s: Song, userId: string) {
     notes: s.notes ?? null,
     video_url: s.videoUrl ?? null,
     karaoke_url: s.karaokeUrl ?? null,
+    chord_voicings: s.chordVoicings ?? null,
     tags: s.tags,
     favorite: s.favorite,
     last_practiced_at: s.lastPracticedAt ?? null,
@@ -71,6 +72,7 @@ function songFromRemote(r: any): Song {
     notes: r.notes ?? undefined,
     videoUrl: r.video_url ?? undefined,
     karaokeUrl: r.karaoke_url ?? undefined,
+    chordVoicings: r.chord_voicings ?? undefined,
     tags: r.tags ?? [],
     favorite: r.favorite,
     lastPracticedAt: r.last_practiced_at ?? undefined,
@@ -494,7 +496,7 @@ function songContent(song: Song): string {
   return JSON.stringify([
     song.title, song.artist, song.originalKey, song.preferredKey, song.lyrics,
     song.chordData, song.bpm, song.rhythm, song.timeSignature, song.difficulty,
-    song.notes, song.videoUrl, song.karaokeUrl, song.tags, song.favorite,
+    song.notes, song.videoUrl, song.karaokeUrl, song.chordVoicings, song.tags, song.favorite,
   ])
 }
 

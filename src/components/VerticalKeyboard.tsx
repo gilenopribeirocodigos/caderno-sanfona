@@ -8,6 +8,11 @@ interface VerticalKeyboardProps {
   chord?: string
   color: ChordColor
   notation: ChordNotation
+  /** Inversão já salva pra esse acorde nesta música (item 183), se tiver. */
+  savedInversion?: number
+  /** Presente = mostra o botão "Salvar", que grava a inversão escolhida
+   * pra valer em toda ocorrência desse acorde na música. */
+  onSaveInversion?: (inversion: number) => void
 }
 
 const WHITE_KEY_W = 64
@@ -30,9 +35,10 @@ function inversionLabel(i: number): string {
  * como no teclado de verdade. Usado em conjunto com um teclado por
  * acorde da música (ver ChordKeyboards).
  */
-export default function VerticalKeyboard({ chord, color, notation }: VerticalKeyboardProps) {
-  const [inversion, setInversion] = useState(0)
-  useEffect(() => setInversion(0), [chord])
+export default function VerticalKeyboard({ chord, color, notation, savedInversion, onSaveInversion }: VerticalKeyboardProps) {
+  const [inversion, setInversion] = useState(savedInversion ?? 0)
+  const [justSaved, setJustSaved] = useState(false)
+  useEffect(() => setInversion(savedInversion ?? 0), [chord, savedInversion])
 
   const inversionCount = inversionCountForChord(chord)
   const { whiteKeys, blackKeys, active } = keyboardLayoutForChord(chord, 1, inversion)
@@ -60,6 +66,20 @@ export default function VerticalKeyboard({ chord, color, notation }: VerticalKey
               {inversionLabel(i)}
             </button>
           ))}
+          {onSaveInversion && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onSaveInversion(inversion)
+                setJustSaved(true)
+                setTimeout(() => setJustSaved(false), 1500)
+              }}
+              className="ml-1 rounded border border-slate-300 px-1 py-0.5 text-[8px] font-semibold leading-none text-slate-500 dark:border-slate-600 dark:text-slate-400"
+            >
+              {justSaved ? '✓ Salvo' : 'Salvar'}
+            </button>
+          )}
         </div>
       )}
       <svg width={width} height={height} role="img" aria-label={`Teclado do acorde ${chord ?? ''}, ${inversionLabel(inversion)}`}>

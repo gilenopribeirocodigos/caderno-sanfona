@@ -15,12 +15,35 @@ function parseLine(rawLine: string): LyricLine {
   if (rawLine.trim() === '') return { tokens: [] }
 
   const words = rawLine.trim().split(/\s+/)
-  const tokens: LyricToken[] = words.map((word) => {
-    const match = /^\[([^\]]+)\](.*)$/.exec(word)
-    if (match) return { chord: match[1], text: match[2] }
-    return { text: word }
-  })
+  const tokens: LyricToken[] = words.map(parseWord)
   return { tokens }
+}
+
+/** Uma "palavra" pode ter mais de um acorde grudado em posições diferentes
+ * (ex: "Mo[G]re[Am]na", acorde na 2ª e 3ª sílaba) — separa em pedaços,
+ * um por sílaba marcada, pra permitir ancorar o acorde no meio da palavra
+ * (item 182) sem perder compatibilidade com o caso simples de 1 acorde só
+ * no começo (continua usando `chord`/`text` direto, sem `pieces`). */
+function parseWord(word: string): LyricToken {
+  if (!word.includes('[')) return { text: word }
+
+  const singleLeading = /^\[([^\]]+)\]([^[]*)$/.exec(word)
+  if (singleLeading) return { chord: singleLeading[1], text: singleLeading[2] }
+
+  const pieces: LyricToken['pieces'] = []
+  let plainText = ''
+  const leading = /^[^[]+/.exec(word)
+  if (leading) {
+    pieces.push({ text: leading[0] })
+    plainText += leading[0]
+  }
+  const regex = /\[([^\]]*)\]([^[]*)/g
+  let match: RegExpExecArray | null
+  while ((match = regex.exec(word))) {
+    pieces.push({ chord: match[1] || undefined, text: match[2] })
+    plainText += match[2]
+  }
+  return { chord: pieces.find((p) => p.chord)?.chord, text: plainText, pieces }
 }
 
 /** Reconstrói o texto em ChordPro a partir das linhas estruturadas (inverso de parseChordPro). */
@@ -29,9 +52,14 @@ export function renderChordPro(lines: LyricLine[]): string {
     .map((line) => {
       if (line.section !== undefined) return `${SECTION_PREFIX}${line.section}`
       if (line.tokens.length === 0) return ''
-      return line.tokens.map((t) => (t.chord ? `[${t.chord}]${t.text}` : t.text)).join(' ')
+      return line.tokens.map(renderWord).join(' ')
     })
     .join('\n')
+}
+
+function renderWord(t: LyricToken): string {
+  if (t.pieces) return t.pieces.map((p) => (p.chord ? `[${p.chord}]${p.text}` : p.text)).join('')
+  return t.chord ? `[${t.chord}]${t.text}` : t.text
 }
 
 export function buildChordData(source: string): ChordData {
@@ -60,7 +88,13 @@ export function uniqueChordsInSong(lines: LyricLine[]): string[] {
   const seen = new Set<string>()
   for (const line of lines) {
     for (const token of line.tokens) {
-      if (token.chord) seen.add(token.chord)
+      if (token.pieces) {
+        for (const piece of token.pieces) {
+          if (piece.chord) seen.add(piece.chord)
+        }
+      } else if (token.chord) {
+        seen.add(token.chord)
+      }
     }
   }
   return Array.from(seen)

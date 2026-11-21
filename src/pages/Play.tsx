@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db'
-import { registerPractice } from '@/lib/songsRepo'
+import { registerPractice, saveChordVoicing } from '@/lib/songsRepo'
 import { updateSettings } from '@/lib/settingsRepo'
 import { useSettings } from '@/lib/useSettings'
 import { firstChord, uniqueChordsInSong } from '@/utils/chordpro'
@@ -570,6 +570,8 @@ export default function Play() {
               accordionType={settings.accordionType}
               notation={settings.notation}
               onClose={() => setPreviewChord(null)}
+              savedInversion={song.chordVoicings?.[previewChord.chord]}
+              onSaveInversion={(inversion) => saveChordVoicing(song, previewChord.chord, inversion)}
             />
           )}
 

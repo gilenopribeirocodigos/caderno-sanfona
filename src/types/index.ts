@@ -12,6 +12,15 @@ export type HelpLevel = 'iniciante' | 'intermediario' | 'avancado'
 export interface LyricToken {
   chord?: string
   text: string
+  /** Presente = a palavra tem acorde(s) ancorados em sílaba(s) específica(s)
+   * (item 182), não só no começo. Cada pedaço é uma sílaba da palavra; a
+   * concatenação dos `text` dá a palavra inteira, sem hífen. */
+  pieces?: LyricPiece[]
+}
+
+export interface LyricPiece {
+  chord?: string
+  text: string
 }
 
 export interface LyricLine {
@@ -49,6 +58,10 @@ export interface Song {
   karaokeUrl?: string
   tags: string[]
   favorite: boolean
+  /** Inversão (Fund/1ª/2ª...) escolhida pra cada acorde desta música, no
+   * teclado de "onde apertar" (item 183) — por nome de acorde, vale pra
+   * toda ocorrência dele na música. */
+  chordVoicings?: Record<string, number>
   lastPracticedAt?: string
   timesPlayed: number
   createdAt: string

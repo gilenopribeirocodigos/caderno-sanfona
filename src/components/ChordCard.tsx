@@ -82,12 +82,22 @@ interface ChordCardProps {
   color?: ChordColor
   /** "lg" pro Modo Aula (letra maior, sem escala reduzida no teclado). */
   size?: 'sm' | 'lg'
+  savedInversion?: number
+  onSaveInversion?: (inversion: number) => void
 }
 
 /** Cartão reutilizável (nome + teclado + baixo) pra "onde apertar" de um
  * acorde — usado no balão de preview rápido (ChordPreviewPopup) e no
  * Modo Aula, sempre com o mesmo desenho compacto. */
-export default function ChordCard({ chord, accordionType, notation, color, size = 'sm' }: ChordCardProps) {
+export default function ChordCard({
+  chord,
+  accordionType,
+  notation,
+  color,
+  size = 'sm',
+  savedInversion,
+  onSaveInversion,
+}: ChordCardProps) {
   const resolvedColor = color ?? colorMapForChords([chord]).get(chord)!
   const fullName = fullChordNamePt(chord)
   return (
@@ -102,7 +112,13 @@ export default function ChordCard({ chord, accordionType, notation, color, size 
       </span>
       <div className="flex items-start gap-2">
         <div className={size === 'lg' ? undefined : 'scale-90 origin-top-left'}>
-          <VerticalKeyboard chord={chord} color={resolvedColor} notation={notation} />
+          <VerticalKeyboard
+            chord={chord}
+            color={resolvedColor}
+            notation={notation}
+            savedInversion={savedInversion}
+            onSaveInversion={onSaveInversion}
+          />
         </div>
         <MiniBassPreview chord={chord} accordionType={accordionType} notation={notation} color={resolvedColor} />
       </div>

@@ -1,4 +1,4 @@
-import type { AccordionType, ChordNotation, LyricLine, Song } from '@/types'
+import type { AccordionType, ChordNotation, LyricLine, LyricToken, Song } from '@/types'
 import { formatChordForDisplay } from './chords'
 import { chordLabelForRow, columnsFor, getHighlightedButtons, rowsFor } from './accordion'
 import { colorMapForChords, type ChordColor } from './chordColors'
@@ -55,11 +55,21 @@ function lineToPlainText(line: LyricLine, notation: ChordNotation): string[] {
   let chordLine = ''
   let hasChord = false
   line.tokens.forEach((token, i) => {
-    if (token.chord) {
-      hasChord = true
-      chordLine = padTo(chordLine, lyricLine.length) + formatChordForDisplay(token.chord, notation)
+    if (token.pieces) {
+      for (const piece of token.pieces) {
+        if (piece.chord) {
+          hasChord = true
+          chordLine = padTo(chordLine, lyricLine.length) + formatChordForDisplay(piece.chord, notation)
+        }
+        lyricLine += piece.text
+      }
+    } else {
+      if (token.chord) {
+        hasChord = true
+        chordLine = padTo(chordLine, lyricLine.length) + formatChordForDisplay(token.chord, notation)
+      }
+      lyricLine += token.text
     }
-    lyricLine += token.text
     if (i < line.tokens.length - 1) lyricLine += ' '
   })
 
@@ -190,17 +200,25 @@ function chordCardHtml(chord: string, accordionType: AccordionType, notation: Ch
 /** Uma música em HTML pronto pra impressão — acorde acima da palavra,
  * igual à tela, mas sem menu/barra do app. Ao lado da letra, um cartão por
  * acorde da música com teclado + baixo (a "sanfona visual" no papel). */
+function wordToHtml(t: LyricToken, notation: ChordNotation): string {
+  if (t.pieces) {
+    const pieces = t.pieces
+      .map(
+        (p) =>
+          `<span class="word"><span class="chord">${p.chord ? escapeHtml(formatChordForDisplay(p.chord, notation)) : '&nbsp;'}</span><span class="lyric">${escapeHtml(p.text)}</span></span>`,
+      )
+      .join('')
+    return `<span class="piece-row">${pieces}</span>`
+  }
+  return `<span class="word"><span class="chord">${t.chord ? escapeHtml(formatChordForDisplay(t.chord, notation)) : '&nbsp;'}</span><span class="lyric">${escapeHtml(t.text) || '&nbsp;'}</span></span>`
+}
+
 function songToPrintHtml(song: Song, notation: ChordNotation, accordionType: AccordionType): string {
   const lines = song.chordData.lines
     .map((line) => {
       if (line.section !== undefined) return `<h4>${escapeHtml(line.section)}</h4>`
       if (line.tokens.length === 0) return '<div class="gap"></div>'
-      const words = line.tokens
-        .map(
-          (t) =>
-            `<span class="word"><span class="chord">${t.chord ? escapeHtml(formatChordForDisplay(t.chord, notation)) : '&nbsp;'}</span><span class="lyric">${escapeHtml(t.text) || '&nbsp;'}</span></span>`,
-        )
-        .join('')
+      const words = line.tokens.map((t) => wordToHtml(t, notation)).join('')
       return `<div class="line">${words}</div>`
     })
     .join('\n')
@@ -242,6 +260,7 @@ const PRINT_STYLES = `
   .gap { height: 0.5rem; }
   .line { display: flex; flex-wrap: wrap; gap: 0.15rem 0.3rem; margin-bottom: 0.2rem; }
   .word { display: flex; flex-direction: column; align-items: flex-start; }
+  .piece-row { display: flex; align-items: flex-end; }
   .chord { font-weight: bold; font-size: 0.85em; color: #0369a1; line-height: 1.1; }
   .lyric { line-height: 1.2; }
   .song-chords { width: 130px; flex-shrink: 0; display: flex; flex-direction: column; gap: 0.5rem; }

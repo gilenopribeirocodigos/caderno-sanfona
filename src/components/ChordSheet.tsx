@@ -140,7 +140,7 @@ export default function ChordSheet({
                     onWordClick ? 'rounded px-0.5 hover:bg-surface-alt' : ''
                   } ${isDropTarget ? 'bg-emerald-200 dark:bg-emerald-800' : ''}`}
                 >
-                  {showChords && (
+                  {showChords && !token.pieces && (
                   <span
                     style={{ fontSize: chordSize }}
                     className={`font-bold leading-tight ${
@@ -152,9 +152,34 @@ export default function ChordSheet({
                     {token.chord ? formatChordForDisplay(token.chord, notation) : ' '}
                   </span>
                   )}
-                  <span style={{ fontSize }} className="leading-tight">
-                    {token.text || ' '}
-                  </span>
+                  {!token.pieces && (
+                    <span style={{ fontSize }} className="leading-tight">
+                      {token.text || ' '}
+                    </span>
+                  )}
+                  {token.pieces && (
+                    <span className="flex items-end">
+                      {token.pieces.map((piece, pi) => (
+                        <span key={pi} className="flex flex-col items-start">
+                          {showChords && (
+                            <span
+                              style={{ fontSize: chordSize }}
+                              className={`font-bold leading-tight ${
+                                piece.chord && piece.chord === activeChord
+                                  ? 'rounded bg-amber-400 px-1 text-slate-900'
+                                  : 'text-sky-600 dark:text-sky-400'
+                              }`}
+                            >
+                              {piece.chord ? formatChordForDisplay(piece.chord, notation) : ' '}
+                            </span>
+                          )}
+                          <span style={{ fontSize }} className="leading-tight">
+                            {piece.text}
+                          </span>
+                        </span>
+                      ))}
+                    </span>
+                  )}
                 </span>
               )
             })}

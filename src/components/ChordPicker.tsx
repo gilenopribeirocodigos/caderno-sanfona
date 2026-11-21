@@ -12,6 +12,12 @@ interface ChordPickerProps {
   currentKey: string
   notation: ChordNotation
   currentChord?: string
+  /** Sílabas da palavra atual (item 182) — mostra uma fileira de chips pra
+   * escolher em qual sílaba ancorar o acorde, quando a palavra tem mais de
+   * uma. Ignorado em palavras monossílabas. */
+  syllables?: string[]
+  activeSyllable?: number
+  onSyllableChange?: (syllableIndex: number) => void
   onSelect: (chord: string) => void
   onRemove?: () => void
   onClose: () => void
@@ -28,6 +34,9 @@ export default function ChordPicker({
   currentKey,
   notation,
   currentChord,
+  syllables,
+  activeSyllable = 0,
+  onSyllableChange,
   onSelect,
   onRemove,
   onClose,
@@ -47,6 +56,24 @@ export default function ChordPicker({
             Fechar
           </button>
         </div>
+
+        {syllables && syllables.length > 1 && onSyllableChange && (
+          <div className="mb-3 flex flex-wrap gap-1.5">
+            {syllables.map((syl, i) => (
+              <button
+                key={i}
+                className={`tap-target rounded-md border px-2.5 py-1 text-sm font-medium ${
+                  i === activeSyllable
+                    ? 'border-[var(--color-gold)] bg-[var(--color-gold)] text-slate-900'
+                    : 'border-slate-300 dark:border-slate-700'
+                }`}
+                onClick={() => onSyllableChange(i)}
+              >
+                {syl}
+              </button>
+            ))}
+          </div>
+        )}
 
         {!showAll ? (
           <>

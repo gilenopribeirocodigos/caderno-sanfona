@@ -123,7 +123,14 @@ export default function LessonMode({ song, notation, accordionType, onExit, onNe
         {chunkChords.length > 0 && (
           <div className="flex flex-wrap justify-center gap-4">
             {chunkChords.map((c) => (
-              <ChordCard key={c} chord={c} accordionType={accordionType} notation={notation} size="lg" />
+              <ChordCard
+                key={c}
+                chord={c}
+                accordionType={accordionType}
+                notation={notation}
+                size="lg"
+                savedInversion={song.chordVoicings?.[c]}
+              />
             ))}
           </div>
         )}

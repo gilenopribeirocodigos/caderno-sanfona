@@ -8,11 +8,22 @@ interface ChordPreviewPopupProps {
   accordionType: AccordionType
   notation: ChordNotation
   onClose: () => void
+  savedInversion?: number
+  onSaveInversion?: (inversion: number) => void
 }
 
 /** Ao tocar num acorde na letra (estilo Cifra Club): mostra rapidinho onde
  * apertar — teclado e os botões certos do baixo — sem editar nada. */
-export default function ChordPreviewPopup({ chord, x, y, accordionType, notation, onClose }: ChordPreviewPopupProps) {
+export default function ChordPreviewPopup({
+  chord,
+  x,
+  y,
+  accordionType,
+  notation,
+  onClose,
+  savedInversion,
+  onSaveInversion,
+}: ChordPreviewPopupProps) {
   const width = 260
 
   return (
@@ -25,7 +36,13 @@ export default function ChordPreviewPopup({ chord, x, y, accordionType, notation
         <button className="tap-target absolute right-1.5 top-1.5 text-xs text-slate-400" onClick={onClose}>
           ✕
         </button>
-        <ChordCard chord={chord} accordionType={accordionType} notation={notation} />
+        <ChordCard
+          chord={chord}
+          accordionType={accordionType}
+          notation={notation}
+          savedInversion={savedInversion}
+          onSaveInversion={onSaveInversion}
+        />
       </div>
     </>
   )

@@ -100,6 +100,12 @@ export async function updateSong(id: string, changes: Partial<Song>): Promise<vo
   queueSyncChange('songs', id)
 }
 
+/** Salva a inversão escolhida (Fund/1ª/2ª...) pra um acorde, valendo pra
+ * toda ocorrência dele nesta música (item 183). */
+export async function saveChordVoicing(song: Song, chord: string, inversion: number): Promise<void> {
+  await updateSong(song.id, { chordVoicings: { ...song.chordVoicings, [chord]: inversion } })
+}
+
 export async function deleteSong(id: string): Promise<void> {
   const markerId = deletionId('songs', id)
   await db.transaction('rw', db.songs, db.notebookSongs, db.songVersions, db.practiceHistory, db.syncDeletions, async () => {
