@@ -26,6 +26,10 @@ export const COMMON_CHORD_QUALITIES = [
 
 export const COMMON_ROOTS = CHROMATIC_SHARP
 
+/** Tons maiores e menores juntos (ex: C, Cm, C#, C#m...), pra quem quer
+ * marcar que a música é em tom menor (item 181). */
+export const COMMON_KEYS = CHROMATIC_SHARP.flatMap((root) => [root, `${root}m`])
+
 /** Acordes sugeridos para os graus da tonalidade maior (paleta rápida, item 10). */
 const MAJOR_SCALE_DEGREE_OFFSETS = [0, 2, 4, 5, 7, 9, 11]
 const MAJOR_SCALE_DEGREE_QUALITY = ['', 'm', 'm', '', '', 'm', 'dim']

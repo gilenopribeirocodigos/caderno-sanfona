@@ -1,7 +1,7 @@
 import { db, deletionId } from './db'
 import type { ChordData, Song, SongVersion } from '@/types'
 import { buildChordData, stripChords, transposeChordProSource } from '@/utils/chordpro'
-import { semitonesBetweenKeys } from '@/utils/chords'
+import { CHROMATIC_SHARP, parseChord, semitonesBetweenKeys } from '@/utils/chords'
 import { queueSyncChange, removePendingChange } from './syncQueue'
 
 function newId(): string {
@@ -140,11 +140,12 @@ export async function transposeSongToKey(song: Song, newKey: string): Promise<vo
 }
 
 export async function transposeSongBySemitones(song: Song, delta: number): Promise<void> {
-  const CHROMATIC = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-  const currentIndex = CHROMATIC.indexOf(song.preferredKey)
+  const parsed = parseChord(song.preferredKey)
+  if (!parsed) return
+  const currentIndex = CHROMATIC_SHARP.indexOf(parsed.root as (typeof CHROMATIC_SHARP)[number])
   if (currentIndex === -1) return
-  const newKey = CHROMATIC[(currentIndex + delta + 120) % 12]
-  await transposeSongToKey(song, newKey)
+  const newRoot = CHROMATIC_SHARP[(currentIndex + delta + 120) % 12]
+  await transposeSongToKey(song, `${newRoot}${parsed.quality}`)
 }
 
 /** Registra uma sessão de prática (item 29), incrementando o contador de execuções. */

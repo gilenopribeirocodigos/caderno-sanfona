@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Song } from '@/types'
-import { COMMON_ROOTS } from '@/utils/chords'
+import { COMMON_KEYS } from '@/utils/chords'
 
 export interface SongFormValues {
   title: string
@@ -74,21 +74,21 @@ export default function SongForm({ initial, submitLabel, onCancel, onSubmit }: S
         className={inputClass}
         placeholder="Título da música"
         value={values.title}
-        onChange={(e) => set('title', e.target.value)}
+        onChange={(e) => set('title', e.target.value.toUpperCase())}
       />
       <div className="flex gap-2">
         <input
           className={`${inputClass} flex-1`}
           placeholder="Artista (opcional)"
           value={values.artist}
-          onChange={(e) => set('artist', e.target.value)}
+          onChange={(e) => set('artist', e.target.value.toUpperCase())}
         />
         <select
           className={`${inputClass} w-24`}
           value={values.originalKey}
           onChange={(e) => set('originalKey', e.target.value)}
         >
-          {COMMON_ROOTS.map((r) => (
+          {COMMON_KEYS.map((r) => (
             <option key={r} value={r}>
               {r}
             </option>

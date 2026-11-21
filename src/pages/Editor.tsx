@@ -13,7 +13,7 @@ import {
 } from '@/lib/songsRepo'
 import { useSettings } from '@/lib/useSettings'
 import { parseChordPro, renderChordPro } from '@/utils/chordpro'
-import { COMMON_ROOTS } from '@/utils/chords'
+import { COMMON_KEYS } from '@/utils/chords'
 import ChordSheet, { type WordRef } from '@/components/ChordSheet'
 import ChordPicker from '@/components/ChordPicker'
 import SongForm, { songToFormValues, type SongFormValues } from '@/components/SongForm'
@@ -414,7 +414,7 @@ function TransposeBar({ song }: { song: Song }) {
         value={song.preferredKey}
         onChange={(e) => transposeSongToKey(song, e.target.value)}
       >
-        {COMMON_ROOTS.map((r) => (
+        {COMMON_KEYS.map((r) => (
           <option key={r} value={r}>
             {r}
           </option>
