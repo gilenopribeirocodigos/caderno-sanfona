@@ -52,7 +52,11 @@ export default function Notebooks() {
             <button
               aria-label="Excluir caderno"
               className="tap-target text-xs text-red-500 underline"
-              onClick={() => deleteNotebook(nb.id)}
+              onClick={() => {
+                if (window.confirm(`Excluir o caderno "${nb.name}"? As músicas continuam na Biblioteca, só a lista/ordem deste caderno será apagada.`)) {
+                  deleteNotebook(nb.id)
+                }
+              }}
             >
               Excluir
             </button>
