@@ -18,6 +18,9 @@ interface ChordPickerProps {
   syllables?: string[]
   activeSyllable?: number
   onSyllableChange?: (syllableIndex: number) => void
+  /** Acordes já usados nesta música (item 184) — mostra um atalho pra
+   * reaproveitar sem precisar abrir "Todos os acordes" de novo. */
+  usedChords?: string[]
   onSelect: (chord: string) => void
   onRemove?: () => void
   onClose: () => void
@@ -37,6 +40,7 @@ export default function ChordPicker({
   syllables,
   activeSyllable = 0,
   onSyllableChange,
+  usedChords = [],
   onSelect,
   onRemove,
   onClose,
@@ -72,6 +76,27 @@ export default function ChordPicker({
                 {syl}
               </button>
             ))}
+          </div>
+        )}
+
+        {usedChords.length > 0 && (
+          <div className="mb-3">
+            <p className="mb-1.5 text-xs text-slate-400">Usados nesta música</p>
+            <div className="flex flex-wrap gap-1.5">
+              {usedChords.map((chord) => (
+                <button
+                  key={chord}
+                  className={`tap-target rounded-md border px-2.5 py-1.5 text-sm font-medium ${
+                    chord === currentChord
+                      ? 'border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900'
+                      : 'border-slate-300 dark:border-slate-700'
+                  }`}
+                  onClick={() => onSelect(chord)}
+                >
+                  {formatChordForDisplay(chord, notation)}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 

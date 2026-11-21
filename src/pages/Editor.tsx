@@ -12,7 +12,7 @@ import {
   updateSongDetails,
 } from '@/lib/songsRepo'
 import { useSettings } from '@/lib/useSettings'
-import { parseChordPro, renderChordPro } from '@/utils/chordpro'
+import { parseChordPro, renderChordPro, uniqueChordsInSong } from '@/utils/chordpro'
 import { COMMON_KEYS } from '@/utils/chords'
 import { splitSyllables } from '@/utils/syllables'
 import ChordSheet, { type WordRef } from '@/components/ChordSheet'
@@ -406,6 +406,7 @@ function SongEditor({ songId }: { songId: string }) {
           syllables={splitSyllables(activeToken.text)}
           activeSyllable={picker.syllableIndex}
           onSyllableChange={(syllableIndex) => setPicker({ ...picker, syllableIndex })}
+          usedChords={lines ? uniqueChordsInSong(lines) : []}
           onSelect={handleChordSelect}
           onRemove={chordAtSyllable(activeToken, picker.syllableIndex) ? handleChordRemove : undefined}
           onClose={() => setPicker(null)}
