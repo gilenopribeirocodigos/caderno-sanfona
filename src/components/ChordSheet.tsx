@@ -13,8 +13,10 @@ interface ChordSheetProps {
   onChordMove?: (from: WordRef, to: WordRef) => void
   /** Modo leitura: tocar num acorde já existente o marca como "atual" (Modo Sanfona Visual). */
   onChordTap?: (chord: string) => void
-  /** PROTÓTIPO: tocar num acorde mostra um preview rápido (teclado + baixo) pertinho do toque. */
-  onChordPreview?: (chord: string, x: number, y: number) => void
+  /** Mostra um preview rápido (teclado + baixo) pertinho do toque — o `ref`
+   * identifica exatamente qual ocorrência foi tocada (item 185), pra dar
+   * pra salvar a inversão só pra ela, se quiser. */
+  onChordPreview?: (chord: string, x: number, y: number, ref: WordRef) => void
   activeChord?: string
   /** false = só a letra, sem a linha de cifra acima — mais compacto (item 179). */
   showChords?: boolean
@@ -23,6 +25,8 @@ interface ChordSheetProps {
 export interface WordRef {
   lineIndex: number
   tokenIndex: number
+  /** Presente quando a palavra tem acorde(s) por sílaba (item 182/185). */
+  pieceIndex?: number
 }
 
 const DRAG_THRESHOLD = 8
@@ -130,10 +134,16 @@ export default function ChordSheet({
                   onPointerDown={(e) => showChords && handlePointerDown(e, li, ti, token.chord)}
                   onClick={(e) => {
                     if (!showChords || dragState.current?.moved) return
-                    if (onWordClick) onWordClick(li, ti)
-                    else if (token.chord) {
-                      onChordTap?.(token.chord)
-                      onChordPreview?.(token.chord, e.clientX, e.clientY)
+                    if (onWordClick) {
+                      onWordClick(li, ti)
+                      return
+                    }
+                    const pieceEl = (e.target as HTMLElement).closest<HTMLElement>('[data-pi]')
+                    const pieceIndex = pieceEl ? Number(pieceEl.dataset.pi) : undefined
+                    const chord = pieceIndex !== undefined ? token.pieces?.[pieceIndex]?.chord : token.chord
+                    if (chord) {
+                      onChordTap?.(chord)
+                      onChordPreview?.(chord, e.clientX, e.clientY, { lineIndex: li, tokenIndex: ti, pieceIndex })
                     }
                   }}
                   className={`flex flex-col items-start ${clickable ? 'cursor-pointer touch-none' : ''} ${
@@ -150,6 +160,9 @@ export default function ChordSheet({
                     }`}
                   >
                     {token.chord ? formatChordForDisplay(token.chord, notation) : ' '}
+                    {token.inversion !== undefined && (
+                      <sup className="ml-0.5 text-[8px] text-amber-500" title="Inversão diferente só aqui">●</sup>
+                    )}
                   </span>
                   )}
                   {!token.pieces && (
@@ -160,7 +173,7 @@ export default function ChordSheet({
                   {token.pieces && (
                     <span className="flex items-end">
                       {token.pieces.map((piece, pi) => (
-                        <span key={pi} className="flex flex-col items-start">
+                        <span key={pi} data-pi={pi} className="flex flex-col items-start">
                           {showChords && (
                             <span
                               style={{ fontSize: chordSize }}
@@ -171,6 +184,9 @@ export default function ChordSheet({
                               }`}
                             >
                               {piece.chord ? formatChordForDisplay(piece.chord, notation) : ' '}
+                              {piece.inversion !== undefined && (
+                                <sup className="ml-0.5 text-[8px] text-amber-500" title="Inversão diferente só aqui">●</sup>
+                              )}
                             </span>
                           )}
                           <span style={{ fontSize }} className="leading-tight">

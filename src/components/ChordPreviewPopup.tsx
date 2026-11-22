@@ -9,7 +9,10 @@ interface ChordPreviewPopupProps {
   notation: ChordNotation
   onClose: () => void
   savedInversion?: number
-  onSaveInversion?: (inversion: number) => void
+  /** Presente = essa inversão veio de "Salvar só este", não do padrão da música. */
+  hasOccurrenceOverride?: boolean
+  onSaveAll?: (inversion: number) => void
+  onSaveThis?: (inversion: number) => void
 }
 
 /** Ao tocar num acorde na letra (estilo Cifra Club): mostra rapidinho onde
@@ -22,7 +25,9 @@ export default function ChordPreviewPopup({
   notation,
   onClose,
   savedInversion,
-  onSaveInversion,
+  hasOccurrenceOverride,
+  onSaveAll,
+  onSaveThis,
 }: ChordPreviewPopupProps) {
   const width = 260
 
@@ -41,7 +46,9 @@ export default function ChordPreviewPopup({
           accordionType={accordionType}
           notation={notation}
           savedInversion={savedInversion}
-          onSaveInversion={onSaveInversion}
+          hasOccurrenceOverride={hasOccurrenceOverride}
+          onSaveAll={onSaveAll}
+          onSaveThis={onSaveThis}
         />
       </div>
     </>

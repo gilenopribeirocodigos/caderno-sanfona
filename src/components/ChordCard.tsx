@@ -83,7 +83,9 @@ interface ChordCardProps {
   /** "lg" pro Modo Aula (letra maior, sem escala reduzida no teclado). */
   size?: 'sm' | 'lg'
   savedInversion?: number
-  onSaveInversion?: (inversion: number) => void
+  hasOccurrenceOverride?: boolean
+  onSaveAll?: (inversion: number) => void
+  onSaveThis?: (inversion: number) => void
 }
 
 /** Cartão reutilizável (nome + teclado + baixo) pra "onde apertar" de um
@@ -96,7 +98,9 @@ export default function ChordCard({
   color,
   size = 'sm',
   savedInversion,
-  onSaveInversion,
+  hasOccurrenceOverride,
+  onSaveAll,
+  onSaveThis,
 }: ChordCardProps) {
   const resolvedColor = color ?? colorMapForChords([chord]).get(chord)!
   const fullName = fullChordNamePt(chord)
@@ -117,7 +121,9 @@ export default function ChordCard({
             color={resolvedColor}
             notation={notation}
             savedInversion={savedInversion}
-            onSaveInversion={onSaveInversion}
+            hasOccurrenceOverride={hasOccurrenceOverride}
+            onSaveAll={onSaveAll}
+            onSaveThis={onSaveThis}
           />
         </div>
         <MiniBassPreview chord={chord} accordionType={accordionType} notation={notation} color={resolvedColor} />

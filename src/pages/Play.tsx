@@ -2,17 +2,44 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db'
-import { registerPractice, saveChordVoicing } from '@/lib/songsRepo'
+import { registerPractice, saveChordData, saveChordVoicing } from '@/lib/songsRepo'
 import { updateSettings } from '@/lib/settingsRepo'
 import { useSettings } from '@/lib/useSettings'
-import { firstChord, uniqueChordsInSong } from '@/utils/chordpro'
-import ChordSheet from '@/components/ChordSheet'
+import { firstChord, renderChordPro, uniqueChordsInSong } from '@/utils/chordpro'
+import ChordSheet, { type WordRef } from '@/components/ChordSheet'
 import AccordionVisualPanel from '@/components/AccordionVisualPanel'
 import BatuqueControl from '@/components/BatuqueControl'
 import ChordPreviewPopup from '@/components/ChordPreviewPopup'
 import LessonMode from '@/components/LessonMode'
 import MediaPanel from '@/components/MediaPanel'
-import type { NotebookSong } from '@/types'
+import type { LyricLine, NotebookSong, Song } from '@/types'
+
+/** Inversão já salva especificamente nesta ocorrência do acorde (item 185),
+ * se alguém escolheu "Salvar só este" em vez de "Salvar pra todos". */
+function inversionAtRef(song: Song, ref: WordRef): number | undefined {
+  const token = song.chordData.lines[ref.lineIndex]?.tokens[ref.tokenIndex]
+  if (!token) return undefined
+  if (ref.pieceIndex !== undefined) return token.pieces?.[ref.pieceIndex]?.inversion
+  return token.inversion
+}
+
+/** Marca (ou limpa) a inversão de uma ocorrência específica do acorde,
+ * sem mexer no padrão da música (Song.chordVoicings). */
+async function setInversionAtRef(song: Song, ref: WordRef, inversion: number | undefined): Promise<void> {
+  const newLines: LyricLine[] = song.chordData.lines.map((line, li) => {
+    if (li !== ref.lineIndex) return line
+    const tokens = line.tokens.map((t, ti) => {
+      if (ti !== ref.tokenIndex) return t
+      if (ref.pieceIndex !== undefined && t.pieces) {
+        const pieces = t.pieces.map((p, pi) => (pi === ref.pieceIndex ? { ...p, inversion } : p))
+        return { ...t, pieces }
+      }
+      return { ...t, inversion }
+    })
+    return { ...line, tokens }
+  })
+  await saveChordData(song.id, { chordProSource: renderChordPro(newLines), lines: newLines })
+}
 
 const SPEED_PRESETS = [
   { label: 'Muito lento', px: 0.3 },
@@ -92,7 +119,7 @@ export default function Play() {
   const [showLesson, setShowLesson] = useState(false)
   const [showMoreControls, setShowMoreControls] = useState(false)
   const [activeChord, setActiveChord] = useState<string | undefined>()
-  const [previewChord, setPreviewChord] = useState<{ chord: string; x: number; y: number } | null>(null)
+  const [previewChord, setPreviewChord] = useState<{ chord: string; x: number; y: number; ref: WordRef } | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [scrolling, setScrolling] = useState(false)
   const [speedLevel, setSpeedLevel] = useState(2)
@@ -557,7 +584,7 @@ export default function Play() {
               // acorde da música aparecia marcado sem nenhuma explicação.
               activeChord={showVisual ? activeChord : undefined}
               onChordTap={setActiveChord}
-              onChordPreview={(chord, x, y) => setPreviewChord({ chord, x, y })}
+              onChordPreview={(chord, x, y, ref) => setPreviewChord({ chord, x, y, ref })}
               showChords={showChords}
             />
           </div>
@@ -570,8 +597,15 @@ export default function Play() {
               accordionType={settings.accordionType}
               notation={settings.notation}
               onClose={() => setPreviewChord(null)}
-              savedInversion={song.chordVoicings?.[previewChord.chord]}
-              onSaveInversion={(inversion) => saveChordVoicing(song, previewChord.chord, inversion)}
+              savedInversion={inversionAtRef(song, previewChord.ref) ?? song.chordVoicings?.[previewChord.chord]}
+              hasOccurrenceOverride={inversionAtRef(song, previewChord.ref) !== undefined}
+              onSaveAll={(inversion) => {
+                saveChordVoicing(song, previewChord.chord, inversion)
+                if (inversionAtRef(song, previewChord.ref) !== undefined) {
+                  setInversionAtRef(song, previewChord.ref, undefined)
+                }
+              }}
+              onSaveThis={(inversion) => setInversionAtRef(song, previewChord.ref, inversion)}
             />
           )}
 

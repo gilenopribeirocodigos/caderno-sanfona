@@ -8,11 +8,15 @@ interface VerticalKeyboardProps {
   chord?: string
   color: ChordColor
   notation: ChordNotation
-  /** Inversão já salva pra esse acorde nesta música (item 183), se tiver. */
+  /** Inversão já salva pra esse acorde (padrão da música, ou só desta
+   * ocorrência — item 183/185), se tiver. */
   savedInversion?: number
-  /** Presente = mostra o botão "Salvar", que grava a inversão escolhida
-   * pra valer em toda ocorrência desse acorde na música. */
-  onSaveInversion?: (inversion: number) => void
+  /** A inversão acima veio de "Salvar só este", não do padrão da música. */
+  hasOccurrenceOverride?: boolean
+  /** Presentes = mostra o botão "Salvar", que deixa escolher entre valer
+   * pra todo "Dm" da música ou só nesta ocorrência. */
+  onSaveAll?: (inversion: number) => void
+  onSaveThis?: (inversion: number) => void
 }
 
 const WHITE_KEY_W = 64
@@ -35,10 +39,19 @@ function inversionLabel(i: number): string {
  * como no teclado de verdade. Usado em conjunto com um teclado por
  * acorde da música (ver ChordKeyboards).
  */
-export default function VerticalKeyboard({ chord, color, notation, savedInversion, onSaveInversion }: VerticalKeyboardProps) {
+export default function VerticalKeyboard({
+  chord,
+  color,
+  notation,
+  savedInversion,
+  hasOccurrenceOverride,
+  onSaveAll,
+  onSaveThis,
+}: VerticalKeyboardProps) {
   const [inversion, setInversion] = useState(savedInversion ?? 0)
-  const [justSaved, setJustSaved] = useState(false)
+  const [saveMode, setSaveMode] = useState<'idle' | 'choosing' | 'saved'>('idle')
   useEffect(() => setInversion(savedInversion ?? 0), [chord, savedInversion])
+  useEffect(() => setSaveMode('idle'), [chord])
 
   const inversionCount = inversionCountForChord(chord)
   const { whiteKeys, blackKeys, active } = keyboardLayoutForChord(chord, 1, inversion)
@@ -66,21 +79,71 @@ export default function VerticalKeyboard({ chord, color, notation, savedInversio
               {inversionLabel(i)}
             </button>
           ))}
-          {onSaveInversion && (
+          {(onSaveAll || onSaveThis) && saveMode === 'idle' && (
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
-                onSaveInversion(inversion)
-                setJustSaved(true)
-                setTimeout(() => setJustSaved(false), 1500)
+                setSaveMode('choosing')
               }}
               className="ml-1 rounded border border-slate-300 px-1 py-0.5 text-[8px] font-semibold leading-none text-slate-500 dark:border-slate-600 dark:text-slate-400"
             >
-              {justSaved ? '✓ Salvo' : 'Salvar'}
+              Salvar
             </button>
           )}
+          {saveMode === 'choosing' && (
+            <>
+              {onSaveAll && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onSaveAll(inversion)
+                    setSaveMode('saved')
+                    setTimeout(() => setSaveMode('idle'), 1500)
+                  }}
+                  className="ml-1 rounded border border-slate-300 px-1 py-0.5 text-[8px] font-semibold leading-none text-slate-500 dark:border-slate-600 dark:text-slate-400"
+                  title='Vale pra todo acorde igual a este na música'
+                >
+                  Todos
+                </button>
+              )}
+              {onSaveThis && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onSaveThis(inversion)
+                    setSaveMode('saved')
+                    setTimeout(() => setSaveMode('idle'), 1500)
+                  }}
+                  className="ml-1 rounded border border-slate-300 px-1 py-0.5 text-[8px] font-semibold leading-none text-slate-500 dark:border-slate-600 dark:text-slate-400"
+                  title="Vale só pra este, nesse ponto da letra"
+                >
+                  Só este
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setSaveMode('idle')
+                }}
+                className="ml-1 rounded px-1 py-0.5 text-[8px] font-semibold leading-none text-slate-400"
+              >
+                ✕
+              </button>
+            </>
+          )}
+          {saveMode === 'saved' && (
+            <span className="ml-1 rounded px-1 py-0.5 text-[8px] font-semibold leading-none text-emerald-500">
+              ✓ Salvo
+            </span>
+          )}
         </div>
+      )}
+      {hasOccurrenceOverride && (
+        <span className="text-[8px] leading-none text-amber-500">● inversão diferente só aqui</span>
       )}
       <svg width={width} height={height} role="img" aria-label={`Teclado do acorde ${chord ?? ''}, ${inversionLabel(inversion)}`}>
         {whiteKeys.map((key, i) => {

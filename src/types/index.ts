@@ -16,11 +16,16 @@ export interface LyricToken {
    * (item 182), não só no começo. Cada pedaço é uma sílaba da palavra; a
    * concatenação dos `text` dá a palavra inteira, sem hífen. */
   pieces?: LyricPiece[]
+  /** Inversão (Fund/1ª/2ª...) só pra ESTA ocorrência do acorde, diferente
+   * do padrão da música (item 185) — "Salvar só este", ao invés de
+   * "Salvar pra todos" (Song.chordVoicings). */
+  inversion?: number
 }
 
 export interface LyricPiece {
   chord?: string
   text: string
+  inversion?: number
 }
 
 export interface LyricLine {
