@@ -2,23 +2,18 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db'
-import { registerPractice, saveChordData, saveChordVoicing } from '@/lib/songsRepo'
+import { registerPractice } from '@/lib/songsRepo'
 import { updateSettings } from '@/lib/settingsRepo'
 import { useSettings } from '@/lib/useSettings'
-import { firstChord, renderChordPro, uniqueChordsInSong } from '@/utils/chordpro'
-import { inversionAtRef, withInversionAtRef } from '@/utils/chordVoicing'
+import { firstChord, uniqueChordsInSong } from '@/utils/chordpro'
+import { inversionAtRef } from '@/utils/chordVoicing'
 import ChordSheet, { type WordRef } from '@/components/ChordSheet'
 import AccordionVisualPanel from '@/components/AccordionVisualPanel'
 import BatuqueControl from '@/components/BatuqueControl'
 import ChordPreviewPopup from '@/components/ChordPreviewPopup'
 import LessonMode from '@/components/LessonMode'
 import MediaPanel from '@/components/MediaPanel'
-import type { NotebookSong, Song } from '@/types'
-
-async function setInversionAtRef(song: Song, ref: WordRef, inversion: number | undefined): Promise<void> {
-  const newLines = withInversionAtRef(song.chordData.lines, ref, inversion)
-  await saveChordData(song.id, { chordProSource: renderChordPro(newLines), lines: newLines })
-}
+import type { NotebookSong } from '@/types'
 
 const SPEED_PRESETS = [
   { label: 'Muito lento', px: 0.3 },
@@ -578,13 +573,6 @@ export default function Play() {
               onClose={() => setPreviewChord(null)}
               savedInversion={inversionAtRef(song.chordData.lines, previewChord.ref) ?? song.chordVoicings?.[previewChord.chord]}
               hasOccurrenceOverride={inversionAtRef(song.chordData.lines, previewChord.ref) !== undefined}
-              onSaveAll={(inversion) => {
-                saveChordVoicing(song, previewChord.chord, inversion)
-                if (inversionAtRef(song.chordData.lines, previewChord.ref) !== undefined) {
-                  setInversionAtRef(song, previewChord.ref, undefined)
-                }
-              }}
-              onSaveThis={(inversion) => setInversionAtRef(song, previewChord.ref, inversion)}
             />
           )}
 
