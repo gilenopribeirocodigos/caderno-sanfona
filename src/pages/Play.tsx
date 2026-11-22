@@ -6,38 +6,17 @@ import { registerPractice, saveChordData, saveChordVoicing } from '@/lib/songsRe
 import { updateSettings } from '@/lib/settingsRepo'
 import { useSettings } from '@/lib/useSettings'
 import { firstChord, renderChordPro, uniqueChordsInSong } from '@/utils/chordpro'
+import { inversionAtRef, withInversionAtRef } from '@/utils/chordVoicing'
 import ChordSheet, { type WordRef } from '@/components/ChordSheet'
 import AccordionVisualPanel from '@/components/AccordionVisualPanel'
 import BatuqueControl from '@/components/BatuqueControl'
 import ChordPreviewPopup from '@/components/ChordPreviewPopup'
 import LessonMode from '@/components/LessonMode'
 import MediaPanel from '@/components/MediaPanel'
-import type { LyricLine, NotebookSong, Song } from '@/types'
+import type { NotebookSong, Song } from '@/types'
 
-/** Inversão já salva especificamente nesta ocorrência do acorde (item 185),
- * se alguém escolheu "Salvar só este" em vez de "Salvar pra todos". */
-function inversionAtRef(song: Song, ref: WordRef): number | undefined {
-  const token = song.chordData.lines[ref.lineIndex]?.tokens[ref.tokenIndex]
-  if (!token) return undefined
-  if (ref.pieceIndex !== undefined) return token.pieces?.[ref.pieceIndex]?.inversion
-  return token.inversion
-}
-
-/** Marca (ou limpa) a inversão de uma ocorrência específica do acorde,
- * sem mexer no padrão da música (Song.chordVoicings). */
 async function setInversionAtRef(song: Song, ref: WordRef, inversion: number | undefined): Promise<void> {
-  const newLines: LyricLine[] = song.chordData.lines.map((line, li) => {
-    if (li !== ref.lineIndex) return line
-    const tokens = line.tokens.map((t, ti) => {
-      if (ti !== ref.tokenIndex) return t
-      if (ref.pieceIndex !== undefined && t.pieces) {
-        const pieces = t.pieces.map((p, pi) => (pi === ref.pieceIndex ? { ...p, inversion } : p))
-        return { ...t, pieces }
-      }
-      return { ...t, inversion }
-    })
-    return { ...line, tokens }
-  })
+  const newLines = withInversionAtRef(song.chordData.lines, ref, inversion)
   await saveChordData(song.id, { chordProSource: renderChordPro(newLines), lines: newLines })
 }
 
@@ -597,11 +576,11 @@ export default function Play() {
               accordionType={settings.accordionType}
               notation={settings.notation}
               onClose={() => setPreviewChord(null)}
-              savedInversion={inversionAtRef(song, previewChord.ref) ?? song.chordVoicings?.[previewChord.chord]}
-              hasOccurrenceOverride={inversionAtRef(song, previewChord.ref) !== undefined}
+              savedInversion={inversionAtRef(song.chordData.lines, previewChord.ref) ?? song.chordVoicings?.[previewChord.chord]}
+              hasOccurrenceOverride={inversionAtRef(song.chordData.lines, previewChord.ref) !== undefined}
               onSaveAll={(inversion) => {
                 saveChordVoicing(song, previewChord.chord, inversion)
-                if (inversionAtRef(song, previewChord.ref) !== undefined) {
+                if (inversionAtRef(song.chordData.lines, previewChord.ref) !== undefined) {
                   setInversionAtRef(song, previewChord.ref, undefined)
                 }
               }}

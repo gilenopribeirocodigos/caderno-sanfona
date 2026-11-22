@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import type { ChordNotation } from '@/types'
+import type { AccordionType, ChordNotation } from '@/types'
 import {
   COMMON_CHORD_QUALITIES,
   COMMON_ROOTS,
   formatChordForDisplay,
   quickPaletteForKey,
 } from '@/utils/chords'
+import ChordCard from './ChordCard'
 
 interface ChordPickerProps {
   title: string
@@ -24,6 +25,13 @@ interface ChordPickerProps {
   onSelect: (chord: string) => void
   onRemove?: () => void
   onClose: () => void
+  /** Presentes = mostra o teclado "onde apertar" do acorde atual, com
+   * opção de ajustar e salvar a inversão (item 187), direto no Editor. */
+  accordionType?: AccordionType
+  voicingSavedInversion?: number
+  voicingHasOverride?: boolean
+  onSaveVoicingAll?: (inversion: number) => void
+  onSaveVoicingThis?: (inversion: number) => void
 }
 
 /**
@@ -44,6 +52,11 @@ export default function ChordPicker({
   onSelect,
   onRemove,
   onClose,
+  accordionType,
+  voicingSavedInversion,
+  voicingHasOverride,
+  onSaveVoicingAll,
+  onSaveVoicingThis,
 }: ChordPickerProps) {
   const [showAll, setShowAll] = useState(false)
   const quickChords = quickPaletteForKey(currentKey)
@@ -60,6 +73,20 @@ export default function ChordPicker({
             Fechar
           </button>
         </div>
+
+        {currentChord && accordionType && (
+          <div className="mb-3 rounded-lg bg-surface-alt p-2">
+            <ChordCard
+              chord={currentChord}
+              accordionType={accordionType}
+              notation={notation}
+              savedInversion={voicingSavedInversion}
+              hasOccurrenceOverride={voicingHasOverride}
+              onSaveAll={onSaveVoicingAll}
+              onSaveThis={onSaveVoicingThis}
+            />
+          </div>
+        )}
 
         {syllables && syllables.length > 1 && onSyllableChange && (
           <div className="mb-3 flex flex-wrap gap-1.5">

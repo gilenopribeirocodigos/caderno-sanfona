@@ -6,6 +6,7 @@ import {
   parseTagsInput,
   saveChordData,
   restoreSongVersion,
+  saveChordVoicing,
   setInitialLyrics,
   transposeSongBySemitones,
   transposeSongToKey,
@@ -14,6 +15,7 @@ import {
 import { useSettings } from '@/lib/useSettings'
 import { parseChordPro, renderChordPro, uniqueChordsInSong } from '@/utils/chordpro'
 import { COMMON_KEYS } from '@/utils/chords'
+import { inversionAtRef, withInversionAtRef, type ChordOccurrenceRef } from '@/utils/chordVoicing'
 import { splitSyllables } from '@/utils/syllables'
 import ChordSheet, { type WordRef } from '@/components/ChordSheet'
 import ChordPicker from '@/components/ChordPicker'
@@ -100,6 +102,10 @@ function SongEditor({ songId }: { songId: string }) {
   const [tab, setTab] = useState<'cifra' | 'dados'>('cifra')
   const [dadosSaved, setDadosSaved] = useState(false)
   const [showChordHelp, setShowChordHelp] = useState(() => localStorage.getItem('editorChordHelpDismissed') !== '1')
+  // Começa sempre bloqueado (item 186) — evita alterar a letra/cifra sem
+  // querer só de tocar na tela; precisa habilitar de propósito a cada
+  // visita pra poder editar.
+  const [editingEnabled, setEditingEnabled] = useState(false)
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>()
   const lastLoadedSource = useRef<string | undefined>(undefined)
 
@@ -238,6 +244,19 @@ function SongEditor({ songId }: { songId: string }) {
         <SaveIndicator state={saveState} />
       </div>
 
+      <button
+        className={`tap-target mt-3 w-full rounded-lg border px-3 py-2 text-left text-sm font-medium ${
+          editingEnabled
+            ? 'border-[var(--color-gold)] bg-[color-mix(in_srgb,var(--color-gold)_12%,transparent)] text-slate-900 dark:text-slate-100'
+            : 'border-slate-300 text-slate-500 dark:border-slate-700'
+        }`}
+        onClick={() => setEditingEnabled((v) => !v)}
+      >
+        {editingEnabled
+          ? '🔓 Edição habilitada — toque para voltar ao normal (bloqueado)'
+          : '🔒 Normal (bloqueado) — toque para habilitar edição'}
+      </button>
+
       {(savedVersions?.length ?? 0) > 0 && (
         <details className="mt-3 rounded-lg bg-surface px-3 py-2">
           <summary className="tap-target cursor-pointer text-sm font-medium">Versões salvas ({savedVersions!.length})</summary>
@@ -248,14 +267,16 @@ function SongEditor({ songId }: { songId: string }) {
                   <span className="block font-medium">{version.name}</span>
                   <span className="text-slate-500">Tom {version.key} · {new Date(version.createdAt).toLocaleString('pt-BR')}</span>
                 </span>
-                <button
-                  className="tap-target rounded-md border border-slate-300 px-2 py-1.5 dark:border-slate-700"
-                  onClick={async () => {
-                    if (window.confirm('Restaurar esta versão? A versão atual também será salva no histórico.')) {
-                      await restoreSongVersion(songId, version.id)
-                    }
-                  }}
-                >Restaurar</button>
+                {editingEnabled && (
+                  <button
+                    className="tap-target rounded-md border border-slate-300 px-2 py-1.5 dark:border-slate-700"
+                    onClick={async () => {
+                      if (window.confirm('Restaurar esta versão? A versão atual também será salva no histórico.')) {
+                        await restoreSongVersion(songId, version.id)
+                      }
+                    }}
+                  >Restaurar</button>
+                )}
               </li>
             ))}
           </ul>
@@ -287,11 +308,24 @@ function SongEditor({ songId }: { songId: string }) {
 
       {tab === 'dados' ? (
         <div className="mt-4">
-          <SongForm
-            initial={songToFormValues(song)}
-            submitLabel={dadosSaved ? 'Salvo ✓' : 'Salvar dados'}
-            onSubmit={handleSaveDados}
-          />
+          {editingEnabled ? (
+            <SongForm
+              initial={songToFormValues(song)}
+              submitLabel={dadosSaved ? 'Salvo ✓' : 'Salvar dados'}
+              onSubmit={handleSaveDados}
+            />
+          ) : (
+            <dl className="flex flex-col gap-2 rounded-lg bg-surface p-3 text-sm">
+              <div><dt className="text-xs text-slate-400">Título</dt><dd>{song.title}</dd></div>
+              <div><dt className="text-xs text-slate-400">Artista</dt><dd>{song.artist || '—'}</dd></div>
+              <div><dt className="text-xs text-slate-400">Tom</dt><dd>{song.originalKey}</dd></div>
+              <div><dt className="text-xs text-slate-400">Ritmo</dt><dd>{song.rhythm || '—'}</dd></div>
+              <div><dt className="text-xs text-slate-400">Dificuldade</dt><dd>{song.difficulty || '—'}</dd></div>
+              <div><dt className="text-xs text-slate-400">Tags</dt><dd>{song.tags.join(', ') || '—'}</dd></div>
+              <div><dt className="text-xs text-slate-400">Observações</dt><dd>{song.notes || '—'}</dd></div>
+              <p className="text-xs text-slate-400">Toque em "Habilitar edição" acima pra alterar.</p>
+            </dl>
+          )}
         </div>
       ) : song.lyrics.trim() === '' ? (
         <form onSubmit={handleSaveInitialLyrics} className="mt-4 flex flex-col gap-2">
@@ -314,12 +348,12 @@ function SongEditor({ songId }: { songId: string }) {
         </form>
       ) : (
         <>
-          <TransposeBar song={song} />
+          <TransposeBar song={song} editable={editingEnabled} />
 
           {!rawMode ? (
             <>
               <div className="mt-4 rounded-lg bg-surface p-4">
-                {showChordHelp && (
+                {editingEnabled && showChordHelp && (
                   <div role="note" className="mb-3 flex items-start justify-between gap-3 rounded-md bg-surface-alt px-3 py-2 text-xs text-slate-600 dark:text-slate-300">
                     <p>Toque em uma palavra para adicionar ou alterar a cifra. Para mover uma cifra, arraste-a até outra palavra.</p>
                     <button className="shrink-0 underline" onClick={() => { localStorage.setItem('editorChordHelpDismissed', '1'); setShowChordHelp(false) }}>Entendi</button>
@@ -331,40 +365,54 @@ function SongEditor({ songId }: { songId: string }) {
                     notation={settings.notation}
                     fontSize={settings.fontSize}
                     chordSize={settings.chordSize}
-                    onWordClick={handleWordClick}
-                    onChordMove={handleChordMove}
+                    onWordClick={editingEnabled ? handleWordClick : undefined}
+                    onChordMove={editingEnabled ? handleChordMove : undefined}
                   />
                 )}
               </div>
 
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button
-                  className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
-                  onClick={addSection}
-                >
-                  + Seção (Refrão, Verso...)
-                </button>
-                <button
-                  className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
-                  onClick={openRawMode}
-                >
-                  Modo texto (ChordPro)
-                </button>
-                <button
-                  className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
-                  onClick={() => applyTextCase('upper')}
-                  title="Deixa todas as palavras da letra em maiúsculas"
-                >
-                  MAIÚSCULAS
-                </button>
-                <button
-                  className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
-                  onClick={() => applyTextCase('title')}
-                  title="Deixa só a primeira letra de cada palavra maiúscula"
-                >
-                  Primeira Maiúscula
-                </button>
-              </div>
+              {editingEnabled && (
+                <div className="mt-3 flex flex-col gap-3">
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-slate-400">Estrutura da letra</p>
+                    <button
+                      className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
+                      onClick={addSection}
+                    >
+                      + Seção (Refrão, Verso...)
+                    </button>
+                    <p className="mt-1 text-xs text-slate-500">Marca um trecho com um título (ex: "Refrão"), só pra organizar — não entra na cifra.</p>
+                  </div>
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-slate-400">Edição avançada</p>
+                    <button
+                      className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
+                      onClick={openRawMode}
+                    >
+                      Modo texto (ChordPro)
+                    </button>
+                    <p className="mt-1 text-xs text-slate-500">Edita a letra e os acordes digitando direto, em vez de tocar palavra por palavra.</p>
+                  </div>
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-slate-400">Formatar a letra toda</p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
+                        onClick={() => applyTextCase('upper')}
+                      >
+                        MAIÚSCULAS
+                      </button>
+                      <button
+                        className="tap-target rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
+                        onClick={() => applyTextCase('title')}
+                      >
+                        Primeira Maiúscula
+                      </button>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500">Deixa todas as palavras em CAIXA ALTA, ou só a primeira letra de cada uma maiúscula.</p>
+                  </div>
+                </div>
+              )}
             </>
           ) : (
             <div className="mt-4 flex flex-col gap-2">
@@ -397,21 +445,38 @@ function SongEditor({ songId }: { songId: string }) {
         </>
       )}
 
-      {picker && activeToken && (
-        <ChordPicker
-          title={`Acorde em "${activeToken.text || '(instrumental)'}"`}
-          currentKey={song.preferredKey}
-          notation={settings.notation}
-          currentChord={chordAtSyllable(activeToken, picker.syllableIndex)}
-          syllables={splitSyllables(activeToken.text)}
-          activeSyllable={picker.syllableIndex}
-          onSyllableChange={(syllableIndex) => setPicker({ ...picker, syllableIndex })}
-          usedChords={lines ? uniqueChordsInSong(lines) : []}
-          onSelect={handleChordSelect}
-          onRemove={chordAtSyllable(activeToken, picker.syllableIndex) ? handleChordRemove : undefined}
-          onClose={() => setPicker(null)}
-        />
-      )}
+      {picker && activeToken && lines && (() => {
+        const chord = chordAtSyllable(activeToken, picker.syllableIndex)
+        const ref: ChordOccurrenceRef = {
+          lineIndex: picker.lineIndex,
+          tokenIndex: picker.tokenIndex,
+          pieceIndex: activeToken.pieces ? picker.syllableIndex : undefined,
+        }
+        const occurrenceInversion = inversionAtRef(lines, ref)
+        return (
+          <ChordPicker
+            title={`Acorde em "${activeToken.text || '(instrumental)'}"`}
+            currentKey={song.preferredKey}
+            notation={settings.notation}
+            currentChord={chord}
+            syllables={splitSyllables(activeToken.text)}
+            activeSyllable={picker.syllableIndex}
+            onSyllableChange={(syllableIndex) => setPicker({ ...picker, syllableIndex })}
+            usedChords={uniqueChordsInSong(lines)}
+            onSelect={handleChordSelect}
+            onRemove={chord ? handleChordRemove : undefined}
+            onClose={() => setPicker(null)}
+            accordionType={settings.accordionType}
+            voicingSavedInversion={occurrenceInversion ?? (chord ? song.chordVoicings?.[chord] : undefined)}
+            voicingHasOverride={occurrenceInversion !== undefined}
+            onSaveVoicingAll={(inversion) => {
+              if (chord) saveChordVoicing(song, chord, inversion)
+              if (occurrenceInversion !== undefined) commitLines(withInversionAtRef(lines, ref, undefined))
+            }}
+            onSaveVoicingThis={(inversion) => commitLines(withInversionAtRef(lines, ref, inversion))}
+          />
+        )
+      })()}
     </div>
   )
 }
@@ -421,38 +486,44 @@ function SaveIndicator({ state }: { state: SaveState }) {
   return <span className="text-xs text-slate-400">{state === 'saving' ? 'Salvando...' : 'Salvo ✓'}</span>
 }
 
-function TransposeBar({ song }: { song: Song }) {
+function TransposeBar({ song, editable }: { song: Song; editable: boolean }) {
   return (
     <div className="mt-3 flex items-center gap-2 rounded-lg bg-surface p-2">
-      <button
-        className="tap-target rounded-md border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-700"
-        onClick={() => transposeSongBySemitones(song, -1)}
-      >
-        -1
-      </button>
+      {editable && (
+        <button
+          className="tap-target rounded-md border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-700"
+          onClick={() => transposeSongBySemitones(song, -1)}
+        >
+          -1
+        </button>
+      )}
       <span className="flex-1 text-center text-sm">
         Tom: <strong>{song.preferredKey}</strong>
         {song.originalKey !== song.preferredKey && (
           <span className="text-xs text-slate-400"> (original {song.originalKey})</span>
         )}
       </span>
-      <button
-        className="tap-target rounded-md border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-700"
-        onClick={() => transposeSongBySemitones(song, 1)}
-      >
-        +1
-      </button>
-      <select
-        className="tap-target rounded-md border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
-        value={song.preferredKey}
-        onChange={(e) => transposeSongToKey(song, e.target.value)}
-      >
-        {COMMON_KEYS.map((r) => (
-          <option key={r} value={r}>
-            {r}
-          </option>
-        ))}
-      </select>
+      {editable && (
+        <>
+          <button
+            className="tap-target rounded-md border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-700"
+            onClick={() => transposeSongBySemitones(song, 1)}
+          >
+            +1
+          </button>
+          <select
+            className="tap-target rounded-md border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
+            value={song.preferredKey}
+            onChange={(e) => transposeSongToKey(song, e.target.value)}
+          >
+            {COMMON_KEYS.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+        </>
+      )}
     </div>
   )
 }
